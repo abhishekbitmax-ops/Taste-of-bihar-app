@@ -16,6 +16,14 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
   int selectedDateIndex = 0;
   int selectedTimeIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    if (Get.arguments != null) {
+      selectedGuests = Get.arguments as int; // 👈 value पकड़ ली
+    }
+  }
+
   final List<Map<String, String>> dates = [
     {"day": "Today", "date": "02 Jan"},
     {"day": "Tomorrow", "date": "03 Jan"},
@@ -117,9 +125,10 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                               "$selectedGuests Guests",
                               style: GoogleFonts.poppins(fontSize: 14),
                             ),
+
                             DropdownButton<int>(
                               underline: const SizedBox(),
-                              value: selectedGuests,
+                              value: selectedGuests, // 👈 FIX
                               items: List.generate(
                                 30,
                                 (i) => DropdownMenuItem(
@@ -127,8 +136,9 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                                   child: Text("${i + 1}"),
                                 ),
                               ),
-                              onChanged: (v) =>
-                                  setState(() => selectedGuests = v!),
+                              onChanged: (v) => setState(
+                                () => selectedGuests = v!,
+                              ), // already correct
                             ),
                           ],
                         ),

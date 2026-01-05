@@ -48,7 +48,10 @@ class AddressSelector extends StatelessWidget {
             children: [
               Text(
                 "Select Address",
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               InkWell(
@@ -61,16 +64,32 @@ class AddressSelector extends StatelessWidget {
           ListTile(
             onTap: () => Get.to(() => SelectLocationScreen()),
             leading: const Icon(Icons.add, size: 26, color: Color(0xFF8B0000)),
-            title: Text("Add New Address",
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF8B0000))),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black45),
+            title: Text(
+              "Add New Address",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF8B0000),
+              ),
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.black45,
+            ),
             contentPadding: EdgeInsets.zero,
             dense: true,
           ),
           const Divider(),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text("Saved Addresses", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold)),
+            child: Text(
+              "Saved Addresses",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -80,21 +99,51 @@ class AddressSelector extends StatelessWidget {
                 final adr = savedAddress[i];
                 return Obx(
                   () => Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 1,
                     child: ListTile(
-                      onTap: () => cartCtrl.selectedAddress.value = adr["address"],
-                      leading: Icon(adr["icon"], size: 26, color: const Color(0xFF555555)),
+                      onTap: () =>
+                          cartCtrl.selectedAddress.value = adr["address"],
+                      leading: Icon(
+                        adr["icon"],
+                        size: 26,
+                        color: const Color(0xFF555555),
+                      ),
                       title: Row(
                         children: [
-                          Text(adr["title"], style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          Text(
+                            adr["title"],
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 6),
                           if (cartCtrl.selectedAddress.value == adr["address"])
-                            const Text("Selected", style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                            const Text(
+                              "Selected",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                         ],
                       ),
-                      subtitle: Text(adr["address"], style: GoogleFonts.poppins(fontSize: 10, color: Colors.black54)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.pink),
+                      subtitle: Text(
+                        adr["address"],
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.pink,
+                      ),
                       dense: true,
                     ),
                   ),

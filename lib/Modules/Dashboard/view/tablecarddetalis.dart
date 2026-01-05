@@ -217,105 +217,129 @@ class RestaurantDetailScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     _offerButton("Book a Table", false, () {
+                      int tempSelected = 1; // 👈 इसे बाहर रखो ताकि reset न हो
+
                       Get.bottomSheet(
-                        Container(
-                          height: 40.h,
-                          padding: EdgeInsets.all(4.w),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(22),
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                        StatefulBuilder(
+                          builder: (context, setSheetState) {
+                            return Container(
+                              height: 40.h,
+                              padding: EdgeInsets.all(4.w),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(22),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "Select number of guests",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Select number of guests",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () => Get.back(),
+                                        child: const CircleAvatar(
+                                          backgroundColor: Color(0xFF8B0000),
+                                          child: Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 3.h),
+
+                                  SizedBox(
+                                    height: 7.h,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: 30,
+                                      itemBuilder: (_, i) {
+                                        int g = i + 1;
+                                        bool isSel = tempSelected == g;
+
+                                        return InkWell(
+                                          onTap: () {
+                                            setSheetState(() {
+                                              tempSelected =
+                                                  g; // 👈 अब कोई भी select होगा
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 14.w,
+                                            margin: EdgeInsets.only(right: 3.w),
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: isSel
+                                                  ? Colors.green.shade50
+                                                  : Colors.white,
+                                              border: Border.all(
+                                                color: isSel
+                                                    ? Colors.green.shade700
+                                                    : Colors.grey.shade300,
+                                                width: 2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              "$g",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSel
+                                                    ? Colors.green.shade700
+                                                    : Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
-                                  InkWell(
-                                    onTap: () => Get.back(),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Color(0xFF8B0000),
+
+                                  const Spacer(),
+
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 55,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF8B0000,
+                                        ),
+                                        foregroundColor: Colors.white,
                                       ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 24,
-                                          color: Colors.white,
+                                      onPressed: () {
+                                        Get.back();
+                                        Get.to(
+                                          const TableBookingFormScreen(),
+                                          arguments: tempSelected,
+                                        );
+                                      },
+                                      child: Text(
+                                        "Continue ($tempSelected Guests)",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 4.h),
-
-                              SizedBox(
-                                height: 7.h,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: 30,
-                                  itemBuilder: (_, i) {
-                                    int guest = i + 1;
-                                    return Container(
-                                      width: 14.w,
-                                      margin: EdgeInsets.only(right: 3.w),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                          width: 2,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        "$guest",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              SizedBox(height: 4.h),
-
-                              SizedBox(
-                                width: double.infinity,
-                                height: 55,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF8B0000),
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  onPressed: () =>
-                                      Get.to(TableBookingFormScreen()),
-                                  child: Text(
-                                    "Continue",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       );
                     }),

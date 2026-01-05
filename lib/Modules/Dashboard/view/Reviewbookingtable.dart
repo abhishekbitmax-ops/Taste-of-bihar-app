@@ -109,7 +109,7 @@ class ReviewBookingScreen extends StatelessWidget {
                           width: 92.w,
                           padding: EdgeInsets.all(3.w),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A40),
+                            color: const Color(0xFF8B0000),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -352,7 +352,7 @@ class ReviewBookingScreen extends StatelessWidget {
                 width: 100.w,
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF006241),
+                  color: Color(0xFF8B0000),
                   borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
                 ),
                 child: Row(

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 
 class UserBasicDetails extends StatefulWidget {
@@ -22,6 +23,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
   final RxString selectedGender = "".obs;
   final RxString dobValue = "".obs;
   final RxString locationTime = "".obs;
+  final Authcontroller userBasicCtrl = Get.put(Authcontroller());
 
   File? userImage;
   final ImagePicker picker = ImagePicker();
@@ -336,17 +338,18 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                     width: 260,
                     child: ElevatedButton(
                       onPressed: () {
-                        Get.offAll(BottomNavBar());
-                        // Map<String, String> userData = {
-                        //   "name": nameCtrl.text,
-                        //   "email": emailCtrl.text,
-                        //   "dateOfBirth": dobValue.value,
-                        //   "gender": selectedGender.value,
-                        //   "location": locationCtrl.text,
-                        // };
-                        // print(userData);
-                        // Get.snackbar("Success", "Data Submitted!");
+                        userBasicCtrl.submitBasicDetails(
+                          name: nameCtrl.text.trim(),
+                          email: emailCtrl.text.trim(),
+                          imageFile: userImage,
+                          gender: selectedGender.value.toLowerCase(),
+                          dob: dobValue.value,
+                          address: locationCtrl.text.trim(),
+                          lat: 28.5559,
+                          lng: 77.3466,
+                        );
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF8B0000),
                         minimumSize: const Size(double.infinity, 56),

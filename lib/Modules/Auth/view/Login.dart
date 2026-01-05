@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/view/Otpverifiction.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final Authcontroller loginCtrl = Get.put(Authcontroller());
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -75,6 +76,7 @@ class LoginScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       TextField(
+                        controller: loginCtrl.mobileCtrl,
                         keyboardType: TextInputType.phone,
                         style: GoogleFonts.poppins(
                           fontSize: 16,
@@ -116,30 +118,29 @@ class LoginScreen extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const OtpVerificationScreen(),
+                      Obx(
+                        () => ElevatedButton(
+                          onPressed: loginCtrl.isLoading.value
+                              ? null
+                              : loginCtrl.sendOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B0000),
+                            minimumSize: const Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B0000),
-                          minimumSize: const Size(double.infinity, 56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            elevation: 3,
                           ),
-                          elevation: 3,
-                        ),
-                        child: Text(
-                          "Continue Securely",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          child: loginCtrl.isLoading.value
+                              ? const CircularProgressIndicator()
+                              : Text(
+                                  "Continue Securely",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
 

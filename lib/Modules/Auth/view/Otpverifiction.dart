@@ -1,8 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -12,41 +11,13 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  late String otpCode;
-
-  // Generate 6 digit OTP
-  String _generateOTP() {
-    return (100000 + Random().nextInt(900000)).toString();
-  }
-
-  // Show OTP in snackbar
-  void _showOTP() {
-    Get.snackbar(
-      "Your OTP Code",
-      otpCode,
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 4), // 👈 OTP will show for 4 sec
-      backgroundColor: Colors.red.shade900,
-      colorText: Colors.white,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      // fontSize: 18,
-      isDismissible: true,
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    otpCode = _generateOTP();
-    Future.delayed(
-      const Duration(milliseconds: 300),
-      _showOTP,
-    ); // 👈 show when screen opens
-  }
+  final Authcontroller otpCtrl = Get.put(Authcontroller());
+  final TextEditingController otpInputCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final mobile = Get.arguments['mobile']; // passed mobile number
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -74,7 +45,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
                     ),
                     Text(
-                      "Otp Verification page",
+                      "Otp Verification",
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -118,6 +89,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 SizedBox(
                   width: 260,
                   child: TextField(
+                    controller: otpInputCtrl,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
                     maxLength: 6,
@@ -128,7 +100,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                     decoration: InputDecoration(
                       counterText: "",
-                      hintText: "••••••",
+                      hintText: "Enter OTP",
                       filled: true,
                       fillColor: Colors.grey.shade100,
                       border: OutlineInputBorder(
@@ -152,7 +124,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   width: 260,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.to(() => const UserBasicDetails());
+                      otpCtrl.verifyOtp(
+                        mobile: mobile,
+                        otp: otpInputCtrl.text.trim(),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B0000),
@@ -174,22 +149,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 ),
 
                 const Spacer(),
-
-                // Resend OTP
-                TextButton(
-                  onPressed: () {
-                    otpCode = _generateOTP(); // regenerate new OTP
-                    _showOTP(); // 👈 show new OTP in snackbar
-                  },
-                  child: Text(
-                    "Didn't receive? Resend OTP",
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
 
                 const SizedBox(height: 30),
               ],
