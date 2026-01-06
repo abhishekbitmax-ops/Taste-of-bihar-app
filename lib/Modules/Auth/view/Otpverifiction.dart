@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
+import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:restro_app/utils/Sharedpre.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -11,7 +14,8 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final Authcontroller otpCtrl = Get.put(Authcontroller());
+  final Authcontroller otpCtrl = Get.find<Authcontroller>();
+
   final TextEditingController otpInputCtrl = TextEditingController();
 
   @override
@@ -74,7 +78,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     child: Transform.scale(
                       scale: 1.2,
                       child: Image.asset(
-                        "assets/images/dadi.png",
+                        "assets/images/applogo.png",
                         width: 140,
                         height: 140,
                         fit: BoxFit.cover,
@@ -119,16 +123,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
                 const SizedBox(height: 20),
 
-                // Verify Button
                 SizedBox(
                   width: 260,
                   child: ElevatedButton(
-                    onPressed: () {
-                      otpCtrl.verifyOtp(
-                        mobile: mobile,
-                        otp: otpInputCtrl.text.trim(),
-                      );
+                    onPressed: () async {
+                      bool isLogin = Get.arguments["isLogin"] ?? false;
+                      String mobile = Get.arguments["mobile"];
+                      String otp = otpInputCtrl.text.trim();
+
+                      if (isLogin) {
+                        await otpCtrl.mobileLoginVerify(
+                          mobile: mobile,
+                          otp: otp,
+                        );
+                      } else {
+                        await otpCtrl.verifyOtp(mobile: mobile, otp: otp);
+                      }
                     },
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B0000),
                       minimumSize: const Size(double.infinity, 56),

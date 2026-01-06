@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:restro_app/Modules/Navbar/Splashscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:restro_app/Modules/Auth/view/Demoscreen/Demo_one.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
 
 void main() async {
   SystemChrome.setSystemUIOverlayStyle(
@@ -36,7 +35,7 @@ class MyApp extends StatelessWidget {
             textTheme: GoogleFonts.poppinsTextTheme(),
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           ),
-          home: const OnboardingScreen(),
+          home: const SplashScreen(),
           debugShowCheckedModeBanner: false,
         );
       },

@@ -337,19 +337,18 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                   SizedBox(
                     width: 260,
                     child: ElevatedButton(
-                      onPressed: () {
-                        userBasicCtrl.submitBasicDetails(
+                      onPressed: () async {
+                        await userBasicCtrl.submitBasicDetails(
                           name: nameCtrl.text.trim(),
                           email: emailCtrl.text.trim(),
                           imageFile: userImage,
-                          gender: selectedGender.value.toLowerCase(),
+                          gender: selectedGender.value, // ✔ Correct value
                           dob: dobValue.value,
                           address: locationCtrl.text.trim(),
                           lat: 28.5559,
                           lng: 77.3466,
                         );
                       },
-
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF8B0000),
                         minimumSize: const Size(double.infinity, 56),

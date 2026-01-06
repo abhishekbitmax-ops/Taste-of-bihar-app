@@ -8,7 +8,7 @@ class ApiEndpoint {
   //  AUTHENTICATION ENDPOINTS
 
   static const String login = "/mobile-send-otp";
-  static const String verifyOtp = "/mobile-verify-otp";
+  static String verifyOtp = "/mobile-verify-otp";
   static const String basicDetails = "/mobile-register";
   static const String profile = "/profile";
   static const String mobileLogin = "/mobile-login";

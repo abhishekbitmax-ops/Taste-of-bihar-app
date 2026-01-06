@@ -1,3 +1,10 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:restro_app/Modules/Auth/view/Login.dart';
+import 'package:restro_app/Modules/ProfileSection/Controller/profilecontroller.dart';
+import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:restro_app/utils/api_endpoints.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +16,9 @@ import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
 class ProfileHomeScreen extends StatelessWidget {
-  const ProfileHomeScreen({super.key});
+  ProfileHomeScreen({super.key});
+
+  final ProfileController profileCtrl = Get.put(ProfileController());
 
   Widget _menuTile(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
@@ -96,16 +105,14 @@ class ProfileHomeScreen extends StatelessWidget {
   }
 
   Future<void> _onRefresh() async {
-    await Future.delayed(const Duration(seconds: 2));
-    // Yahan API / controller refresh logic laga sakte ho
+    await profileCtrl.fetchProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Status bar color same header gradient
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFB71C1C),
+        statusBarColor: Color(0xFF8B0000),
         statusBarIconBrightness: Brightness.light,
       ),
     );
@@ -121,149 +128,159 @@ class ProfileHomeScreen extends StatelessWidget {
               onRefresh: _onRefresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // HEADER GRADIENT
-                    Container(
-                      height: 26.h,
-                      width: 100.w,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFB71C1C), Color(0xFFFF5252)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                child: Obx(() {
+                  final user = profileCtrl.profileData.value;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // HEADER
+                      Container(
+                        height: 26.h,
+                        width: 100.w,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFB71C1C), Color(0xFFFF5252)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 5.w),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 18),
-                            Center(
-                              child: CircleAvatar(
-                                radius: 38,
-                                backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 5.w),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 18),
+                              Center(
                                 child: CircleAvatar(
-                                  radius: 35,
+                                  radius: 38,
                                   backgroundColor: Colors.white,
-                                  backgroundImage: const AssetImage(
-                                    "assets/images/profile.jpg",
-                                  ),
-                                  onBackgroundImageError: (_, __) {},
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 35,
-                                    color: Colors.black54,
+                                  child: CircleAvatar(
+                                    radius: 35,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage: user.profile != null
+                                        ? NetworkImage(
+                                            "${ApiEndpoint.baseUrl}/image/${user.profile}",
+                                          )
+                                        : const AssetImage(
+                                            "assets/images/profile.jpg",
+                                          ),
+                                    onBackgroundImageError: (_, __) {},
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 35,
+                                      color: Colors.black54,
+                                    ),
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      user.name ?? "Rahul Sharma",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      user.email ?? "rahul.sharma@example.com",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 26),
+
+                      // QUICK ACTIONS
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: GridView.count(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 1.6,
+                          children: [
+                            _quickCard(
+                              Icons.shopping_bag,
+                              "My Orders",
+                              "View your order history",
                             ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    "Rahul Sharma",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    "rahul.sharma@example.com",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ],
+                            _quickCard(
+                              Icons.favorite,
+                              "Favorites",
+                              "Your saved restaurants",
+                            ),
+                            _quickCard(
+                              Icons.location_on,
+                              "My Addresses",
+                              "Saved delivery locations",
+                              onTap: () => Get.bottomSheet(
+                                const AddressSelector(heightFactor: 1),
+                                isScrollControlled: true,
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            _quickCard(
+                              Icons.payment,
+                              "Payments",
+                              "Manage payment",
+                            ),
                           ],
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 26),
+                      const SizedBox(height: 22),
 
-                    // QUICK ACTIONS
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      child: GridView.count(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        childAspectRatio: 1.6,
-                        children: [
-                          _quickCard(
-                            Icons.shopping_bag,
-                            "My Orders",
-                            "View your order history",
-                          ),
-                          _quickCard(
-                            Icons.favorite,
-                            "Favorites",
-                            "Your saved restaurants",
-                          ),
-                          _quickCard(
-                            Icons.location_on,
-                            "My Addresses",
-                            "Saved delivery locations",
-                            onTap: () => Get.bottomSheet(
-                              const AddressSelector(heightFactor: 1),
-                              isScrollControlled: true,
-                            ),
-                          ),
-
-                          _quickCard(
-                            Icons.payment,
-                            "Payments",
-                            "Manage payment",
-                          ),
-                        ],
+                      // MENU LIST
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2.w),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _menuTile(Icons.help_outline, "Help & Support"),
+                            _menuTile(Icons.restaurant, "Partner with Us"),
+                            _menuTile(Icons.card_membership, "Pro Membership"),
+                            const Divider(),
+                            _menuTile(Icons.lock, "Privacy Policy"),
+                            _menuTile(Icons.description, "Terms & Conditions"),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 22),
+                      const SizedBox(height: 30),
 
-                    // MENU LIST
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _menuTile(Icons.help_outline, "Help & Support"),
-                          _menuTile(Icons.restaurant, "Partner with Us"),
-                          _menuTile(Icons.card_membership, "Pro Membership"),
-                          const Divider(),
-                          _menuTile(Icons.lock, "Privacy Policy"),
-                          _menuTile(Icons.description, "Terms & Conditions"),
-                        ],
+                      // LOGOUT BUTTON
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w),
+                        child: _gradientButton(
+                          "Log Out",
+                          onTap: () async {
+                            await SharedPre.clearAll();
+                            Get.offAll(() => const LoginScreen());
+                          },
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 30),
-
-                    // LOGOUT BUTTON
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w),
-                      child: _gradientButton(
-                        "Log Out",
-                        onTap: () => Get.back(),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                }),
               ),
             ),
           ),
