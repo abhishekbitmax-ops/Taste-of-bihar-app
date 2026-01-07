@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/view/Otpverifiction.dart';
 import 'package:http/http.dart' as http;
 import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
+import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'dart:convert';
@@ -14,6 +15,14 @@ import 'package:restro_app/utils/api_endpoints.dart';
 class Authcontroller extends GetxController {
   final mobileCtrl = TextEditingController();
   var isLoading = false.obs;
+
+  String getCategoryId(CategoryData cat) => cat.id ?? "";
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCategories();
+  }
 
   Future<void> sendOtp() async {
     if (mobileCtrl.text.length < 10) {
@@ -139,8 +148,17 @@ class Authcontroller extends GetxController {
       debugPrint(data.toString());
 
       if (data["success"] == true) {
+        // 🔥 Save Tokens
+        if (data["tokens"] != null) {
+          await SharedPre.saveTokens(
+            accessToken: data["tokens"]["accessToken"],
+            refreshToken: data["tokens"]["refreshToken"],
+            expiresIn: data["tokens"]["expiresIn"],
+          );
+        }
+
         Get.snackbar("Success", "Registration successful!");
-        Get.offAll(BottomNavBar());
+        Get.offAll(() => BottomNavBar()); // 🚀 Now correct redirect
       } else {
         Get.snackbar(
           "Error",
@@ -234,6 +252,75 @@ class Authcontroller extends GetxController {
         Get.offAll(BottomNavBar());
       } else {
         Get.snackbar("Error", data["message"] ?? "Invalid OTP");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Categories Fetching (Example) -----
+
+  CategoryResponse? categoryResponse;
+  var categories = <CategoryData>[].obs; // 👈 dynamic list
+  int get length => categories.length;
+
+  Future<void> fetchCategories() async {
+    try {
+      String token = await SharedPre.getAccessToken();
+
+      final res = await http.get(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.categories)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        categoryResponse = CategoryResponse.fromJson(jsonDecode(res.body));
+        if (categoryResponse?.data != null) {
+          categories.value = categoryResponse!.data!; // 👈 assign list
+        }
+      }
+    } catch (e) {
+      debugPrint("Category API Error: $e");
+    }
+  }
+
+  // categories item show api
+
+  var items = <ItemModel>[].obs;
+  var category = CategoryModel().obs;
+
+  Future<void> fetchCategoryItems(String categoryId) async {
+    try {
+      isLoading.value = true;
+      items.clear();
+
+      String token = await SharedPre.getAccessToken();
+
+      var response = await http.get(
+        Uri.parse(
+          "https://resto-grandma.onrender.com/api/v1/user/categories/$categoryId/items",
+        ),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var jsonData = jsonDecode(response.body);
+        var data = CategoryItemsResponse.fromJson(jsonData);
+
+        if (data.success == true) {
+          category.value = data.data?.category ?? CategoryModel();
+          items.value = data.data?.items ?? [];
+        }
+      } else {
+        Get.snackbar("Error", "Failed to load items");
       }
     } catch (e) {
       Get.snackbar("Exception", e.toString());

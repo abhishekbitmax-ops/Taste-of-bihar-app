@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Dashboard/view/menuscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/widgets/Addtocartbottom.dart';
@@ -49,9 +51,32 @@ class BannerSliderController extends GetxController {
   }
 }
 
-class FoodHomeScreen extends StatelessWidget {
+class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
 
+  @override
+  State<FoodHomeScreen> createState() => _FoodHomeScreenState();
+}
+
+class _FoodHomeScreenState extends State<FoodHomeScreen> {
+  final Authcontroller authCtrl = Get.put(Authcontroller());
+
+  @override
+  void initState() {
+    super.initState();
+    authCtrl.fetchCategories().then((_) {
+      if (authCtrl.categories.isNotEmpty) {
+        setState(() {
+          selectedCategory = authCtrl.categories[0].name ?? "";
+          selectedCategoryId = authCtrl.categories[0].id ?? "";
+        });
+        authCtrl.fetchCategoryItems(selectedCategoryId);
+      }
+    });
+  }
+
+  String selectedCategory = ""; // 👈 ADD THIS
+  String selectedCategoryId = "";
   Future<String> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return "Location service disabled";
@@ -274,18 +299,77 @@ class FoodHomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 20),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildCategory("assets/images/Dine.jpg", "All"),
-                      _buildCategory("assets/images/Dine.jpg", "Biryani"),
-                      _buildCategory("assets/images/Dine.jpg", "Pizza"),
-                      _buildCategory("assets/images/Dine.jpg", "Burgers"),
-                      _buildCategory("assets/images/Dine.jpg", "Veg Meals"),
-                      _buildCategory("assets/images/Dine.jpg", "Thali"),
-                      _buildCategory("assets/images/Dine.jpg", "Chole Bhature"),
-                      _buildCategory("assets/images/Dine.jpg", "Paneer"),
-                    ],
-                  ),
+                  child: Obx(() {
+                    if (authCtrl.categories.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Text(
+                          "No categories found",
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      );
+                    }
+
+                    return Row(
+                      children: authCtrl.categories.map((cat) {
+                        final img = (cat.image == null || cat.image!.isEmpty)
+                            ? "assets/images/Dine.jpg"
+                            : "assets/images/${cat.image}";
+
+                        return InkWell(
+                          onTap: () {
+                            // store selected ID
+                            setState(() {
+                              selectedCategory = cat.name ?? "";
+                              selectedCategoryId = cat.id ?? "";
+                            });
+
+                            // 🚀 open navbar index 2 with arguments
+                            Get.offAll(
+                              () => BottomNavBar(initialIndex: 2),
+                              arguments: {
+                                "categoryId": cat.id ?? "",
+                                "categoryName": cat.name ?? "",
+                              },
+                            );
+                          },
+                          child: Container(
+                            width: 90,
+                            margin: const EdgeInsets.only(right: 14),
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: Image.asset(
+                                    img,
+                                    width: 70,
+                                    height: 70,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Image.asset(
+                                      "assets/images/Dine.jpg",
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  cat.name ?? "Unknown",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF8B0000),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  }),
                 ),
               ),
 
@@ -513,45 +597,6 @@ Widget _recommendedItem(
           ),
         ),
       ],
-    ),
-  );
-}
-
-Widget _dealGradientCard(
-  String title,
-  String subtitle,
-  List<Color> gradientColors,
-) {
-  return Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: gradientColors,
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70),
-          ),
-        ],
-      ),
     ),
   );
 }

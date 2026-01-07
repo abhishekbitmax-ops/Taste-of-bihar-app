@@ -1,17 +1,15 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:restro_app/Modules/Auth/view/Login.dart';
 import 'package:restro_app/Modules/ProfileSection/Controller/profilecontroller.dart';
+import 'package:restro_app/Modules/ProfileSection/view/Editprofile.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:flutter/services.dart';
-import 'package:restro_app/Modules/Dashboard/view/AddAddress.dart';
-import 'package:restro_app/Modules/Dashboard/view/CurrentMapfetch.dart';
+
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
@@ -120,6 +118,16 @@ class ProfileHomeScreen extends StatelessWidget {
     return ResponsiveSizer(
       builder: (context, orientation, screenType) {
         return Scaffold(
+          appBar: AppBar(
+            systemOverlayStyle: const SystemUiOverlayStyle(
+              statusBarColor: Color(0xFFB71C1C),
+              statusBarIconBrightness: Brightness.light,
+            ),
+            backgroundColor: const Color(0xFFB71C1C),
+            elevation: 0,
+            title: const Text("Profile", style: TextStyle(color: Colors.white)),
+          ),
+
           bottomNavigationBar: ZomatoCartBar(),
           resizeToAvoidBottomInset: false,
           backgroundColor: Colors.grey.shade50,
@@ -136,72 +144,93 @@ class ProfileHomeScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // HEADER
-                      Container(
-                        height: 26.h,
-                        width: 100.w,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFB71C1C), Color(0xFFFF5252)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 5.w),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 18),
-                              Center(
-                                child: CircleAvatar(
-                                  radius: 38,
-                                  backgroundColor: Colors.white,
-                                  child: CircleAvatar(
-                                    radius: 35,
-                                    backgroundColor: Colors.white,
-                                    backgroundImage: user.profile != null
-                                        ? NetworkImage(
-                                            "${ApiEndpoint.baseUrl}/image/${user.profile}",
-                                          )
-                                        : const AssetImage(
-                                            "assets/images/profile.jpg",
-                                          ),
-                                    onBackgroundImageError: (_, __) {},
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 35,
-                                      color: Colors.black54,
+                      // HEADER
+                      Stack(
+                        children: [
+                          Container(
+                            height: 26.h,
+                            width: 100.w,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFB71C1C), Color(0xFFFF5252)],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 5.w),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 18),
+                                  Center(
+                                    child: CircleAvatar(
+                                      radius: 38,
+                                      backgroundColor: Colors.white,
+                                      child: CircleAvatar(
+                                        radius: 35,
+                                        backgroundColor: Colors.white,
+                                        backgroundImage: user.profile != null
+                                            ? NetworkImage(
+                                                "${ApiEndpoint.baseUrl}/image/${user.profile}",
+                                              )
+                                            : const AssetImage(
+                                                "assets/images/profile.jpg",
+                                              ),
+                                        onBackgroundImageError: (_, __) {},
+                                        child: const Icon(
+                                          Icons.person,
+                                          size: 35,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      user.name ?? "Rahul Sharma",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                                  const SizedBox(height: 10),
+                                  Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          user.name ?? "No Name ",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          user.email ?? "xyz@example.com",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      user.email ?? "rahul.sharma@example.com",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                ],
                               ),
-                              const SizedBox(height: 14),
-                            ],
+                            ),
                           ),
-                        ),
+
+                          // ✏ EDIT PROFILE ICON (TOP RIGHT)
+                          Positioned(
+                            top: 10,
+                            right: 40,
+                            child: InkWell(
+                              onTap: () => Get.to(
+                                () => EditProfileScreen(),
+                              ), // 👈 Navigation
+                              child: const Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 26),

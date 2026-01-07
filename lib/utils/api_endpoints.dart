@@ -13,6 +13,7 @@ class ApiEndpoint {
   static const String profile = "/profile";
   static const String mobileLogin = "/mobile-login";
   static const String mobileLoginVerify = "/mobile-login-verify";
+  static const String categories = "/categories";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

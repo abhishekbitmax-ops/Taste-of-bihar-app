@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Auth/view/Demoscreen/Demo_one.dart';
+import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:restro_app/utils/Sharedpre.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,6 +26,18 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+
+    Timer(const Duration(seconds: 3), () async {
+      final accessToken = await SharedPre.getAccessToken();
+
+      if (accessToken.isNotEmpty) {
+        // 🔥 User already registered → Go to Home
+        Get.offAll(() => BottomNavBar());
+      } else {
+        // 🔥 First time or not registered → Go to Onboarding
+        Get.off(() => OnboardingScreen());
+      }
+    });
 
     _controller = AnimationController(
       vsync: this,
@@ -63,10 +77,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
-
-    Timer(const Duration(seconds: 3), () {
-      Get.off(() => OnboardingScreen());
-    });
   }
 
   @override
