@@ -202,7 +202,7 @@ class _UserLoginTab extends StatelessWidget {
                         final savedMobile = await SharedPre.getMobile();
 
                         if (savedMobile.isNotEmpty) {
-                          loginCtrl.mobileLogin();
+                          loginCtrl.sendOtp(); // controller खुद OTP पर भेजेगा
                         } else {
                           loginCtrl.sendOtp();
                         }

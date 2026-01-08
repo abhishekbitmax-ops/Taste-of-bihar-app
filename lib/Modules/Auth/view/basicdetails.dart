@@ -24,6 +24,9 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
   final RxString dobValue = "".obs;
   final RxString locationTime = "".obs;
   final Authcontroller userBasicCtrl = Get.put(Authcontroller());
+  var isLocLoading = false.obs;
+  double? latValue;
+  double? lngValue;
 
   File? userImage;
   final ImagePicker picker = ImagePicker();
@@ -40,44 +43,40 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
 
   // 📍 Fetch current location + time
   Future<void> _fetchLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+    try {
+      isLocLoading.value = true;
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      Get.snackbar("Location Error", "Please enable GPS service");
-      return;
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      latValue = position.latitude;
+      lngValue = position.longitude;
+
+      List<Placemark> place = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      final p = place.first;
+      String fullAddress = [
+        p.street,
+        p.subLocality,
+        p.locality,
+        p.administrativeArea, // state
+        p.subAdministrativeArea,
+        p.country,
+      ].where((e) => e != null && e!.isNotEmpty).join(", ");
+
+      String fetchTime = DateFormat('hh:mm a').format(DateTime.now());
+
+      locationCtrl.text = fullAddress;
+      locationTime.value = fetchTime;
+    } catch (e) {
+      Get.snackbar("Location Error", "Failed to fetch location");
+    } finally {
+      isLocLoading.value = false;
     }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        Get.snackbar("Permission Denied", "Location permission is required");
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      Get.snackbar("Permission Error", "Enable permission from settings.");
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    List<Placemark> place = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-
-    String address =
-        "${place.first.street ?? ""}, ${place.first.locality ?? ""}, ${place.first.country ?? ""}";
-    String fetchTime = DateFormat('hh:mm a').format(DateTime.now());
-
-    locationCtrl.text = address;
-    locationTime.value = fetchTime;
   }
 
   @override
@@ -270,7 +269,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                         isExpanded: true,
                         underline: const SizedBox(),
                         onChanged: (val) => selectedGender.value = val!,
-                        items: const ["Male", "Female", "Other"]
+                        items: const ["male", "female", "other"]
                             .map(
                               (e) => DropdownMenuItem(value: e, child: Text(e)),
                             )
@@ -310,19 +309,33 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                         suffixIcon: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            InkWell(
-                              onTap: _fetchLocation,
-                              child: const Icon(
-                                Icons.my_location,
-                                color: Color(0xFF8B0000),
+                            Obx(
+                              () => InkWell(
+                                onTap: isLocLoading.value
+                                    ? null
+                                    : _fetchLocation,
+                                child: isLocLoading.value
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.my_location,
+                                        color: Color(0xFF8B0000),
+                                      ),
                               ),
                             ),
                             if (locationTime.value.isNotEmpty)
-                              Text(
-                                locationTime.value,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: Colors.black54,
+                              Obx(
+                                () => Text(
+                                  locationTime.value,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: Colors.black54,
+                                  ),
                                 ),
                               ),
                           ],
@@ -334,36 +347,48 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                   const SizedBox(height: 26),
 
                   // Continue Button
-                  SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await userBasicCtrl.submitBasicDetails(
-                          name: nameCtrl.text.trim(),
-                          email: emailCtrl.text.trim(),
-                          imageFile: userImage,
-                          gender: selectedGender.value, // ✔ Correct value
-                          dob: dobValue.value,
-                          address: locationCtrl.text.trim(),
-                          lat: 28.5559,
-                          lng: 77.3466,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B0000),
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  Obx(
+                    () => SizedBox(
+                      width: 260,
+                      child: ElevatedButton(
+                        onPressed: userBasicCtrl.isLoading.value
+                            ? null
+                            : () async {
+                                await userBasicCtrl.submitBasicDetails(
+                                  name: nameCtrl.text.trim(),
+                                  email: emailCtrl.text.trim(),
+                                  imageFile: userImage,
+                                  gender: selectedGender.value,
+                                  dob: dobValue.value,
+                                  address: locationCtrl.text.trim(),
+                                  lat: latValue ?? 0.0,
+                                  lng: lngValue ?? 0.0,
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B0000),
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 3,
                         ),
-                        elevation: 3,
-                      ),
-                      child: Text(
-                        "Continue",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        child: userBasicCtrl.isLoading.value
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.6,
+                                ),
+                              )
+                            : Text(
+                                "Continue",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ),

@@ -11,8 +11,7 @@ class ApiEndpoint {
   static String verifyOtp = "/mobile-verify-otp";
   static const String basicDetails = "/mobile-register";
   static const String profile = "/profile";
-  static const String mobileLogin = "/mobile-login";
-  static const String mobileLoginVerify = "/mobile-login-verify";
+  static const String updateProfile = "/profile-update";
   static const String categories = "/categories";
 
   //  Helper — automatically combines base URL + endpoint

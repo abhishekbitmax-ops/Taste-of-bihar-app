@@ -73,10 +73,17 @@ class Authcontroller extends GetxController {
       );
 
       final data = jsonDecode(response.body);
-      debugPrint(data.toString());
+      debugPrint("OTP Response: $data");
 
       if (data["success"] == true) {
         await SharedPre.saveMobile(mobile);
+
+        // ✔ Tokens root me mil rhe hain, directly save karo
+        await SharedPre.saveTokens(
+          accessToken: data["accessToken"] ?? "",
+          refreshToken: data["refreshToken"] ?? "",
+          expiresIn: data["expiresIn"] ?? "",
+        );
 
         Get.snackbar(
           "Success",
@@ -85,7 +92,11 @@ class Authcontroller extends GetxController {
           colorText: Colors.white,
         );
 
-        Get.off(() => const UserBasicDetails());
+        if (data["requiresRegistration"] == true) {
+          Get.off(() => const UserBasicDetails());
+        } else {
+          Get.offAll(() => BottomNavBar());
+        }
       } else {
         Get.snackbar("Error", data["message"] ?? "Invalid OTP");
       }
@@ -114,7 +125,7 @@ class Authcontroller extends GetxController {
 
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      final mobile = await SharedPre.getMobile(); // 👈 GET SAVED MOBILE
+      final mobile = await SharedPre.getMobile(); //  GET SAVED MOBILE
       if (mobile.isEmpty) {
         Get.snackbar(
           "Error",
@@ -148,7 +159,7 @@ class Authcontroller extends GetxController {
       debugPrint(data.toString());
 
       if (data["success"] == true) {
-        // 🔥 Save Tokens
+        //  Save Tokens
         if (data["tokens"] != null) {
           await SharedPre.saveTokens(
             accessToken: data["tokens"]["accessToken"],
@@ -158,7 +169,7 @@ class Authcontroller extends GetxController {
         }
 
         Get.snackbar("Success", "Registration successful!");
-        Get.offAll(() => BottomNavBar()); // 🚀 Now correct redirect
+        Get.offAll(() => BottomNavBar()); //  Now correct redirect
       } else {
         Get.snackbar(
           "Error",
@@ -179,91 +190,12 @@ class Authcontroller extends GetxController {
     }
   }
 
-  Future<void> mobileLogin() async {
-    if (mobileCtrl.text.length < 10) {
-      Get.snackbar("Error", "Please enter valid mobile number");
-      return;
-    }
-
-    try {
-      isLoading.value = true;
-      var body = jsonEncode({"mobile": mobileCtrl.text.trim()});
-
-      var response = await http.post(
-        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.mobileLogin)),
-        headers: {"Content-Type": "application/json"},
-        body: body,
-      );
-
-      var data = jsonDecode(response.body);
-      debugPrint(data.toString());
-
-      if (data["success"] == true) {
-        Get.to(
-          () => const OtpVerificationScreen(),
-          arguments: {"mobile": data["mobile"], "isLogin": true},
-        );
-      } else {
-        Get.snackbar(
-          "Login Failed",
-          data["message"] ?? "User not found",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        "Exception",
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> mobileLoginVerify({
-    required String mobile,
-    required String otp,
-  }) async {
-    try {
-      isLoading.value = true;
-      final url = ApiEndpoint.getUrl(ApiEndpoint.mobileLoginVerify);
-      final body = jsonEncode({"mobile": mobile, "otp": otp});
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: body,
-      );
-
-      final data = jsonDecode(response.body);
-      debugPrint(data.toString());
-
-      if (data["success"] == true && data["tokens"] != null) {
-        await SharedPre.saveTokens(
-          accessToken: data["tokens"]["accessToken"],
-          refreshToken: data["tokens"]["refreshToken"],
-          expiresIn: data["tokens"]["expiresIn"],
-        );
-
-        Get.snackbar("Success", "Welcome Back!");
-        Get.offAll(BottomNavBar());
-      } else {
-        Get.snackbar("Error", data["message"] ?? "Invalid OTP");
-      }
-    } catch (e) {
-      Get.snackbar("Exception", e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
+  // Mobile Login ------
 
   // Categories Fetching (Example) -----
 
   CategoryResponse? categoryResponse;
-  var categories = <CategoryData>[].obs; // 👈 dynamic list
+  var categories = <CategoryData>[].obs; //  dynamic list
   int get length => categories.length;
 
   Future<void> fetchCategories() async {

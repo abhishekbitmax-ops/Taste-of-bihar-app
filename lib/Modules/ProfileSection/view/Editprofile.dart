@@ -1,72 +1,7 @@
-import 'dart:io';
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:restro_app/utils/Sharedpre.dart';
-import 'dart:convert';
-
-class EditProfileController extends GetxController {
-  var imageFile = Rx<File?>(null);
-  var locationText = "".obs;
-  var isLoading = false.obs;
-
-  final nameCtrl = TextEditingController();
-  final mobileCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
-
-  var selectedGender = "Male".obs;
-  var selectedDOB = Rx<DateTime?>(null); // ✔ now observable
-
-  final genders = ["Male", "Female", "Other"];
-
-  Future<void> pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      imageFile.value = File(picked.path);
-    }
-  }
-
-  Future<void> fetchCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      locationText.value = "Location disabled";
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        locationText.value = "Permission denied";
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      locationText.value = "Permission denied forever";
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-
-    final place = placemarks.first;
-    locationText.value = "${place.street}, ${place.locality}";
-  }
-}
+import 'package:restro_app/Modules/ProfileSection/Controller/profilecontroller.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -76,20 +11,13 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final ctrl = Get.put(EditProfileController());
-
-  @override
-  void initState() {
-    super.initState();
-    ctrl.fetchCurrentLocation();
-  }
+  final ctrl = Get.find<ProfileController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFF8B0000),
         title: Text(
           "Edit Profile",
@@ -104,13 +32,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        // ✔ prevents DOB error + overflow
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               GestureDetector(
-                onTap: () => ctrl.pickImage(),
+                onTap: ctrl.pickImage,
                 child: Obx(
                   () => CircleAvatar(
                     radius: 45,
@@ -134,19 +61,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 "Name",
                 TextField(
                   controller: ctrl.nameCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-
-              buildTextField(
-                "Mobile",
-                TextField(
-                  controller: ctrl.mobileCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: ctrl.profileData.value.name ?? "Enter Name",
                   ),
                 ),
               ),
@@ -156,8 +73,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 TextField(
                   controller: ctrl.emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: ctrl.profileData.value.email ?? "Enter Email",
                   ),
                 ),
               ),
@@ -171,9 +89,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                         .toList(),
                     onChanged: (val) =>
-                        ctrl.selectedGender.value = val ?? "Male",
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                        ctrl.selectedGender.value = val ?? "male",
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText:
+                          ctrl.profileData.value.gender ?? "Select Gender",
                     ),
                   ),
                 ),
@@ -181,56 +101,77 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               buildTextField(
                 "DOB",
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().subtract(
-                        const Duration(days: 365 * 18),
+                Obx(
+                  () => InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().subtract(
+                          const Duration(days: 365 * 18),
+                        ),
+                        firstDate: DateTime(1970),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) ctrl.selectedDOB.value = picked;
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      firstDate: DateTime(1970),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      ctrl.selectedDOB.value = picked; // ✔ update observable
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Obx(
-                          () => Text(
+                      child: Row(
+                        children: [
+                          Text(
                             ctrl.selectedDOB.value != null
                                 ? "${ctrl.selectedDOB.value!.day}/${ctrl.selectedDOB.value!.month}/${ctrl.selectedDOB.value!.year}"
                                 : "Select DOB",
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
-                        ),
-                        const Spacer(),
-                        const Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: Color(0xFF8B0000),
-                        ),
-                      ],
+                          const Spacer(),
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: Color(0xFF8B0000),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 10),
+              // ✍ Manual Address Field
+              buildTextField(
+                "Address",
+                TextField(
+                  controller: ctrl.addressCtrl,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: "Enter Address",
+                    prefixIcon: Icon(
+                      Icons.home,
+                      size: 20,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
               Obx(
                 () => ElevatedButton(
-                  onPressed: ctrl.isLoading.value ? null : () {},
+                  onPressed: ctrl.isLoading.value
+                      ? null
+                      : () => ctrl.updateProfileApi(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B0000),
+                    minimumSize: const Size(double.infinity, 45),
                   ),
                   child: ctrl.isLoading.value
-                      ? const CircularProgressIndicator()
+                      ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           "Update",
                           style: TextStyle(color: Colors.white),

@@ -123,39 +123,43 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
                 const SizedBox(height: 20),
 
-                SizedBox(
-                  width: 260,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      bool isLogin = Get.arguments["isLogin"] ?? false;
-                      String mobile = Get.arguments["mobile"];
-                      String otp = otpInputCtrl.text.trim();
+                Obx(
+                  () => SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: otpCtrl.isLoading.value
+                          ? null
+                          : () async {
+                              String mobile = Get.arguments["mobile"];
+                              String otp = otpInputCtrl.text.trim();
 
-                      if (isLogin) {
-                        await otpCtrl.mobileLoginVerify(
-                          mobile: mobile,
-                          otp: otp,
-                        );
-                      } else {
-                        await otpCtrl.verifyOtp(mobile: mobile, otp: otp);
-                      }
-                    },
-
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B0000),
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                              await otpCtrl.verifyOtp(mobile: mobile, otp: otp);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B0000),
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 3,
                       ),
-                      elevation: 3,
-                    ),
-                    child: Text(
-                      "Verify OTP",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      child: otpCtrl.isLoading.value
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              "Verify OTP",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),
