@@ -10,6 +10,9 @@ import 'package:http/http.dart' as http;
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
   var grandTotal = 0.0.obs;
+  var isLoading = false.obs;
+
+  CartResponse? cartResponse;
 
   var address = "".obs;
   var selectedAddress = "No address selected".obs;
@@ -20,86 +23,94 @@ class CartController extends GetxController {
     address.value = addr;
   }
 
-  /// Bill subtotal calculation (price * qty)
-  int get subtotal => cartItems.fold(0, (sum, item) {
-    if (item["itemTotal"] is int) {
-      return sum + (item["itemTotal"] as int); // 👈 direct use
-    }
-    int price =
-        int.tryParse(item["price"].toString().replaceAll("₹", "").trim()) ?? 0;
-    int quantity = item["qty"] is int
-        ? item["qty"]
-        : int.tryParse(item["qty"].toString()) ?? 1;
-    return sum + (price * quantity);
-  });
+  /// API call to update quantity
+  Future<void> updateQtyApi(int index, int newQty) async {
+    try {
+      isLoading.value = true;
+      String token = await SharedPre.getAccessToken();
+      final url = ApiEndpoint.getUrl(ApiEndpoint.Addtocart);
 
-  void increaseQty(int i) {
-    int price =
-        int.tryParse(
-          cartItems[i]["price"].toString().replaceAll("₹", "").trim(),
-        ) ??
-        0;
-    int qty = cartItems[i]["qty"] + 1; // ensure qty key exists
-    cartItems[i]["qty"] = qty;
-    cartItems[i]["itemTotal"] = price * qty;
-    grandTotal.value = subtotal.toDouble();
-    cartItems.refresh();
-  }
+      final item = cartItems[index];
+      final body = {
+        "menuItemId": item["menuItemId"],
+        "quantity": newQty,
+        "specialInstructions": item["specialInstructions"] ?? "",
+      };
 
-  void decreaseQty(int i) {
-    int price =
-        int.tryParse(
-          cartItems[i]["price"].toString().replaceAll("₹", "").trim(),
-        ) ??
-        0;
-    int qty = cartItems[i]["qty"];
-    if (qty > 1) {
-      qty -= 1;
-      cartItems[i]["qty"] = qty;
-      cartItems[i]["itemTotal"] = price * qty;
-      grandTotal.value = subtotal.toDouble();
-      cartItems.refresh();
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchCartApi(); // resync cart after update
+      } else {
+        Get.snackbar("Error", "Failed to update quantity");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", "Something went wrong");
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void removeItem(int i) {
-    cartItems.removeAt(i);
-    grandTotal.value = subtotal.toDouble();
-    cartItems.refresh();
+  /// Increase qty using API
+  /// Increase qty by 1 using API
+  void increaseQty(int index) {
+    int currentQty = cartItems[index]["qty"];
+    updateQtyApi(index, currentQty + 1);
   }
 
-  /// Add to cart locally from BottomSheet
-  void addToCart(Map<String, String> product, int qty) {
-    int price = int.tryParse(product["price"]!.replaceAll("₹", "").trim()) ?? 0;
-    int itemTotal = price * qty; // 👈 calculate locally
-
-    cartItems.add({
-      "id": product["id"] ?? "",
-      "name": product["name"] ?? "",
-      "image": (product["image"] ?? "").isEmpty
-          ? "assets/images/popular.png"
-          : product["image"],
-      "price": "₹$price",
-      "qty": qty,
-      "itemTotal": itemTotal, // 👈 store item total
-    });
-
-    // Update grand total
-    grandTotal.value = subtotal.toDouble();
-    cartItems.refresh();
+  /// Decrease qty by 1 using API
+  void decreaseQty(int index) {
+    int currentQty = cartItems[index]["qty"];
+    if (currentQty > 1) {
+      updateQtyApi(index, currentQty - 1);
+    }
   }
 
-  /// Total items count for bar
-  int get totalCount => cartItems.fold(0, (sum, item) {
-    int quantity = item["qty"] is int
-        ? item["qty"]
-        : int.tryParse(item["qty"].toString()) ?? 1;
+  // Remove item using API
+  Future<void> removeItemApi(int index) async {
+    try {
+      isLoading.value = true;
+      String token = await SharedPre.getAccessToken();
 
-    return sum + quantity;
-  });
+      // Get cartItemId from model
+      final cartItemId = cartResponse?.data?.cart?.items?[index].cartItemId;
+      if (cartItemId == null) {
+        Get.snackbar("Error", "Cart Item ID not found");
+        return;
+      }
 
-  var isLoading = false.obs;
-  CartResponse? cartResponse;
+      final url =
+          "https://resto-grandma.onrender.com/api/v1/user/cart/$cartItemId/remove";
+
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({}), // body not needed
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchCartApi(); // resync
+      } else {
+        Get.snackbar("Error", "Failed to remove item");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", "Something went wrong");
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   /// Fetch cart from API and sync
   Future<void> fetchCartApi() async {
@@ -120,29 +131,23 @@ class CartController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         cartResponse = CartResponse.fromJson(jsonDecode(response.body));
 
-        // Sync items
         cartItems.clear();
         for (var item in cartResponse?.data?.cart?.items ?? []) {
-          int qty = item.quantity ?? 1;
-          int price = item.basePrice ?? 0;
-          int total =
-              item.itemTotal ??
-              (price * qty); // 👈 prefer API total, else calculate
-
           cartItems.add({
+            "cartItemId": item.cartItemId,
             "menuItemId": item.menuItemId,
             "name": item.name,
-            "price": "₹$price",
-            "qty": qty, // 👈 FIXED
             "image": item.image,
-            "itemTotal": total,
+            "price": "₹${item.basePrice}",
+            "qty": item.quantity,
+            "itemTotal": item.itemTotal,
+            "specialInstructions": item.specialInstructions,
+            "cartItemId": item.cartItemId,
           });
         }
 
-        // Update grand total from API
-        final summary = cartResponse?.data?.cart?.summary;
-        grandTotal.value = summary?.grandTotal ?? subtotal.toDouble();
-
+        /// Take grand total from API summary
+        grandTotal.value = cartResponse?.data?.cart?.summary?.grandTotal ?? 0.0;
         cartItems.refresh();
       } else {
         Get.snackbar("Error", "Failed to fetch cart");

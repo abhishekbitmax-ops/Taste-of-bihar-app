@@ -16,9 +16,10 @@ class ZomatoCartBar extends StatelessWidget {
       double tax = summary?.tax ?? 0;
       int discount = summary?.discount ?? 0;
       int delivery = summary?.deliveryCharge ?? 0;
+      int totalCount = summary?.itemCount ?? 0;
       double total =
           summary?.grandTotal ??
-          (cartCtrl.subtotal + tax + delivery - discount);
+          (summary?.subtotal ?? 0) + tax - discount + delivery;
 
       return Container(
         height: 62, // 👈 chhota height
@@ -60,7 +61,7 @@ class ZomatoCartBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "${cartCtrl.totalCount} item${cartCtrl.totalCount > 1 ? "s" : ""} added",
+                    "${totalCount} item${totalCount > 1 ? "s" : ""} added",
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

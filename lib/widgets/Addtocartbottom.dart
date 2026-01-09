@@ -147,8 +147,12 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                 }
 
                                 await apiCtrl.addToCartApi(menuId, qty, "");
-                                cartCtrl.addToCart(product, qty);
-                                await cartCtrl.fetchCartApi();
+                                await apiCtrl.addToCartApi(menuId, qty, "");
+                                await cartCtrl
+                                    .fetchCartApi(); // 👈 CART KO REFRESH API SE
+
+                                // cartCtrl.addToCart(product, qty);
+                                // await cartCtrl.fetchCartApi();
                                 Navigator.pop(context);
                               },
                         icon: loading

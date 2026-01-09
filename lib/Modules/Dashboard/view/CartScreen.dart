@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 
 class CartScreen extends StatelessWidget {
   CartScreen({super.key});
@@ -18,15 +17,13 @@ class CartScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(
-              title,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-              ),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
             ),
           ),
           Text(
@@ -44,336 +41,266 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final restaurant = cartCtrl.cartResponse?.data?.cart?.restaurant;
-    final summary = cartCtrl.cartResponse?.data?.cart?.summary;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
+        child: Obx(() {
+          final restaurant = cartCtrl.cartResponse?.data?.cart?.restaurant;
+          final s = cartCtrl.cartResponse?.data?.cart?.summary;
+
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               // TOP BAR
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Get.back(),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 24,
-                        color: Color(0xFF8B0000),
-                      ),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF8B0000),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      "Cart",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8B0000),
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Cart",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF8B0000),
                     ),
-                    const Spacer(),
+                  ),
+                  const Spacer(),
+                  CircleAvatar(
+                    radius: 11,
+                    backgroundColor: const Color(0xFF8B0000),
+                    child: Text(
+                      "${s?.itemCount ?? 0}",
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
 
-                    // Only listening to real observable count
-                    Obx(
-                      () => CircleAvatar(
-                        radius: 11,
-                        backgroundColor: const Color(0xFF8B0000),
-                        child: Text(
-                          "${cartCtrl.totalCount}",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
+              const SizedBox(height: 14),
+
+              // RESTAURANT SECTION
+              if (restaurant != null)
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        restaurant.image ?? "",
+                        height: 46,
+                        width: 46,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          "assets/images/popular.png",
+                          height: 46,
+                          width: 46,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        restaurant.name ?? "",
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-              // RESTAURANT SECTION
-              if (restaurant != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          restaurant.image ?? "",
-                          height: 46,
-                          width: 46,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            "assets/images/popular.png",
-                            height: 46,
-                            width: 46,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          restaurant.name ?? "",
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+              // CART ITEMS
+              if (cartCtrl.cartItems.isEmpty)
+                const Center(child: Text("Your cart is empty"))
+              else
+                for (int i = 0; i < cartCtrl.cartItems.length; i++)
+                  _CartItemTile(index: i),
+
+              const SizedBox(height: 20),
+
+              // BILL DETAILS
+              if (s != null) ...[
+                const Text(
+                  "Bill Details",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                _buildBillRow("Subtotal", "₹${s.subtotal ?? 0}"),
+                _buildBillRow("Tax", "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}"),
+                _buildBillRow(
+                  "Delivery",
+                  s.deliveryCharge == 0 ? "Free" : "₹${s.deliveryCharge ?? 0}",
+                ),
+                const Divider(),
+                _buildBillRow(
+                  "Grand Total",
+                  "₹${s.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
+                  isBold: true,
+                  color: const Color(0xFF8B0000),
+                ),
+              ],
+
+              const SizedBox(height: 20),
+
+              // COUPON INPUT
+              TextField(
+                decoration: InputDecoration(
+                  hintText: "Enter coupon code",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      "Apply",
+                      style: TextStyle(color: Color(0xFF8B0000)),
+                    ),
                   ),
                 ),
+              ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 20),
 
-              // CART ITEMS LIST
-              Obx(() {
-                if (cartCtrl.cartItems.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      "Your cart is empty",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+              // PAY BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: cartCtrl.isLoading.value ? null : () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B0000),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  );
-                }
+                  ),
+                  child: Text(
+                    "Pay ₹${s?.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
 
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: cartCtrl.cartItems.length,
-                  itemBuilder: (context, i) {
-                    final item = cartCtrl.cartItems[i];
+              const SizedBox(height: 40),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
 
-                    return Container(
-                      margin: const EdgeInsets.only(
-                        bottom: 12,
-                        left: 16,
-                        right: 16,
+// Cart Item Tile extracted in separate widget
+class _CartItemTile extends StatelessWidget {
+  final CartController cartCtrl = Get.find<CartController>();
+  final int index;
+
+  _CartItemTile({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final item = cartCtrl.cartItems[index];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              item["image"] ?? "",
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Image.asset(
+                "assets/images/popular.png",
+                width: 60,
+                height: 60,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item["name"] ?? "",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+
+                // QTY CONTROL BUTTONS
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
                       ),
-                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              item["image"] ?? "",
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Image.asset(
-                                "assets/images/popular.png",
-                                width: 60,
-                                height: 60,
+                          InkWell(
+                            onTap: () => cartCtrl.decreaseQty(index),
+                            child: const Icon(Icons.remove, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Obx(
+                            () => Text(
+                              "${cartCtrl.cartItems[index]["qty"]}",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-
-                          // NAME + QTY COUNTER + PRICE (All dynamic from .obs list)
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item["name"] ?? "",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: const Color(0xFF8B0000),
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      InkWell(
-                                        onTap: () => cartCtrl.decreaseQty(i),
-                                        child: const Icon(
-                                          Icons.remove,
-                                          size: 18,
-                                          color: Color(0xFF8B0000),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "${item["qty"]}",
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      InkWell(
-                                        onTap: () => cartCtrl.increaseQty(i),
-                                        child: const Icon(
-                                          Icons.add,
-                                          size: 18,
-                                          color: Color(0xFF8B0000),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 8),
-                                Text(
-                                  "₹${item["itemTotal"]}",
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // DELETE BUTTON (Dynamic)
+                          const SizedBox(width: 10),
                           InkWell(
-                            onTap: () => cartCtrl.removeItem(i),
-                            child: const Icon(
-                              Icons.delete_outline,
-                              size: 22,
-                              color: Colors.black45,
-                            ),
+                            onTap: () => cartCtrl.increaseQty(index),
+                            child: const Icon(Icons.add, size: 16),
                           ),
                         ],
                       ),
-                    );
-                  },
-                );
-              }),
-              const Divider(),
-
-              // BILL DETAILS — now reactive from controller
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Obx(() {
-                  // Now GetX sees observable inside scope
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Bill Details",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 6),
-
-                      _buildBillRow("Subtotal", "₹${cartCtrl.subtotal}"),
-
-                      _buildBillRow(
-                        "Tax",
-                        "₹${summary?.tax?.toStringAsFixed(2) ?? "0.00"}",
-                      ),
-
-                      _buildBillRow(
-                        "Delivery",
-                        summary?.deliveryCharge == 0
-                            ? "Free"
-                            : "₹${summary?.deliveryCharge ?? 0}",
-                      ),
-
-                      const Divider(),
-
-                      _buildBillRow(
-                        "Grand Total",
-                        "₹${summary?.grandTotal?.toStringAsFixed(2)}",
-                        isBold: true,
-                        color: const Color(0xFF8B0000),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-
-              // COUPON SECTION
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 6,
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Enter coupon code",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    suffixIcon: TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        "Apply",
-                        style: TextStyle(color: Color(0xFF8B0000)),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-              ),
 
-              const SizedBox(height: 12),
-
-              // PAY BUTTON (Dynamic Grand Total)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                const SizedBox(height: 8),
+                Text(
+                  "₹${item["itemTotal"]}",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                 ),
-                child: Obx(
-                  () => ElevatedButton(
-                    onPressed: cartCtrl.isLoading.value ? null : () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B0000),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: Text(
-                      "Pay ₹${summary?.grandTotal!.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+
+          // DELETE BUTTON
+          IconButton(
+            onPressed: () => cartCtrl.removeItemApi(index),
+            icon: const Icon(Icons.delete_outline, color: Colors.black45),
+          ),
+        ],
       ),
     );
   }
