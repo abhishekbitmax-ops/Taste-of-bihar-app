@@ -13,6 +13,8 @@ class ApiEndpoint {
   static const String profile = "/profile";
   static const String updateProfile = "/profile-update";
   static const String categories = "/categories";
+  static const String Addtocart = "/cart/items";
+  static const String getCart = "/cart";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

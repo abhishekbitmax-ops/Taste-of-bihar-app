@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Navbar/Splashscreen.dart';
+import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
@@ -17,6 +19,9 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPreferences.getInstance();
+
+  Get.put(CartController(), permanent: true);
+  Get.put(Authcontroller(), permanent: true);
 
   runApp(const MyApp());
 }

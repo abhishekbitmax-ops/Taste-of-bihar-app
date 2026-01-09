@@ -260,4 +260,56 @@ class Authcontroller extends GetxController {
       isLoading.value = false;
     }
   }
+
+
+
+  /// Add to Cart Functionality
+  /// 
+
+
+
+
+
+  var isApiLoading = false.obs;
+
+  Future<void> addToCartApi(String menuItemId, int quantity, String instructions) async {
+    try {
+      isApiLoading.value = true;
+      String token = await SharedPre.getAccessToken();
+
+      final url = ApiEndpoint.getUrl(ApiEndpoint.Addtocart);
+
+      final body = {
+        "menuItemId": menuItemId,
+        "quantity": quantity,
+        "specialInstructions": instructions
+      };
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      debugPrint("Add to Cart Status Code: ${response.statusCode}");
+      debugPrint("Add to Cart Response: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.snackbar("Success", "Item added to cart");
+      } else {
+        Get.snackbar("Error", "Failed to add item");
+      }
+    } catch (e) {
+      debugPrint("Add to Cart API Error: $e");
+      Get.snackbar("Exception", "Something went wrong");
+    } finally {
+      isApiLoading.value = false;
+    }
+  }
 }
+
+

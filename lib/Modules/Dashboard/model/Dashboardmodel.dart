@@ -291,3 +291,8 @@ class ItemModel {
     '__v': v,
   };
 }
+
+
+// Card total item show model class 
+
+

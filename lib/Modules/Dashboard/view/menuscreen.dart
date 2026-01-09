@@ -34,7 +34,7 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: ZomatoCartBar(),
-      backgroundColor: const Color(0xFF8B0000),
+
       appBar: AppBar(
         backgroundColor: const Color(0xFF8B0000),
         title: const Text("Our Menu", style: TextStyle(color: Colors.white)),

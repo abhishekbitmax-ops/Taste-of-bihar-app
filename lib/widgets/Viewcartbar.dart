@@ -1,59 +1,97 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/get_instance.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 
 class ZomatoCartBar extends StatelessWidget {
-  final CartController cartCtrl = Get.put(CartController());
+  final CartController cartCtrl = Get.find<CartController>();
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       if (cartCtrl.cartItems.isEmpty) return const SizedBox();
 
+      final summary = cartCtrl.cartResponse?.data?.cart?.summary;
+      double tax = summary?.tax ?? 0;
+      int discount = summary?.discount ?? 0;
+      int delivery = summary?.deliveryCharge ?? 0;
+      double total =
+          summary?.grandTotal ??
+          (cartCtrl.subtotal + tax + delivery - discount);
+
       return Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        height: 62, // 👈 chhota height
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: const Color(0xFF8B0000), // Zomato red tone
+          borderRadius: BorderRadius.circular(32), // 👈 pill shape
+          color: const Color(0xFF8B0000), // 👈 Zomato red
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 12,
+              spreadRadius: 1,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
+            // 🍽 last added image
             ClipOval(
-              child: Image.asset(
-                cartCtrl.cartItems.last["image"],
-                height: 34,
-                width: 34,
+              child: Image.network(
+                cartCtrl.cartItems.last["image"] ?? "",
+                height: 36,
+                width: 36,
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  "assets/images/popular.png",
+                  height: 36,
+                  width: 36,
+                ),
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              "${cartCtrl.totalCount} item added",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            InkWell(
-              onTap: () => Get.to(() => CartScreen()),
-              child: Row(
-                children: const [
+
+            // Text Section
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    "View cart",
-                    style: TextStyle(
+                    "${cartCtrl.totalCount} item${cartCtrl.totalCount > 1 ? "s" : ""} added",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white),
+                  Text(
+                    "₹${total.toStringAsFixed(2)}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
+              ),
+            ),
+
+            // View Cart Button
+            InkWell(
+              onTap: () {
+                cartCtrl.fetchCartApi();
+                Get.to(() => CartScreen());
+              },
+              child: Text(
+                "View cart ›",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
