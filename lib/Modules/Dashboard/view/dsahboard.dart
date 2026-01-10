@@ -312,19 +312,16 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
                     return Row(
                       children: authCtrl.categories.map((cat) {
-                        final img = (cat.image == null || cat.image!.isEmpty)
-                            ? "assets/images/Dine.jpg"
-                            : "assets/images/${cat.image}";
+                        final bool hasImage =
+                            cat.image != null && cat.image!.isNotEmpty;
 
                         return InkWell(
                           onTap: () {
-                            // store selected ID
                             setState(() {
                               selectedCategory = cat.name ?? "";
                               selectedCategoryId = cat.id ?? "";
                             });
 
-                            // 🚀 open navbar index 2 with arguments
                             Get.offAll(
                               () => BottomNavBar(initialIndex: 2),
                               arguments: {
@@ -340,18 +337,26 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(50),
-                                  child: Image.asset(
-                                    img,
-                                    width: 70,
-                                    height: 70,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Image.asset(
-                                      "assets/images/Dine.jpg",
-                                      width: 70,
-                                      height: 70,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                                  child: hasImage
+                                      ? Image.network(
+                                          cat.image!, // ✅ FULL URL directly
+                                          width: 70,
+                                          height: 70,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Image.asset(
+                                                "assets/images/Dine.jpg",
+                                                width: 70,
+                                                height: 70,
+                                                fit: BoxFit.cover,
+                                              ),
+                                        )
+                                      : Image.asset(
+                                          "assets/images/Dine.jpg",
+                                          width: 70,
+                                          height: 70,
+                                          fit: BoxFit.cover,
+                                        ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(

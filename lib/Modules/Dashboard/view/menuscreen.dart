@@ -182,6 +182,11 @@ class _MenuScreenState extends State<MenuScreen> {
                           itemBuilder: (_, index) {
                             final item = itemList[index];
 
+                            final String imageUrl =
+                                (item.image != null && item.image!.isNotEmpty)
+                                ? item.image!
+                                : "";
+
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(10),
@@ -200,24 +205,43 @@ class _MenuScreenState extends State<MenuScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Image.network(
-                                      item.foodType == "img"
-                                          ? item.id ?? ""
-                                          : item.id ?? "",
-                                      height: 140,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
-                                        "assets/images/popular.png",
-                                        height: 140,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: Colors
+                                            .grey
+                                            .shade300, // 👈 subtle border
+                                        width: 0.8,
                                       ),
                                     ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              imageUrl,
+                                              height: 140,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  Image.asset(
+                                                    "assets/images/popular.png",
+                                                    height: 140,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                            )
+                                          : Image.asset(
+                                              "assets/images/popular.png",
+                                              height: 140,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            ),
+                                    ),
                                   ),
+
                                   const SizedBox(height: 8),
+
                                   Text(
                                     item.name ?? "",
                                     style: const TextStyle(
@@ -225,7 +249,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+
                                   const SizedBox(height: 4),
+
                                   Text(
                                     item.description ?? "",
                                     style: const TextStyle(
@@ -233,24 +259,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                       color: Colors.black54,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item.foodType ?? "",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item.variants?.join(", ") ?? "",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
 
                                   const SizedBox(height: 6),
+
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -263,30 +274,32 @@ class _MenuScreenState extends State<MenuScreen> {
                                           color: Color(0xFF8B0000),
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 7,
+                                      InkWell(
+                                        onTap: () => openProductBottomSheet(
+                                          context,
+                                          {
+                                            "id": item.id ?? "",
+                                            "name": item.name ?? "",
+                                            "desc": item.description ?? "",
+                                            "price": item.basePrice.toString(),
+                                            "image":
+                                                imageUrl, // ✅ correct image
+                                            "type": item.isVeg == true
+                                                ? "veg"
+                                                : "nonveg",
+                                          },
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF8B0000),
-                                          borderRadius: BorderRadius.circular(
-                                            30,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 7,
                                           ),
-                                        ),
-                                        child: InkWell(
-                                          onTap: () =>
-                                              openProductBottomSheet(context, {
-                                                "id": item.id ?? "",
-                                                "name": item.name ?? "",
-                                                "desc": item.description ?? "",
-                                                "price": item.basePrice
-                                                    .toString(),
-                                                "image": item.id ?? "",
-                                                "type": item.isVeg == true
-                                                    ? "veg"
-                                                    : "nonveg",
-                                              }),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF8B0000),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
+                                          ),
                                           child: const Text(
                                             "Add +",
                                             style: TextStyle(

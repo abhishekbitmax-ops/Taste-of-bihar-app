@@ -259,11 +259,14 @@ class ItemModel {
       name: json['name'],
       description: json['description'],
       basePrice: json['basePrice'],
-      foodType: json['foodType'] ?? json['foodType'] ?? json['foodType'],
-      isVeg: json['isVeg'] ?? json['isVeg'] ?? json['isVeg'],
+      foodType: json['foodType'],
+      isVeg: json['isVeg'],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : null,
       variants: json['variants'],
       addons: json['addons'],
+
+      image: json['image'], // 🔥🔥🔥 THIS WAS MISSING
+
       isAvailable: json['isAvailable'],
       isActive: json['isActive'],
       createdAt: json['createdAt'],
@@ -292,7 +295,122 @@ class ItemModel {
   };
 }
 
+// Card total item show model class
+class AddressResponse {
+  bool? success;
+  String? message;
+  int? count;
+  List<AddressData>? data;
 
-// Card total item show model class 
+  AddressResponse({this.success, this.message, this.count, this.data});
 
+  factory AddressResponse.fromJson(Map<String, dynamic> json) {
+    return AddressResponse(
+      success: json['success'],
+      message: json['message'],
+      count: json['count'],
+      data: json['data'] != null
+          ? List<AddressData>.from(
+              json['data'].map((x) => AddressData.fromJson(x)),
+            )
+          : null,
+    );
+  }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'success': success,
+      'message': message,
+      'count': count,
+      'data': data?.map((x) => x.toJson()).toList(),
+    };
+  }
+}
+
+class AddressData {
+  String? id;
+  String? user;
+  String? label;
+  String? street;
+  String? area;
+  String? city;
+  String? state;
+  String? zipCode;
+  double? lat;
+  double? lng;
+  String? landmark;
+  bool? isDefault;
+  bool? isActive;
+  String? createdAtIST;
+  String? updatedAtIST;
+  String? createdAt;
+  String? updatedAt;
+  int? v;
+
+  AddressData({
+    this.id,
+    this.user,
+    this.label,
+    this.street,
+    this.area,
+    this.city,
+    this.state,
+    this.zipCode,
+    this.lat,
+    this.lng,
+    this.landmark,
+    this.isDefault,
+    this.isActive,
+    this.createdAtIST,
+    this.updatedAtIST,
+    this.createdAt,
+    this.updatedAt,
+    this.v,
+  });
+
+  factory AddressData.fromJson(Map<String, dynamic> json) {
+    return AddressData(
+      id: json['_id'],
+      user: json['user'],
+      label: json['label'],
+      street: json['street'],
+      area: json['area'],
+      city: json['city'],
+      state: json['state'],
+      zipCode: json['zipCode'],
+      lat: json['lat'] != null ? (json['lat'] as num).toDouble() : null,
+      lng: json['lng'] != null ? (json['lng'] as num).toDouble() : null,
+      landmark: json['landmark'],
+      isDefault: json['isDefault'],
+      isActive: json['isActive'],
+      createdAtIST: json['createdAtIST'],
+      updatedAtIST: json['updatedAtIST'],
+      createdAt: json['createdAt'],
+      updatedAt: json['updatedAt'],
+      v: json['__v'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'user': user,
+      'label': label,
+      'street': street,
+      'area': area,
+      'city': city,
+      'state': state,
+      'zipCode': zipCode,
+      'lat': lat,
+      'lng': lng,
+      'landmark': landmark,
+      'isDefault': isDefault,
+      'isActive': isActive,
+      'createdAtIST': createdAtIST,
+      'updatedAtIST': updatedAtIST,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      '__v': v,
+    };
+  }
+}

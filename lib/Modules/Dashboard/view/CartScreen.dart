@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:restro_app/widgets/Addressbottomsheet.dart';
 
 class CartScreen extends StatelessWidget {
   CartScreen({super.key});
@@ -52,34 +54,48 @@ class CartScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               // TOP BAR
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF8B0000),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => Get.offAll(BottomNavBar(initialIndex: 0)),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 24,
+                        color: Color(0xFF8B0000),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    "Cart",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8B0000),
+                    const SizedBox(width: 12),
+                    Text(
+                      "Cart",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF8B0000),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  CircleAvatar(
-                    radius: 11,
-                    backgroundColor: const Color(0xFF8B0000),
-                    child: Text(
-                      "${s?.itemCount ?? 0}",
-                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    const Spacer(),
+                    const Icon(Icons.favorite_border, color: Color(0xFF8B0000)),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.more_horiz, color: Color(0xFF8B0000)),
+                    const SizedBox(width: 8),
+                    CircleAvatar(
+                      radius: 11,
+                      backgroundColor: const Color(0xFF8B0000),
+                      child: Text(
+                        "${s?.itemCount ?? 0}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               const SizedBox(height: 14),
@@ -114,6 +130,23 @@ class CartScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.star, size: 15),
+                    const SizedBox(width: 4),
+                    Text(
+                      "4.5  (5k+ ratings) • ",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 20),
 
@@ -166,6 +199,100 @@ class CartScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              SizedBox(height: 20),
+
+              // 📍 Delivery Address Selector Card
+              InkWell(
+                onTap: () => Get.bottomSheet(
+                  const AddressSelector(heightFactor: 0.5),
+                  isScrollControlled: true,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      // 📍 Location Icon
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B0000).withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Color(0xFF8B0000),
+                          size: 20,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Address Text
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Deliver to",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Obx(
+                              () => Text(
+                                cartCtrl.selectedAddress.value,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Dropdown Arrow
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.black54,
+                          size: 22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
@@ -212,93 +339,164 @@ class _CartItemTile extends StatelessWidget {
     final item = cartCtrl.cartItems[index];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // IMAGE
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
             child: Image.network(
               item["image"] ?? "",
-              width: 60,
-              height: 60,
+              width: 70,
+              height: 70,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Image.asset(
                 "assets/images/popular.png",
-                width: 60,
-                height: 60,
+                width: 70,
+                height: 70,
+                fit: BoxFit.cover,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+
+          const SizedBox(width: 14),
+
+          // DETAILS
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // NAME
                 Text(
                   item["name"] ?? "",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 8),
 
-                // QTY CONTROL BUTTONS
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
+                const SizedBox(height: 10),
+
+                // QTY CONTROLLER
+                Obx(() {
+                  final isUpdating = cartCtrl.updatingIndex.value == index;
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFF3F3), Color(0xFFFFEAEA)],
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          InkWell(
-                            onTap: () => cartCtrl.decreaseQty(index),
-                            child: const Icon(Icons.remove, size: 16),
-                          ),
-                          const SizedBox(width: 10),
-                          Obx(
-                            () => Text(
-                              "${cartCtrl.cartItems[index]["qty"]}",
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ➖
+                        InkWell(
+                          onTap: isUpdating
+                              ? null
+                              : () => cartCtrl.decreaseQty(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.red.shade50,
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 16,
+                              color: isUpdating ? Colors.grey : Colors.red,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          InkWell(
-                            onTap: () => cartCtrl.increaseQty(index),
-                            child: const Icon(Icons.add, size: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                        ),
 
-                const SizedBox(height: 8),
-                Text(
-                  "₹${item["itemTotal"]}",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                ),
+                        const SizedBox(width: 14),
+
+                        // LOADER / QTY
+                        isUpdating
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "${cartCtrl.cartItems[index]["qty"]}",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                        const SizedBox(width: 14),
+
+                        // ➕
+                        InkWell(
+                          onTap: isUpdating
+                              ? null
+                              : () => cartCtrl.increaseQty(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green.shade50,
+                            ),
+                            child: Icon(
+                              Icons.add,
+                              size: 16,
+                              color: isUpdating ? Colors.grey : Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           ),
 
-          // DELETE BUTTON
-          IconButton(
-            onPressed: () => cartCtrl.removeItemApi(index),
-            icon: const Icon(Icons.delete_outline, color: Colors.black45),
+          // PRICE + DELETE
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: () => cartCtrl.removeItemApi(index),
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                "₹${item["itemTotal"]}",
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF8B0000),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -15,6 +15,8 @@ class ApiEndpoint {
   static const String categories = "/categories";
   static const String Addtocart = "/cart/items";
   static const String getCart = "/cart";
+  static const String addAddress = "/address";
+  static const String GetAddress = "/address";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

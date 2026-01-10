@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
@@ -11,8 +12,16 @@ class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
   var grandTotal = 0.0.obs;
   var isLoading = false.obs;
+  var updatingIndex = (-1).obs;
+  final Authcontroller authCtrl = Get.put(Authcontroller());
 
   CartResponse? cartResponse;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCartApi(); // 👈 AUTO RESTORE CART ON APP START
+  }
 
   var address = "".obs;
   var selectedAddress = "No address selected".obs;
@@ -23,55 +32,50 @@ class CartController extends GetxController {
     address.value = addr;
   }
 
-  /// API call to update quantity
-  Future<void> updateQtyApi(int index, int newQty) async {
-    try {
-      isLoading.value = true;
-      String token = await SharedPre.getAccessToken();
-      final url = ApiEndpoint.getUrl(ApiEndpoint.Addtocart);
+  Future<void> increaseQty(int index) async {
+    if (updatingIndex.value != -1) return;
 
-      final item = cartItems[index];
-      final body = {
-        "menuItemId": item["menuItemId"],
-        "quantity": newQty,
-        "specialInstructions": item["specialInstructions"] ?? "",
-      };
+    updatingIndex.value = index;
+    final item = cartItems[index];
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode(body),
-      );
+    final result = await authCtrl.addToCartApi(
+      item["menuItemId"],
+      1, // ✅ ONLY +1
+      "",
+    );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await fetchCartApi(); // resync cart after update
-      } else {
-        Get.snackbar("Error", "Failed to update quantity");
-      }
-    } catch (e) {
-      Get.snackbar("Exception", "Something went wrong");
-    } finally {
-      isLoading.value = false;
+    if (result["success"] == true) {
+      await fetchCartApi(); // backend is source of truth
+    } else {
+      Get.snackbar("Error", result["message"]);
     }
+
+    updatingIndex.value = -1;
   }
 
-  /// Increase qty using API
-  /// Increase qty by 1 using API
-  void increaseQty(int index) {
-    int currentQty = cartItems[index]["qty"];
-    updateQtyApi(index, currentQty + 1);
-  }
+  Future<void> decreaseQty(int index) async {
+    if (updatingIndex.value != -1) return;
 
-  /// Decrease qty by 1 using API
-  void decreaseQty(int index) {
-    int currentQty = cartItems[index]["qty"];
-    if (currentQty > 1) {
-      updateQtyApi(index, currentQty - 1);
+    final item = cartItems[index];
+    final int qty = int.parse(item["qty"].toString());
+
+    if (qty <= 1) return;
+
+    updatingIndex.value = index;
+
+    final result = await authCtrl.addToCartApi(
+      item["menuItemId"],
+      -1, // ✅ ONLY -1
+      "",
+    );
+
+    if (result["success"] == true) {
+      await fetchCartApi();
+    } else {
+      Get.snackbar("Error", result["message"]);
     }
+
+    updatingIndex.value = -1;
   }
 
   // Remove item using API

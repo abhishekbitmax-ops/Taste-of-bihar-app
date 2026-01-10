@@ -31,31 +31,48 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child:
-                          (product["image"] == null ||
-                              product["image"]!.isEmpty)
-                          ? Image.asset(
-                              "assets/images/popular.png",
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.network(
-                              product["image"]!,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Image.asset(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.grey.shade300, // 👈 subtle border
+                          width: 0.9,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child:
+                            (product["image"] == null ||
+                                product["image"]!.isEmpty)
+                            ? Image.asset(
                                 "assets/images/popular.png",
                                 height: 150,
-                                width: 220,
+                                width: double.infinity,
                                 fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                product["image"]!,
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Image.asset(
+                                  "assets/images/popular.png",
+                                  height: 150,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ),
+                      ),
                     ),
                   ),
+
                   const SizedBox(height: 14),
                   Text(
                     product["name"]!,
@@ -147,13 +164,13 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                 }
 
                                 await apiCtrl.addToCartApi(menuId, qty, "");
-                                await apiCtrl.addToCartApi(menuId, qty, "");
                                 await cartCtrl
-                                    .fetchCartApi(); // 👈 CART KO REFRESH API SE
+                                    .fetchCartApi(); // ✅ single refresh
+                                Navigator.pop(context);
+                                // 👈 CART KO REFRESH API SE
 
                                 // cartCtrl.addToCart(product, qty);
                                 // await cartCtrl.fetchCartApi();
-                                Navigator.pop(context);
                               },
                         icon: loading
                             ? const SizedBox(

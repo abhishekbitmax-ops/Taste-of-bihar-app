@@ -6,6 +6,7 @@ import 'package:restro_app/Modules/Auth/view/Otpverifiction.dart';
 import 'package:http/http.dart' as http;
 import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'dart:convert';
@@ -15,12 +16,14 @@ import 'package:restro_app/utils/api_endpoints.dart';
 class Authcontroller extends GetxController {
   final mobileCtrl = TextEditingController();
   var isLoading = false.obs;
+  var isDataBound = false.obs;
 
   String getCategoryId(CategoryData cat) => cat.id ?? "";
 
   @override
   void onInit() {
     super.onInit();
+    fetchAddresses();
     fetchCategories();
   }
 
@@ -261,18 +264,16 @@ class Authcontroller extends GetxController {
     }
   }
 
-
-
   /// Add to Cart Functionality
-  /// 
-
-
-
-
+  ///
 
   var isApiLoading = false.obs;
 
-  Future<void> addToCartApi(String menuItemId, int quantity, String instructions) async {
+  Future<Map<String, dynamic>> addToCartApi(
+    String menuItemId,
+    int quantity,
+    String instructions,
+  ) async {
     try {
       isApiLoading.value = true;
       String token = await SharedPre.getAccessToken();
@@ -282,7 +283,7 @@ class Authcontroller extends GetxController {
       final body = {
         "menuItemId": menuItemId,
         "quantity": quantity,
-        "specialInstructions": instructions
+        "specialInstructions": instructions,
       };
 
       final response = await http.post(
@@ -290,26 +291,230 @@ class Authcontroller extends GetxController {
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
-          "Accept": "application/json",
         },
         body: jsonEncode(body),
       );
 
-      debugPrint("Add to Cart Status Code: ${response.statusCode}");
-      debugPrint("Add to Cart Response: ${response.body}");
+      final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Item added to cart");
+        return {
+          "success": true,
+          "message": data["message"] ?? "Item added to cart",
+          "data": data,
+        };
       } else {
-        Get.snackbar("Error", "Failed to add item");
+        return {
+          "success": false,
+          "message": data["message"] ?? "Failed to add item",
+        };
       }
     } catch (e) {
-      debugPrint("Add to Cart API Error: $e");
-      Get.snackbar("Exception", "Something went wrong");
+      return {"success": false, "message": e.toString()};
     } finally {
       isApiLoading.value = false;
     }
   }
+
+  // Add Addresss api method
+
+  RxDouble lat = 0.0.obs;
+  RxDouble lng = 0.0.obs;
+
+  RxString street = "".obs;
+  RxString area = "".obs;
+  RxString city = "".obs;
+  RxString state = "".obs;
+  RxString zipCode = "".obs;
+
+  /// -------- SET LOCATION FROM MAP --------
+  void setLocation({required double latitude, required double longitude}) {
+    lat.value = latitude;
+    lng.value = longitude;
+  }
+
+  /// -------- CALL ADD ADDRESS API --------
+  Future<void> addAddressApi({
+    required String label,
+    required String landmark,
+    required bool isDefault,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      String token = await SharedPre.getAccessToken();
+
+      final body = {
+        "label": label,
+        "street": street.value,
+        "area": area.value,
+        "city": city.value,
+        "state": state.value,
+        "zipCode": zipCode.value,
+        "lat": lat.value,
+        "lng": lng.value,
+        "landmark": landmark,
+        "isDefault": isDefault,
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.addAddress)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      print("📥 STATUS CODE => ${response.statusCode}");
+      print("📥 RESPONSE BODY => ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.to(CartScreen()); // success
+        Get.snackbar("Success", "Address added successfully");
+      } else {
+        Get.snackbar("Error", "Failed to add address");
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Get address list method
+
+  var addressList = <AddressData>[].obs;
+
+  Future<void> fetchAddresses() async {
+    try {
+      isLoading.value = true;
+
+      String token = await SharedPre.getAccessToken();
+
+      final response = await http.get(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.GetAddress)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = jsonDecode(response.body);
+        final addressResponse = AddressResponse.fromJson(jsonData);
+
+        addressList.value = addressResponse.data ?? [];
+      } else {
+        Get.snackbar("Faild", "Failed to fetch address");
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  AddressData? getAddressById(String addressId) {
+    try {
+      return addressList.firstWhere((e) => e.id == addressId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // update Address api method -----
+
+  Future<bool> updateAddressApi({
+    required String addressId,
+    required String label,
+    required String street,
+    required String area,
+    required String city,
+    required String state,
+    required String zipCode,
+    required String landmark,
+    required bool isDefault,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      String token = await SharedPre.getAccessToken();
+
+      final body = {
+        "label": label,
+        "street": street,
+        "area": area,
+        "city": city,
+        "state": state,
+        "zipCode": zipCode,
+        "lat": lat.value,
+        "lng": lng.value,
+        "landmark": landmark,
+        "isDefault": isDefault,
+      };
+
+      final response = await http.put(
+        Uri.parse(
+          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
+        ),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint("response $response");
+        // 🔄 refresh address list
+        await fetchAddresses();
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint("Update Address Error: $e");
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+
+  // delecte address method api 
+
+
+  Future<bool> deleteAddress(String addressId) async {
+  try {
+    isLoading.value = true;
+
+    String token = await SharedPre.getAccessToken();
+
+    final response = await http.delete(
+      Uri.parse(
+        "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
+      ),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // 🔄 local list update (fast UI)
+      addressList.removeWhere((e) => e.id == addressId);
+
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    debugPrint("Delete Address Error: $e");
+    return false;
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-
+}
