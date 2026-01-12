@@ -16,6 +16,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+
   late Animation<double> _logoScale;
   late Animation<double> _logoFade;
   late Animation<double> _logoRotate;
@@ -27,56 +28,64 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 3), () async {
-      final accessToken = await SharedPre.getAccessToken();
-
-      if (accessToken.isNotEmpty) {
-        // 🔥 User already registered → Go to Home
-        Get.offAll(() => BottomNavBar());
-      } else {
-        // 🔥 First time or not registered → Go to Onboarding
-        Get.off(() => OnboardingScreen());
-      }
-    });
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2400),
     );
 
-    _logoScale = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
-
-    _logoFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-
-    _logoRotate = Tween<double>(
-      begin: -0.2,
-      end: 0.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
-    _textSlide = Tween<Offset>(
-      begin: const Offset(0, 0.6),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _textFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-
-    _loaderFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _logoScale = Tween(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
+      ),
+    );
+
+    _logoFade = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.35, curve: Curves.easeIn),
+      ),
+    );
+
+    _logoRotate = Tween(begin: -0.15, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+
+    _textSlide = Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.35, 0.7, curve: Curves.easeOut),
+      ),
+    );
+
+    _textFade = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 0.75, curve: Curves.easeIn),
+      ),
+    );
+
+    _loaderFade = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
       ),
     );
 
     _controller.forward();
+
+    Timer(const Duration(seconds: 3), () async {
+      final token = await SharedPre.getAccessToken();
+
+      if (token.isNotEmpty) {
+        Get.offAll(() => BottomNavBar());
+      } else {
+        Get.off(() => OnboardingScreen());
+      }
+    });
   }
 
   @override
@@ -92,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF8B0000), Color(0xFF8E0000)],
+            colors: [Color(0xFF7A0000), Color(0xFFB00000)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -100,10 +109,10 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // LOGO Animation
+            // LOGO
             AnimatedBuilder(
               animation: _controller,
-              builder: (context, child) {
+              builder: (_, __) {
                 return Transform.rotate(
                   angle: _logoRotate.value,
                   child: ScaleTransition(
@@ -118,19 +127,17 @@ class _SplashScreenState extends State<SplashScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
-                              blurRadius: 25,
-                              offset: const Offset(0, 10),
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 28,
+                              offset: const Offset(0, 12),
                             ),
                           ],
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: ClipOval(
-                            child: Image.asset(
-                              'assets/images/applogo.png',
-                              fit: BoxFit.cover,
-                            ),
+                        padding: const EdgeInsets.all(14),
+                        child: ClipOval(
+                          child: Image.asset(
+                            "assets/images/applogo.png",
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -140,9 +147,9 @@ class _SplashScreenState extends State<SplashScreen>
               },
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 34),
 
-            // App Name + Tagline Animation
+            // TITLE & TAGLINE
             SlideTransition(
               position: _textSlide,
               child: FadeTransition(
@@ -155,7 +162,7 @@ class _SplashScreenState extends State<SplashScreen>
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
-                        letterSpacing: 1.1,
+                        letterSpacing: 1.2,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -173,12 +180,19 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            const SizedBox(height: 45),
+            const SizedBox(height: 42),
 
-            // Loader Fade Animation
+            // LOADER
             FadeTransition(
               opacity: _loaderFade,
-              child: const CircularProgressIndicator(strokeWidth: 2.5),
+              child: const SizedBox(
+                height: 26,
+                width: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
+              ),
             ),
           ],
         ),

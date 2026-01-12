@@ -13,6 +13,8 @@ class CartController extends GetxController {
   var grandTotal = 0.0.obs;
   var isLoading = false.obs;
   var updatingIndex = (-1).obs;
+  var removingIndex = (-1).obs; // 👈 per-item delete loader
+
   final Authcontroller authCtrl = Get.put(Authcontroller());
 
   CartResponse? cartResponse;
@@ -20,13 +22,19 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchCartApi(); // 👈 AUTO RESTORE CART ON APP START
+    fetchCartApi();
+    fetchOrderHistory(); // 👈 AUTO RESTORE CART ON APP START
   }
 
   var address = "".obs;
   var selectedAddress = "No address selected".obs;
   var selectedLat = "".obs;
   var savedAddresses = <Map<String, String>>[].obs;
+
+  // CartController.dart
+  var selectedPaymentMethod = "UPI".obs;
+
+  final paymentMethods = ["UPI", "Cash on Delivery"];
 
   void saveAddress(String addr) {
     address.value = addr;
@@ -80,16 +88,16 @@ class CartController extends GetxController {
 
   // Remove item using API
   Future<void> removeItemApi(int index) async {
-    try {
-      isLoading.value = true;
-      String token = await SharedPre.getAccessToken();
+    if (removingIndex.value != -1) return;
 
-      // Get cartItemId from model
+    try {
+      removingIndex.value = index;
+
+      String token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
       final cartItemId = cartResponse?.data?.cart?.items?[index].cartItemId;
-      if (cartItemId == null) {
-        Get.snackbar("Error", "Cart Item ID not found");
-        return;
-      }
+      if (cartItemId == null) return;
 
       final url =
           "https://resto-grandma.onrender.com/api/v1/user/cart/$cartItemId/remove";
@@ -101,26 +109,51 @@ class CartController extends GetxController {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: jsonEncode({}), // body not needed
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await fetchCartApi(); // resync
+        /// 🔥 OPTIMISTIC UI UPDATE
+        cartItems.removeAt(index);
+        cartItems.refresh();
+
+        /// 🔥 IF LAST ITEM REMOVED → RESET CART
+        if (cartItems.isEmpty) {
+          clearCartAndReset(); // 👈 THIS TRIGGERS _emptyCartView()
+          return;
+        }
+
+        /// Otherwise resync with backend
+        await fetchCartApi();
       } else {
         Get.snackbar("Error", "Failed to remove item");
       }
     } catch (e) {
       Get.snackbar("Exception", "Something went wrong");
     } finally {
-      isLoading.value = false;
+      removingIndex.value = -1;
     }
+  }
+
+  void clearCartAndReset() {
+    cartItems.clear();
+    cartResponse = null;
+    grandTotal.value = 0.0;
+    cartItems.refresh();
   }
 
   /// Fetch cart from API and sync
   Future<void> fetchCartApi() async {
+    if (isLoading.value) return; // ✅ prevent overlap
+
     try {
       isLoading.value = true;
+
       String accessToken = await SharedPre.getAccessToken();
+      if (accessToken.isEmpty) {
+        clearCartAndReset();
+        return;
+      }
+
       final url = ApiEndpoint.getUrl(ApiEndpoint.getCart);
 
       final response = await http.get(
@@ -132,32 +165,144 @@ class CartController extends GetxController {
         },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        cartResponse = CartResponse.fromJson(jsonDecode(response.body));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        clearCartAndReset();
+        return;
+      }
 
-        cartItems.clear();
-        for (var item in cartResponse?.data?.cart?.items ?? []) {
-          cartItems.add({
-            "cartItemId": item.cartItemId,
-            "menuItemId": item.menuItemId,
-            "name": item.name,
-            "image": item.image,
-            "price": "₹${item.basePrice}",
-            "qty": item.quantity,
-            "itemTotal": item.itemTotal,
-            "specialInstructions": item.specialInstructions,
-            "cartItemId": item.cartItemId,
-          });
-        }
+      final decoded = jsonDecode(response.body);
 
-        /// Take grand total from API summary
-        grandTotal.value = cartResponse?.data?.cart?.summary?.grandTotal ?? 0.0;
-        cartItems.refresh();
+      cartResponse = CartResponse.fromJson(decoded);
+
+      final cart = cartResponse?.data?.cart;
+
+      // ✅ VERY IMPORTANT NULL CHECK
+      if (cart == null || cart.items == null || cart.items!.isEmpty) {
+        clearCartAndReset();
+        return;
+      }
+
+      cartItems.clear();
+
+      for (var item in cart.items!) {
+        if (item.menuItemId == null) continue;
+
+        cartItems.add({
+          "cartItemId": item.cartItemId,
+          "menuItemId": item.menuItemId,
+          "name": item.name ?? "",
+          "image": item.image ?? "",
+          "price": "₹${item.basePrice}",
+          "qty": item.quantity ?? 0,
+          "itemTotal": item.itemTotal ?? 0,
+          "specialInstructions": item.specialInstructions ?? "",
+        });
+      }
+
+      grandTotal.value = cart.summary?.grandTotal ?? 0.0;
+      cartItems.refresh();
+    } catch (e, s) {
+      debugPrint("FETCH CART ERROR: $e");
+      debugPrint("STACKTRACE: $s");
+      clearCartAndReset(); // ✅ NEVER crash UI
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ---------------- APPLY COUPON API ----------------
+  Future<bool> applyCouponApi(String couponCode) async {
+    try {
+      isLoading.value = true;
+
+      String token = await SharedPre.getAccessToken();
+      if (token.isEmpty) {
+        Get.snackbar("Error", "User not authenticated");
+        return false;
+      }
+
+      final url = ApiEndpoint.getUrl(ApiEndpoint.ApplyCoupan);
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({"code": couponCode}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data["success"] == true) {
+        // ✅ Refresh cart after coupon applied
+        await fetchCartApi();
+
+        Get.snackbar(
+          "Coupon Applied",
+          data["message"] ?? "Coupon applied successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        return true;
       } else {
-        Get.snackbar("Error", "Failed to fetch cart");
+        Get.snackbar(
+          "Invalid Coupon",
+          data["message"] ?? "Failed to apply coupon",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
       }
     } catch (e) {
-      Get.snackbar("Exception", "Something went wrong");
+      Get.snackbar("Exception", e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  var orders = <OrderModel>[].obs;
+
+  Future<void> refreshOrders() async {
+    await fetchOrderHistory();
+  }
+
+  Future<void> fetchOrderHistory() async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      final mobile = await SharedPre.getMobile();
+
+      if (token.isEmpty || mobile.isEmpty) {
+        orders.clear();
+        return;
+      }
+
+      final url = ApiEndpoint.getUrl(ApiEndpoint.Orderhistorycard);
+
+      final response = await http.get(
+        Uri.parse("$url?mobile=$mobile"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        final res = OrderHistoryResponse.fromJson(decoded);
+
+        orders.value = res.data ?? [];
+      } else {
+        orders.clear();
+        Get.snackbar("Error", "Failed to fetch order history");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", e.toString());
     } finally {
       isLoading.value = false;
     }

@@ -481,40 +481,37 @@ class Authcontroller extends GetxController {
     }
   }
 
-
-  // delecte address method api 
-
+  // delecte address method api
 
   Future<bool> deleteAddress(String addressId) async {
-  try {
-    isLoading.value = true;
+    try {
+      isLoading.value = true;
 
-    String token = await SharedPre.getAccessToken();
+      String token = await SharedPre.getAccessToken();
 
-    final response = await http.delete(
-      Uri.parse(
-        "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
-      ),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      },
-    );
+      final response = await http.delete(
+        Uri.parse(
+          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
+        ),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      // 🔄 local list update (fast UI)
-      addressList.removeWhere((e) => e.id == addressId);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // 🔄 local list update (fast UI)
+        addressList.removeWhere((e) => e.id == addressId);
 
-      return true;
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint("Delete Address Error: $e");
+      return false;
+    } finally {
+      isLoading.value = false;
     }
-
-    return false;
-  } catch (e) {
-    debugPrint("Delete Address Error: $e");
-    return false;
-  } finally {
-    isLoading.value = false;
   }
-}
-
 }

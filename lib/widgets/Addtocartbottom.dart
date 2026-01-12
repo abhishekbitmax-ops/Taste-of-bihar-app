@@ -144,7 +144,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
 
                   SizedBox(height: 24),
 
-                  // Add to Cart Button
+                  
                   // Add to Cart Button
                   SizedBox(
                     width: double.infinity,
@@ -167,10 +167,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                 await cartCtrl
                                     .fetchCartApi(); // ✅ single refresh
                                 Navigator.pop(context);
-                                // 👈 CART KO REFRESH API SE
-
-                                // cartCtrl.addToCart(product, qty);
-                                // await cartCtrl.fetchCartApi();
+                                
                               },
                         icon: loading
                             ? const SizedBox(

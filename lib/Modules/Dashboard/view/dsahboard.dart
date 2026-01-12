@@ -60,10 +60,14 @@ class FoodHomeScreen extends StatefulWidget {
 
 class _FoodHomeScreenState extends State<FoodHomeScreen> {
   final Authcontroller authCtrl = Get.put(Authcontroller());
+  RxString address = "Fetching location...".obs;
 
   @override
   void initState() {
     super.initState();
+
+    _getCurrentLocation();
+
     authCtrl.fetchCategories().then((_) {
       if (authCtrl.categories.isNotEmpty) {
         setState(() {
@@ -77,55 +81,43 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   String selectedCategory = ""; // 👈 ADD THIS
   String selectedCategoryId = "";
-  Future<String> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return "Location service disabled";
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return "Permission denied";
+  Future<void> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        address.value = "Location service disabled";
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        address.value = "Location permission denied";
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      Placemark place = placemarks.first;
+
+      address.value =
+          "${place.name}, ${place.subLocality}, "
+          "${place.locality}, ${place.administrativeArea}, ${place.postalCode}";
+    } catch (e) {
+      address.value = "Unable to fetch location";
     }
-
-    if (permission == LocationPermission.deniedForever) {
-      return "Permission permanently denied";
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-
-    Placemark place = placemarks.first;
-    return "${place.street}, ${place.locality}";
-  }
-
-  Widget _buildCategory(String image, String label) {
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 14),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(50),
-            child: Image.asset(image, width: 70, height: 70, fit: BoxFit.cover),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget recommendedCard(String img, String name) {
@@ -151,9 +143,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    RxString address = "Fetching location...".obs;
-    _getCurrentLocation().then((value) => address.value = value);
-
     final bannerController = PageController();
     RxInt bannerIndex = 0.obs;
 
@@ -172,16 +161,24 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   vertical: 12,
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(Icons.location_on, color: Color(0xFF8B0000)),
                     const SizedBox(width: 6),
-                    Obx(
-                      () => Text(
-                        address.value,
-                        style: GoogleFonts.poppins(fontSize: 14),
+
+                    Expanded(
+                      child: Obx(
+                        () => Text(
+                          address.value,
+                          maxLines: 3, // 👈 second line allowed
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                          style: GoogleFonts.poppins(fontSize: 14),
+                        ),
                       ),
                     ),
-                    const Spacer(),
+
+                    const SizedBox(width: 6),
                     const Icon(Icons.notifications_none, size: 26),
                   ],
                 ),
@@ -335,29 +332,49 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                             margin: const EdgeInsets.only(right: 14),
                             child: Column(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(50),
-                                  child: hasImage
-                                      ? Image.network(
-                                          cat.image!, // ✅ FULL URL directly
-                                          width: 70,
-                                          height: 70,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              Image.asset(
+                                Container(
+                                  width: 74, // border ke liye thoda bada
+                                  height: 74,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: SweepGradient(
+                                      startAngle: -1.57, // top se start
+                                      endAngle: 1.57, // bottom tak
+                                      colors: [
+                                        Color(0xFF8B0000), // 🔴 TOP RED
+                                        Color(0xFF1E88E5), // 🔵 BOTTOM BLUE
+                                      ],
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      2,
+                                    ), // border thickness
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white,
+                                      ),
+                                      child: ClipOval(
+                                        child: hasImage
+                                            ? Image.network(
+                                                cat.image!,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) =>
+                                                    Image.asset(
+                                                      "assets/images/Dine.jpg",
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                              )
+                                            : Image.asset(
                                                 "assets/images/Dine.jpg",
-                                                width: 70,
-                                                height: 70,
                                                 fit: BoxFit.cover,
                                               ),
-                                        )
-                                      : Image.asset(
-                                          "assets/images/Dine.jpg",
-                                          width: 70,
-                                          height: 70,
-                                          fit: BoxFit.cover,
-                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
+
                                 const SizedBox(height: 6),
                                 Text(
                                   cat.name ?? "Unknown",

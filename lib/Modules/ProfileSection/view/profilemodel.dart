@@ -14,10 +14,10 @@ class ProfileResponse {
   }
 
   Map<String, dynamic> toJson() => {
-        'success': success,
-        'message': message,
-        'data': data?.toJson(),
-      };
+    'success': success,
+    'message': message,
+    'data': data?.toJson(),
+  };
 }
 
 class UserData {
@@ -58,25 +58,26 @@ class UserData {
       profile: json['profile'],
       gender: json['gender'],
       dob: json['dob'],
-      location:
-          json['location'] != null ? LocationData.fromJson(json['location']) : null,
+      location: json['location'] != null
+          ? LocationData.fromJson(json['location'])
+          : null,
       createdAt: json['createdAt'],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'mobile': mobile,
-        'name': name,
-        'email': email,
-        'isMobileVerified': isMobileVerified,
-        'isEmailVerified': isEmailVerified,
-        'profile': profile,
-        'gender': gender,
-        'dob': dob,
-        'location': location?.toJson(),
-        'createdAt': createdAt,
-      };
+    'id': id,
+    'mobile': mobile,
+    'name': name,
+    'email': email,
+    'isMobileVerified': isMobileVerified,
+    'isEmailVerified': isEmailVerified,
+    'profile': profile,
+    'gender': gender,
+    'dob': dob,
+    'location': location?.toJson(),
+    'createdAt': createdAt,
+  };
 }
 
 class LocationData {
@@ -94,13 +95,8 @@ class LocationData {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'address': address,
-        'lat': lat,
-        'lng': lng,
-      };
+  Map<String, dynamic> toJson() => {'address': address, 'lat': lat, 'lng': lng};
 }
-
 
 // Cart All item show model class
 
@@ -138,11 +134,12 @@ class CartModel {
   RestaurantModel? restaurant;
   List<CartItem>? items;
   SummaryModel? summary;
-  String? coupon;
-  dynamic couponData;
-  String? updatedAt;
-  CouponModel? couponModel;
+
+  /// FULL coupon object
+  CouponModel? coupon;
+
   bool? isEmpty;
+  String? updatedAt;
 
   CartModel({
     this.id,
@@ -151,23 +148,36 @@ class CartModel {
     this.items,
     this.summary,
     this.coupon,
-    this.couponData,
-    this.updatedAt,
-    this.couponModel,
     this.isEmpty,
+    this.updatedAt,
   });
 
   factory CartModel.fromJson(Map<String, dynamic> json) {
     return CartModel(
       id: json["id"],
       user: json["user"],
-      restaurant: json["restaurant"] == null ? null : RestaurantModel.fromJson(json["restaurant"]),
-      items: json["items"] == null ? null : (json["items"] as List).map((e) => CartItem.fromJson(e)).toList(),
-      summary: json["summary"] == null ? null : SummaryModel.fromJson(json["summary"]),
-      coupon: json["coupon"],
-      couponData: json["coupon"],
+
+      restaurant: json["restaurant"] == null
+          ? null
+          : RestaurantModel.fromJson(json["restaurant"]),
+
+      items: json["items"] == null
+          ? []
+          : (json["items"] as List)
+              .map((e) => CartItem.fromJson(e))
+              .toList(),
+
+      summary: json["summary"] == null
+          ? null
+          : SummaryModel.fromJson(json["summary"]),
+
+      // ✅ FIXED: coupon is OBJECT
+      coupon: json["coupon"] == null
+          ? null
+          : CouponModel.fromJson(json["coupon"]),
+
+      isEmpty: json["isEmpty"] ?? false,
       updatedAt: json["updatedAt"],
-      isEmpty: json["isEmpty"],
     );
   }
 }
@@ -228,7 +238,11 @@ class CartItem {
       foodType: json["foodType"],
       isVeg: json["isVeg"],
       variant: json["variant"],
-      addons: json["addons"] == null ? null : (json["addons"] as List).map((e) => Addon.fromJson(e)).toList(),
+      addons: json["addons"] == null
+          ? []
+          : (json["addons"] as List)
+              .map((e) => Addon.fromJson(e))
+              .toList(),
       basePrice: json["basePrice"],
       quantity: json["quantity"],
       itemTotal: json["itemTotal"],
@@ -261,33 +275,47 @@ class SummaryModel {
   int? discount;
   double? grandTotal;
 
-  SummaryModel({this.itemCount, this.subtotal, this.tax, this.deliveryCharge, this.discount, this.grandTotal});
+  SummaryModel({
+    this.itemCount,
+    this.subtotal,
+    this.tax,
+    this.deliveryCharge,
+    this.discount,
+    this.grandTotal,
+  });
 
   factory SummaryModel.fromJson(Map<String, dynamic> json) {
     return SummaryModel(
       itemCount: json["itemCount"],
       subtotal: json["subtotal"],
-      tax: (json["tax"] as num?)?.toDouble(),
+      tax: (json["tax"] as num?)?.toDouble(), // ✅ FIX
       deliveryCharge: json["deliveryCharge"],
       discount: json["discount"],
-      grandTotal: (json["grandTotal"] as num?)?.toDouble(),
+      grandTotal: (json["grandTotal"] as num?)?.toDouble(), // ✅ FIX
     );
   }
 }
 
+
 class CouponModel {
   String? code;
   int? discountAmount;
+  String? description;
 
-  CouponModel({this.code, this.discountAmount});
+  CouponModel({this.code, this.discountAmount, this.description});
 
   factory CouponModel.fromJson(Map<String, dynamic> json) {
     return CouponModel(
       code: json["code"],
       discountAmount: json["discountAmount"],
+      description: json["description"],
     );
   }
 }
+
+
+
+//--------------------------------------------------------
 
 class CategoryData {
   String? id;
@@ -296,10 +324,7 @@ class CategoryData {
   CategoryData({this.id, this.name});
 
   factory CategoryData.fromJson(Map<String, dynamic> json) {
-    return CategoryData(
-      id: json["id"],
-      name: json["name"],
-    );
+    return CategoryData(id: json["id"], name: json["name"]);
   }
 }
 
@@ -314,7 +339,9 @@ class CategoryItemsResponse {
     return CategoryItemsResponse(
       success: json["success"],
       message: json["message"],
-      data: json["data"] == null ? null : CategoryItemsData.fromJson(json["data"]),
+      data: json["data"] == null
+          ? null
+          : CategoryItemsData.fromJson(json["data"]),
     );
   }
 }
@@ -327,8 +354,291 @@ class CategoryItemsData {
 
   factory CategoryItemsData.fromJson(Map<String, dynamic> json) {
     return CategoryItemsData(
-      restaurant: json["restaurant"] == null ? null : RestaurantModel.fromJson(json["restaurant"]),
-      items: json["items"] == null ? null : (json["items"] as List).map((e) => CartItem.fromJson(e)).toList(),
+      restaurant: json["restaurant"] == null
+          ? null
+          : RestaurantModel.fromJson(json["restaurant"]),
+      items: json["items"] == null
+          ? null
+          : (json["items"] as List).map((e) => CartItem.fromJson(e)).toList(),
+    );
+  }
+}
+
+
+// Orders histary ---------------------
+
+class OrderHistoryResponse {
+  bool? success;
+  String? message;
+  MetaModel? meta;
+  List<OrderModel>? data;
+
+  OrderHistoryResponse({this.success, this.message, this.meta, this.data});
+
+  factory OrderHistoryResponse.fromJson(Map<String, dynamic> json) {
+    return OrderHistoryResponse(
+      success: json["success"],
+      message: json["message"],
+      meta: json["meta"] == null ? null : MetaModel.fromJson(json["meta"]),
+      data: json["data"] == null
+          ? []
+          : List<OrderModel>.from(
+              json["data"].map((x) => OrderModel.fromJson(x))),
+    );
+  }
+}
+
+class MetaModel {
+  int? total;
+  int? page;
+  int? limit;
+
+  MetaModel({this.total, this.page, this.limit});
+
+  factory MetaModel.fromJson(Map<String, dynamic> json) {
+    return MetaModel(
+      total: json["total"],
+      page: json["page"],
+      limit: json["limit"],
+    );
+  }
+}
+
+class OrderModel {
+  String? id;
+  String? user;
+  RestaurantMiniModel? restaurant;
+  String? branch;
+  CustomerModel? customer;
+  DeliveryAddressModel? deliveryAddress;
+  List<OrderItemModel>? items;
+  PriceModel? price;
+  PaymentModel? payment;
+  String? status;
+  ReviewStatusModel? reviewStatus;
+  bool? isActive;
+  String? source;
+  String? orderId;
+  bool? eligibleForReview;
+  List<TimelineModel>? timeline;
+  String? createdAt;
+  String? updatedAt;
+
+  OrderModel({
+    this.id,
+    this.user,
+    this.restaurant,
+    this.branch,
+    this.customer,
+    this.deliveryAddress,
+    this.items,
+    this.price,
+    this.payment,
+    this.status,
+    this.reviewStatus,
+    this.isActive,
+    this.source,
+    this.orderId,
+    this.eligibleForReview,
+    this.timeline,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    return OrderModel(
+      id: json["_id"],
+      user: json["user"],
+      restaurant: json["restaurant"] == null
+          ? null
+          : RestaurantMiniModel.fromJson(json["restaurant"]),
+      branch: json["branch"],
+      customer: json["customer"] == null
+          ? null
+          : CustomerModel.fromJson(json["customer"]),
+      deliveryAddress: json["deliveryAddress"] == null
+          ? null
+          : DeliveryAddressModel.fromJson(json["deliveryAddress"]),
+      items: json["items"] == null
+          ? []
+          : List<OrderItemModel>.from(
+              json["items"].map((x) => OrderItemModel.fromJson(x))),
+      price:
+          json["price"] == null ? null : PriceModel.fromJson(json["price"]),
+      payment: json["payment"] == null
+          ? null
+          : PaymentModel.fromJson(json["payment"]),
+      status: json["status"],
+      reviewStatus: json["reviewStatus"] == null
+          ? null
+          : ReviewStatusModel.fromJson(json["reviewStatus"]),
+      isActive: json["isActive"],
+      source: json["source"],
+      orderId: json["orderId"],
+      eligibleForReview: json["eligibleForReview"],
+      timeline: json["timeline"] == null
+          ? []
+          : List<TimelineModel>.from(
+              json["timeline"].map((x) => TimelineModel.fromJson(x))),
+      createdAt: json["createdAt"],
+      updatedAt: json["updatedAt"],
+    );
+  }
+}
+
+class RestaurantMiniModel {
+  String? id;
+  String? name;
+
+  RestaurantMiniModel({this.id, this.name});
+
+  factory RestaurantMiniModel.fromJson(Map<String, dynamic> json) {
+    return RestaurantMiniModel(
+      id: json["_id"],
+      name: json["name"],
+    );
+  }
+}
+
+class CustomerModel {
+  String? name;
+  String? phone;
+
+  CustomerModel({this.name, this.phone});
+
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    return CustomerModel(
+      name: json["name"],
+      phone: json["phone"],
+    );
+  }
+}
+
+class DeliveryAddressModel {
+  String? name;
+  String? phone;
+  String? addressLine;
+  String? city;
+  String? pincode;
+  double? lat;
+  double? lng;
+
+  DeliveryAddressModel({
+    this.name,
+    this.phone,
+    this.addressLine,
+    this.city,
+    this.pincode,
+    this.lat,
+    this.lng,
+  });
+
+  factory DeliveryAddressModel.fromJson(Map<String, dynamic> json) {
+    return DeliveryAddressModel(
+      name: json["name"],
+      phone: json["phone"],
+      addressLine: json["addressLine"],
+      city: json["city"],
+      pincode: json["pincode"],
+      lat: (json["lat"] as num?)?.toDouble(),
+      lng: (json["lng"] as num?)?.toDouble(),
+    );
+  }
+}
+
+class OrderItemModel {
+  String? itemId;
+  String? name;
+  int? quantity;
+  int? basePrice;
+  List<dynamic>? addons;
+  int? finalItemPrice;
+
+  OrderItemModel({
+    this.itemId,
+    this.name,
+    this.quantity,
+    this.basePrice,
+    this.addons,
+    this.finalItemPrice,
+  });
+
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      itemId: json["itemId"],
+      name: json["name"],
+      quantity: json["quantity"],
+      basePrice: json["basePrice"],
+      addons: json["addons"] ?? [],
+      finalItemPrice: json["finalItemPrice"],
+    );
+  }
+}
+
+class PriceModel {
+  int? itemsTotal;
+  int? tax;
+  int? deliveryFee;
+  int? discount;
+  int? grandTotal;
+
+  PriceModel({
+    this.itemsTotal,
+    this.tax,
+    this.deliveryFee,
+    this.discount,
+    this.grandTotal,
+  });
+
+  factory PriceModel.fromJson(Map<String, dynamic> json) {
+    return PriceModel(
+      itemsTotal: json["itemsTotal"],
+      tax: json["tax"],
+      deliveryFee: json["deliveryFee"],
+      discount: json["discount"],
+      grandTotal: json["grandTotal"],
+    );
+  }
+}
+
+class PaymentModel {
+  String? method;
+  String? status;
+
+  PaymentModel({this.method, this.status});
+
+  factory PaymentModel.fromJson(Map<String, dynamic> json) {
+    return PaymentModel(
+      method: json["method"],
+      status: json["status"],
+    );
+  }
+}
+
+class ReviewStatusModel {
+  bool? hasReviewed;
+  int? reminderCount;
+
+  ReviewStatusModel({this.hasReviewed, this.reminderCount});
+
+  factory ReviewStatusModel.fromJson(Map<String, dynamic> json) {
+    return ReviewStatusModel(
+      hasReviewed: json["hasReviewed"],
+      reminderCount: json["reminderCount"],
+    );
+  }
+}
+
+class TimelineModel {
+  String? at;
+  String? status;
+
+  TimelineModel({this.at, this.status});
+
+  factory TimelineModel.fromJson(Map<String, dynamic> json) {
+    return TimelineModel(
+      at: json["at"],
+      status: json["status"],
     );
   }
 }

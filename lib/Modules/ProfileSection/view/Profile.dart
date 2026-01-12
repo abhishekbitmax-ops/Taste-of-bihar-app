@@ -1,4 +1,5 @@
 import 'package:restro_app/Modules/Auth/view/Login.dart';
+import 'package:restro_app/Modules/Dashboard/view/OrderHistory.dart';
 import 'package:restro_app/Modules/ProfileSection/Controller/profilecontroller.dart';
 import 'package:restro_app/Modules/ProfileSection/view/Editprofile.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
@@ -11,6 +12,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:flutter/services.dart';
 
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
+import 'package:restro_app/widgets/OrderConfrimscreen.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
 class ProfileHomeScreen extends StatelessWidget {
@@ -250,6 +252,7 @@ class ProfileHomeScreen extends StatelessWidget {
                               Icons.shopping_bag,
                               "My Orders",
                               "View your order history",
+                              onTap: () => Get.to(OrderHistoryScreen()),
                             ),
                             _quickCard(
                               Icons.favorite,
