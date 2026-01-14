@@ -163,9 +163,7 @@ class CartModel {
 
       items: json["items"] == null
           ? []
-          : (json["items"] as List)
-              .map((e) => CartItem.fromJson(e))
-              .toList(),
+          : (json["items"] as List).map((e) => CartItem.fromJson(e)).toList(),
 
       summary: json["summary"] == null
           ? null
@@ -240,9 +238,7 @@ class CartItem {
       variant: json["variant"],
       addons: json["addons"] == null
           ? []
-          : (json["addons"] as List)
-              .map((e) => Addon.fromJson(e))
-              .toList(),
+          : (json["addons"] as List).map((e) => Addon.fromJson(e)).toList(),
       basePrice: json["basePrice"],
       quantity: json["quantity"],
       itemTotal: json["itemTotal"],
@@ -296,7 +292,6 @@ class SummaryModel {
   }
 }
 
-
 class CouponModel {
   String? code;
   int? discountAmount;
@@ -312,8 +307,6 @@ class CouponModel {
     );
   }
 }
-
-
 
 //--------------------------------------------------------
 
@@ -364,166 +357,142 @@ class CategoryItemsData {
   }
 }
 
+// Orders Tracking  ---------------------
 
-// Orders histary ---------------------
+class OrderTrackingResponse {
+  final bool? success;
+  final String? message;
+  final OrderTrackingData? data;
 
-class OrderHistoryResponse {
-  bool? success;
-  String? message;
-  MetaModel? meta;
-  List<OrderModel>? data;
+  OrderTrackingResponse({this.success, this.message, this.data});
 
-  OrderHistoryResponse({this.success, this.message, this.meta, this.data});
-
-  factory OrderHistoryResponse.fromJson(Map<String, dynamic> json) {
-    return OrderHistoryResponse(
-      success: json["success"],
-      message: json["message"],
-      meta: json["meta"] == null ? null : MetaModel.fromJson(json["meta"]),
-      data: json["data"] == null
-          ? []
-          : List<OrderModel>.from(
-              json["data"].map((x) => OrderModel.fromJson(x))),
+  factory OrderTrackingResponse.fromJson(Map<String, dynamic> json) {
+    return OrderTrackingResponse(
+      success: json['success'],
+      message: json['message'],
+      data: json['data'] != null
+          ? OrderTrackingData.fromJson(json['data'])
+          : null,
     );
   }
 }
 
-class MetaModel {
-  int? total;
-  int? page;
-  int? limit;
+class OrderTrackingData {
+  final String? orderId;
+  final String? id;
+  final String? status;
+  final List<OrderTimeline>? timeline;
+  final EstimatedDelivery? estimatedDelivery;
+  final Restaurant? restaurant;
+  final DeliveryAddress? deliveryAddress;
+  final List<OrderItem>? items;
+  final Price? price;
+  final Payment? payment;
+  final Delivery? delivery;
+  final String? createdAt;
+  final bool? canCancel;
 
-  MetaModel({this.total, this.page, this.limit});
-
-  factory MetaModel.fromJson(Map<String, dynamic> json) {
-    return MetaModel(
-      total: json["total"],
-      page: json["page"],
-      limit: json["limit"],
-    );
-  }
-}
-
-class OrderModel {
-  String? id;
-  String? user;
-  RestaurantMiniModel? restaurant;
-  String? branch;
-  CustomerModel? customer;
-  DeliveryAddressModel? deliveryAddress;
-  List<OrderItemModel>? items;
-  PriceModel? price;
-  PaymentModel? payment;
-  String? status;
-  ReviewStatusModel? reviewStatus;
-  bool? isActive;
-  String? source;
-  String? orderId;
-  bool? eligibleForReview;
-  List<TimelineModel>? timeline;
-  String? createdAt;
-  String? updatedAt;
-
-  OrderModel({
+  OrderTrackingData({
+    this.orderId,
     this.id,
-    this.user,
+    this.status,
+    this.timeline,
+    this.estimatedDelivery,
     this.restaurant,
-    this.branch,
-    this.customer,
     this.deliveryAddress,
     this.items,
     this.price,
     this.payment,
-    this.status,
-    this.reviewStatus,
-    this.isActive,
-    this.source,
-    this.orderId,
-    this.eligibleForReview,
-    this.timeline,
+    this.delivery,
     this.createdAt,
-    this.updatedAt,
+    this.canCancel,
   });
 
-  factory OrderModel.fromJson(Map<String, dynamic> json) {
-    return OrderModel(
-      id: json["_id"],
-      user: json["user"],
-      restaurant: json["restaurant"] == null
-          ? null
-          : RestaurantMiniModel.fromJson(json["restaurant"]),
-      branch: json["branch"],
-      customer: json["customer"] == null
-          ? null
-          : CustomerModel.fromJson(json["customer"]),
-      deliveryAddress: json["deliveryAddress"] == null
-          ? null
-          : DeliveryAddressModel.fromJson(json["deliveryAddress"]),
-      items: json["items"] == null
-          ? []
-          : List<OrderItemModel>.from(
-              json["items"].map((x) => OrderItemModel.fromJson(x))),
-      price:
-          json["price"] == null ? null : PriceModel.fromJson(json["price"]),
-      payment: json["payment"] == null
-          ? null
-          : PaymentModel.fromJson(json["payment"]),
-      status: json["status"],
-      reviewStatus: json["reviewStatus"] == null
-          ? null
-          : ReviewStatusModel.fromJson(json["reviewStatus"]),
-      isActive: json["isActive"],
-      source: json["source"],
-      orderId: json["orderId"],
-      eligibleForReview: json["eligibleForReview"],
-      timeline: json["timeline"] == null
-          ? []
-          : List<TimelineModel>.from(
-              json["timeline"].map((x) => TimelineModel.fromJson(x))),
-      createdAt: json["createdAt"],
-      updatedAt: json["updatedAt"],
+  factory OrderTrackingData.fromJson(Map<String, dynamic> json) {
+    return OrderTrackingData(
+      orderId: json['orderId'],
+      id: json['_id'],
+      status: json['status'],
+      timeline: (json['timeline'] as List?)
+          ?.map((e) => OrderTimeline.fromJson(e))
+          .toList(),
+      estimatedDelivery: json['estimatedDelivery'] != null
+          ? EstimatedDelivery.fromJson(json['estimatedDelivery'])
+          : null,
+      restaurant: json['restaurant'] != null
+          ? Restaurant.fromJson(json['restaurant'])
+          : null,
+      deliveryAddress: json['deliveryAddress'] != null
+          ? DeliveryAddress.fromJson(json['deliveryAddress'])
+          : null,
+      items: (json['items'] as List?)
+          ?.map((e) => OrderItem.fromJson(e))
+          .toList(),
+      price: json['price'] != null ? Price.fromJson(json['price']) : null,
+      payment:
+          json['payment'] != null ? Payment.fromJson(json['payment']) : null,
+      delivery:
+          json['delivery'] != null ? Delivery.fromJson(json['delivery']) : null,
+      createdAt: json['createdAt'],
+      canCancel: json['canCancel'],
     );
   }
 }
 
-class RestaurantMiniModel {
-  String? id;
-  String? name;
+class OrderTimeline {
+  final String? at;
+  final String? status;
 
-  RestaurantMiniModel({this.id, this.name});
+  OrderTimeline({this.at, this.status});
 
-  factory RestaurantMiniModel.fromJson(Map<String, dynamic> json) {
-    return RestaurantMiniModel(
-      id: json["_id"],
-      name: json["name"],
+  factory OrderTimeline.fromJson(Map<String, dynamic> json) {
+    return OrderTimeline(
+      at: json['at'],
+      status: json['status'],
     );
   }
 }
 
-class CustomerModel {
-  String? name;
-  String? phone;
+class EstimatedDelivery {
+  final String? time;
+  final int? minutes;
+  final String? message;
 
-  CustomerModel({this.name, this.phone});
+  EstimatedDelivery({this.time, this.minutes, this.message});
 
-  factory CustomerModel.fromJson(Map<String, dynamic> json) {
-    return CustomerModel(
-      name: json["name"],
-      phone: json["phone"],
+  factory EstimatedDelivery.fromJson(Map<String, dynamic> json) {
+    return EstimatedDelivery(
+      time: json['time'],
+      minutes: json['minutes'],
+      message: json['message'],
     );
   }
 }
 
-class DeliveryAddressModel {
-  String? name;
-  String? phone;
-  String? addressLine;
-  String? city;
-  String? pincode;
-  double? lat;
-  double? lng;
+class Restaurant {
+  final String? id;
+  final String? name;
 
-  DeliveryAddressModel({
+  Restaurant({this.id, this.name});
+
+  factory Restaurant.fromJson(Map<String, dynamic> json) {
+    return Restaurant(
+      id: json['_id'],
+      name: json['name'],
+    );
+  }
+}
+
+class DeliveryAddress {
+  final String? name;
+  final String? phone;
+  final String? addressLine;
+  final String? city;
+  final String? pincode;
+  final double? lat;
+  final double? lng;
+
+  DeliveryAddress({
     this.name,
     this.phone,
     this.addressLine,
@@ -533,28 +502,28 @@ class DeliveryAddressModel {
     this.lng,
   });
 
-  factory DeliveryAddressModel.fromJson(Map<String, dynamic> json) {
-    return DeliveryAddressModel(
-      name: json["name"],
-      phone: json["phone"],
-      addressLine: json["addressLine"],
-      city: json["city"],
-      pincode: json["pincode"],
-      lat: (json["lat"] as num?)?.toDouble(),
-      lng: (json["lng"] as num?)?.toDouble(),
+  factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
+    return DeliveryAddress(
+      name: json['name'],
+      phone: json['phone'],
+      addressLine: json['addressLine'],
+      city: json['city'],
+      pincode: json['pincode'],
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
     );
   }
 }
 
-class OrderItemModel {
-  String? itemId;
-  String? name;
-  int? quantity;
-  int? basePrice;
-  List<dynamic>? addons;
-  int? finalItemPrice;
+class OrderItem {
+  final ItemRef? itemId;
+  final String? name;
+  final int? quantity;
+  final int? basePrice;
+  final List<dynamic>? addons;
+  final int? finalItemPrice;
 
-  OrderItemModel({
+  OrderItem({
     this.itemId,
     this.name,
     this.quantity,
@@ -563,26 +532,43 @@ class OrderItemModel {
     this.finalItemPrice,
   });
 
-  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
-    return OrderItemModel(
-      itemId: json["itemId"],
-      name: json["name"],
-      quantity: json["quantity"],
-      basePrice: json["basePrice"],
-      addons: json["addons"] ?? [],
-      finalItemPrice: json["finalItemPrice"],
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      itemId:
+          json['itemId'] != null ? ItemRef.fromJson(json['itemId']) : null,
+      name: json['name'],
+      quantity: json['quantity'],
+      basePrice: json['basePrice'],
+      addons: json['addons'],
+      finalItemPrice: json['finalItemPrice'],
     );
   }
 }
 
-class PriceModel {
-  int? itemsTotal;
-  int? tax;
-  int? deliveryFee;
-  int? discount;
-  int? grandTotal;
+class ItemRef {
+  final String? id;
+  final String? name;
+  final String? image;
 
-  PriceModel({
+  ItemRef({this.id, this.name, this.image});
+
+  factory ItemRef.fromJson(Map<String, dynamic> json) {
+    return ItemRef(
+      id: json['_id'],
+      name: json['name'],
+      image: json['image'],
+    );
+  }
+}
+
+class Price {
+  final num? itemsTotal;
+  final num? tax;
+  final num? deliveryFee;
+  final num? discount;
+  final num? grandTotal;
+
+  Price({
     this.itemsTotal,
     this.tax,
     this.deliveryFee,
@@ -590,55 +576,42 @@ class PriceModel {
     this.grandTotal,
   });
 
-  factory PriceModel.fromJson(Map<String, dynamic> json) {
-    return PriceModel(
-      itemsTotal: json["itemsTotal"],
-      tax: json["tax"],
-      deliveryFee: json["deliveryFee"],
-      discount: json["discount"],
-      grandTotal: json["grandTotal"],
+  factory Price.fromJson(Map<String, dynamic> json) {
+    return Price(
+      itemsTotal: json['itemsTotal'],
+      tax: json['tax'],
+      deliveryFee: json['deliveryFee'],
+      discount: json['discount'],
+      grandTotal: json['grandTotal'],
     );
   }
 }
 
-class PaymentModel {
-  String? method;
-  String? status;
+class Payment {
+  final String? method;
+  final String? status;
+  final String? transactionId;
 
-  PaymentModel({this.method, this.status});
+  Payment({this.method, this.status, this.transactionId});
 
-  factory PaymentModel.fromJson(Map<String, dynamic> json) {
-    return PaymentModel(
-      method: json["method"],
-      status: json["status"],
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      method: json['method'],
+      status: json['status'],
+      transactionId: json['transactionId'],
     );
   }
 }
 
-class ReviewStatusModel {
-  bool? hasReviewed;
-  int? reminderCount;
+class Delivery {
+  final String? otp;
 
-  ReviewStatusModel({this.hasReviewed, this.reminderCount});
+  Delivery({this.otp});
 
-  factory ReviewStatusModel.fromJson(Map<String, dynamic> json) {
-    return ReviewStatusModel(
-      hasReviewed: json["hasReviewed"],
-      reminderCount: json["reminderCount"],
+  factory Delivery.fromJson(Map<String, dynamic> json) {
+    return Delivery(
+      otp: json['otp'],
     );
   }
 }
 
-class TimelineModel {
-  String? at;
-  String? status;
-
-  TimelineModel({this.at, this.status});
-
-  factory TimelineModel.fromJson(Map<String, dynamic> json) {
-    return TimelineModel(
-      at: json["at"],
-      status: json["status"],
-    );
-  }
-}

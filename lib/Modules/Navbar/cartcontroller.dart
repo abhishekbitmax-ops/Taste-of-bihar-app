@@ -3,21 +3,35 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
 import 'package:http/http.dart' as http;
+import 'package:restro_app/widgets/OrderConfrimscreen.dart';
+import 'package:restro_app/widgets/RazorpayBottompay.dart';
 
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
   var grandTotal = 0.0.obs;
   var isLoading = false.obs;
   var updatingIndex = (-1).obs;
+  var selectedAddressId = "".obs;
+  var applyingCouponCode = "".obs;
+
   var removingIndex = (-1).obs; // 👈 per-item delete loader
 
   final Authcontroller authCtrl = Get.put(Authcontroller());
 
   CartResponse? cartResponse;
+  void clearCartAfterOrder() {
+    cartItems.clear();
+    cartResponse = null;
+    grandTotal.value = 0.0;
+    applyingCouponCode.value = "";
+    selectedAddressId.value = "";
+    cartItems.refresh();
+  }
 
   @override
   void onInit() {
@@ -212,64 +226,44 @@ class CartController extends GetxController {
 
   // ---------------- APPLY COUPON API ----------------
   Future<bool> applyCouponApi(String couponCode) async {
+    if (applyingCouponCode.value.isNotEmpty) return false;
+
     try {
-      isLoading.value = true;
+      applyingCouponCode.value = couponCode;
 
-      String token = await SharedPre.getAccessToken();
-      if (token.isEmpty) {
-        Get.snackbar("Error", "User not authenticated");
-        return false;
-      }
-
-      final url = ApiEndpoint.getUrl(ApiEndpoint.ApplyCoupan);
-
-      final response = await http.post(
-        Uri.parse(url),
+      final token = await SharedPre.getAccessToken();
+      final res = await http.post(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.ApplyCoupan)),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
-          "Accept": "application/json",
         },
         body: jsonEncode({"code": couponCode}),
       );
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(res.body);
 
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          data["success"] == true) {
-        // ✅ Refresh cart after coupon applied
+      if (res.statusCode == 200 && data["success"] == true) {
         await fetchCartApi();
-
-        Get.snackbar(
-          "Coupon Applied",
-          data["message"] ?? "Coupon applied successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Coupon Applied", data["message"]);
         return true;
       } else {
-        Get.snackbar(
-          "Invalid Coupon",
-          data["message"] ?? "Failed to apply coupon",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Invalid Coupon", data["message"]);
         return false;
       }
     } catch (e) {
-      Get.snackbar("Exception", e.toString());
+      Get.snackbar("Error", e.toString());
       return false;
     } finally {
-      isLoading.value = false;
+      applyingCouponCode.value = "";
     }
   }
-
-  var orders = <OrderModel>[].obs;
 
   Future<void> refreshOrders() async {
     await fetchOrderHistory();
   }
 
+  var orders = <OrderData>[].obs;
   Future<void> fetchOrderHistory() async {
     try {
       isLoading.value = true;
@@ -294,9 +288,19 @@ class CartController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
+
         final res = OrderHistoryResponse.fromJson(decoded);
 
-        orders.value = res.data ?? [];
+        final list = res.data ?? [];
+
+        /// 🔥 SORT BY CREATED DATE (LATEST FIRST)
+        list.sort((a, b) {
+          final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
+          final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
+          return db.compareTo(da);
+        });
+
+        orders.value = list;
       } else {
         orders.clear();
         Get.snackbar("Error", "Failed to fetch order history");
@@ -307,4 +311,200 @@ class CartController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  var isPlacingOrder = false.obs;
+  var orderId = "".obs;
+  var razorpayOrderId = "".obs;
+  Map<String, dynamic>? lastPlacedOrder;
+
+  /// =========================
+  /// PLACE ORDER API
+  /// =========================
+  Future<void> placeOrder({
+    required String addressId,
+    required String paymentMethod,
+  }) async {
+    try {
+      isPlacingOrder(true);
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) {
+        Get.snackbar("Error", "User not authenticated");
+        return;
+      }
+
+      final cart = cartResponse?.data?.cart;
+
+      if (cart == null || cart.items == null || cart.items!.isEmpty) {
+        Get.snackbar("Error", "Cart is empty");
+        return;
+      }
+
+      // 🔥 BUILD ITEMS ARRAY
+      final List<Map<String, dynamic>> itemsPayload = cart.items!
+          .where((e) => e.menuItemId != null && e.quantity != null)
+          .map((e) => {"itemId": e.menuItemId, "quantity": e.quantity})
+          .toList();
+
+      final body = {
+        "cartId": cart.id,
+        "items": itemsPayload,
+        "addressId": addressId,
+        "paymentMethod": paymentMethod, // UPI / COD
+      };
+
+      debugPrint("🛒 PLACE ORDER BODY => $body");
+
+      final res = await http.post(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.Orderplace)),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(res.body);
+      debugPrint("📦 PLACE ORDER RESPONSE => $data");
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        lastPlacedOrder = data["data"]; // 👈 🔥 MOST IMPORTANT
+
+        orderId.value = data["data"]["orderId"] ?? "";
+
+        if (paymentMethod == "COD") {
+          clearCartAfterOrder();
+          Get.offAll(() => OrderConfirmationScreen(), arguments: data["data"]);
+        } else {
+          razorpayOrderId.value = data["data"]["razorpay"]?["orderId"] ?? "";
+          final int amountInPaise = (data["data"]["razorpay"]?["amount"] ?? 0)
+              .toInt();
+
+          openRazorpaySheet(amount: amountInPaise / 100);
+        }
+      } else {
+        Get.snackbar("Error", data["message"] ?? "Order failed");
+      }
+    } catch (e, s) {
+      debugPrint("❌ PLACE ORDER ERROR => $e");
+      debugPrint("STACKTRACE => $s");
+      Get.snackbar("Error", "Something went wrong");
+    } finally {
+      isPlacingOrder(false);
+    }
+  }
+
+  /// =========================
+  /// OPEN PAYMENT SHEET
+  /// =========================
+  void openRazorpaySheet({required num amount}) {
+    Get.dialog(PaymentBottomSheet(amount: amount), barrierDismissible: false);
+  }
+
+  /// =========================
+  /// VERIFY PAYMENT API
+  /// =========================
+  Future<void> verifyPayment({
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    try {
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) {
+        Get.snackbar("Error", "User not authenticated");
+        return;
+      }
+
+      final body = {
+        "razorpay_order_id": razorpayOrderId, // order_S3...
+        "razorpay_payment_id": razorpayPaymentId, // pay_...
+        "razorpay_signature": razorpaySignature, // generated by Razorpay
+        "orderId": orderId.value, // ORD-... (DB order)
+      };
+
+      debugPrint("🔐 VERIFY PAYMENT BODY => $body");
+
+      final res = await http.post(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.PaymentVerify)),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(res.body);
+      debugPrint("✅ VERIFY PAYMENT RESPONSE => $data");
+
+      if (res.statusCode == 200 && data["success"] == true) {
+        clearCartAfterOrder();
+
+        Get.offAll(
+          () => OrderConfirmationScreen(),
+          arguments: {
+            ...?lastPlacedOrder, // 🔥 FULL ORDER DATA
+            "payment": {
+              ...?lastPlacedOrder?["payment"],
+              "status": "PAID", // 🔥 Force update
+            },
+          },
+        );
+      } else {
+        Get.snackbar(
+          "Payment Failed",
+          data["message"] ?? "Verification failed",
+        );
+      }
+    } catch (e, s) {
+      debugPrint("❌ VERIFY PAYMENT ERROR => $e");
+      debugPrint("STACKTRACE => $s");
+      Get.snackbar("Error", "Something went wrong during verification");
+    }
+  }
+
+
+  // order tracking api method 
+
+
+
+
+  final Rx<OrderTrackingData?> order = Rx<OrderTrackingData?>(null);
+
+  Future<void> fetchOrderTracking(String orderId) async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) {
+        Get.snackbar("Error", "User not authenticated");
+        return;
+      }
+
+      final url =
+          "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/track";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        final res = OrderTrackingResponse.fromJson(decoded);
+
+        order.value = res.data;
+      } else {
+        Get.snackbar("Error", "Failed to fetch order tracking");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
+
+

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
+import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/widgets/Addtocartbottom.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
@@ -38,11 +40,60 @@ class _MenuScreenState extends State<MenuScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF8B0000),
         title: const Text("Our Menu", style: TextStyle(color: Colors.white)),
-        actions: const [
-          Icon(Icons.search, color: Colors.white),
-          SizedBox(width: 12),
+        actions: [
+          // 🛒 CART ICON
+          InkWell(
+            onTap: () {
+              Get.to(() => CartScreen()); // 🔥 OPEN CART
+            },
+            child: Stack(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+
+                // 🔴 CART COUNT BADGE
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Obx(() {
+                    final cartCtrl = Get.find<CartController>();
+                    final count = cartCtrl.cartItems.length;
+
+                    if (count == 0) return const SizedBox();
+
+                    return CircleAvatar(
+                      radius: 7,
+                      backgroundColor: Colors.red,
+                      child: Text(
+                        "$count",
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          // 🔍 SEARCH ICON
+          const Icon(Icons.search, color: Colors.white),
+
+          const SizedBox(width: 12),
         ],
       ),
+
       body: SafeArea(
         child: Row(
           children: [

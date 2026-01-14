@@ -414,3 +414,234 @@ class AddressData {
     };
   }
 }
+
+
+//order history 
+
+class OrderHistoryResponse {
+  final bool? success;
+  final String? message;
+  final Meta? meta;
+  final List<OrderData>? data;
+
+  OrderHistoryResponse({this.success, this.message, this.meta, this.data});
+
+  factory OrderHistoryResponse.fromJson(Map<String, dynamic> json) {
+    return OrderHistoryResponse(
+      success: json['success'],
+      message: json['message'],
+      meta: json['meta'] != null ? Meta.fromJson(json['meta']) : null,
+      data: json['data'] != null
+          ? List<OrderData>.from(json['data'].map((x) => OrderData.fromJson(x)))
+          : [],
+    );
+  }
+}
+
+class Meta {
+  final int? total;
+  final int? page;
+  final int? limit;
+
+  Meta({this.total, this.page, this.limit});
+
+  factory Meta.fromJson(Map<String, dynamic> json) {
+    return Meta(total: json['total'], page: json['page'], limit: json['limit']);
+  }
+}
+
+class OrderData {
+  final String? id;
+  final String? orderId;
+  final Restaurant? restaurant;
+  final Customer? customer;
+  final DeliveryAddress? deliveryAddress;
+  final List<OrderItem>? items;
+  final Price? price;
+  final Payment? payment;
+  final String? status;
+  final List<Timeline>? timeline;
+  final String? createdAt;
+  final String? updatedAt;
+
+  OrderData({
+    this.id,
+    this.orderId,
+    this.restaurant,
+    this.customer,
+    this.deliveryAddress,
+    this.items,
+    this.price,
+    this.payment,
+    this.status,
+    this.timeline,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory OrderData.fromJson(Map<String, dynamic> json) {
+    return OrderData(
+      id: json['_id'],
+      orderId: json['orderId'],
+      restaurant: json['restaurant'] != null
+          ? Restaurant.fromJson(json['restaurant'])
+          : null,
+      customer: json['customer'] != null
+          ? Customer.fromJson(json['customer'])
+          : null,
+      deliveryAddress: json['deliveryAddress'] != null
+          ? DeliveryAddress.fromJson(json['deliveryAddress'])
+          : null,
+      items: json['items'] != null
+          ? List<OrderItem>.from(
+              json['items'].map((x) => OrderItem.fromJson(x)),
+            )
+          : [],
+      price: json['price'] != null ? Price.fromJson(json['price']) : null,
+      payment: json['payment'] != null
+          ? Payment.fromJson(json['payment'])
+          : null,
+      status: json['status'],
+      timeline: json['timeline'] != null
+          ? List<Timeline>.from(
+              json['timeline'].map((x) => Timeline.fromJson(x)),
+            )
+          : [],
+      createdAt: json['createdAt'],
+      updatedAt: json['updatedAt'],
+    );
+  }
+}
+
+class Restaurant {
+  final String? id;
+  final String? name;
+
+  Restaurant({this.id, this.name});
+
+  factory Restaurant.fromJson(Map<String, dynamic> json) {
+    return Restaurant(id: json['_id'], name: json['name']);
+  }
+}
+
+class Customer {
+  final String? name;
+  final String? phone;
+
+  Customer({this.name, this.phone});
+
+  factory Customer.fromJson(Map<String, dynamic> json) {
+    return Customer(name: json['name'], phone: json['phone']);
+  }
+}
+
+class DeliveryAddress {
+  final String? name;
+  final String? phone;
+  final String? addressLine;
+  final String? city;
+  final String? pincode;
+  final double? lat;
+  final double? lng;
+
+  DeliveryAddress({
+    this.name,
+    this.phone,
+    this.addressLine,
+    this.city,
+    this.pincode,
+    this.lat,
+    this.lng,
+  });
+
+  factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
+    return DeliveryAddress(
+      name: json['name'],
+      phone: json['phone'],
+      addressLine: json['addressLine'],
+      city: json['city'],
+      pincode: json['pincode'],
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class OrderItem {
+  final String? itemId;
+  final String? name;
+  final int? quantity;
+  final int? basePrice;
+  final int? finalItemPrice;
+
+  OrderItem({
+    this.itemId,
+    this.name,
+    this.quantity,
+    this.basePrice,
+    this.finalItemPrice,
+  });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      itemId: json['itemId'],
+      name: json['name'],
+      quantity: json['quantity'],
+      basePrice: json['basePrice'],
+      finalItemPrice: json['finalItemPrice'],
+    );
+  }
+}
+
+class Price {
+  final num? itemsTotal;
+  final num? tax;
+  final num? deliveryFee;
+  final num? discount;
+  final num? grandTotal;
+
+  Price({
+    this.itemsTotal,
+    this.tax,
+    this.deliveryFee,
+    this.discount,
+    this.grandTotal,
+  });
+
+  factory Price.fromJson(Map<String, dynamic> json) {
+    return Price(
+      itemsTotal: json['itemsTotal'],
+      tax: json['tax'],
+      deliveryFee: json['deliveryFee'],
+      discount: json['discount'],
+      grandTotal: json['grandTotal'],
+    );
+  }
+}
+
+class Payment {
+  final String? method;
+  final String? status;
+  final String? transactionId;
+
+  Payment({this.method, this.status, this.transactionId});
+
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      method: json['method'],
+      status: json['status'],
+      transactionId: json['transactionId'],
+    );
+  }
+}
+
+class Timeline {
+  final String? status;
+  final String? at;
+
+  Timeline({this.status, this.at});
+
+  factory Timeline.fromJson(Map<String, dynamic> json) {
+    return Timeline(status: json['status'], at: json['at']);
+  }
+}

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
 import 'package:restro_app/Modules/Dashboard/view/menuscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
@@ -170,7 +171,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       child: Obx(
                         () => Text(
                           address.value,
-                          maxLines: 3, // 👈 second line allowed
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           softWrap: true,
                           style: GoogleFonts.poppins(fontSize: 14),
@@ -178,7 +179,53 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       ),
                     ),
 
-                    const SizedBox(width: 6),
+                    // 🛒 CART ICON (NEW)
+                    InkWell(
+                      onTap: () {
+                        Get.to(() => CartScreen()); // 🔥 OPEN CART
+                      },
+                      child: Stack(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 26,
+                              color: Color(0xFF8B0000),
+                            ),
+                          ),
+
+                          // 🔴 CART COUNT BADGE
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Obx(() {
+                              final cartCtrl = Get.find<CartController>();
+                              final count = cartCtrl.cartItems.length;
+
+                              if (count == 0) return const SizedBox();
+
+                              return CircleAvatar(
+                                radius: 8,
+                                backgroundColor: Colors.red,
+                                child: Text(
+                                  "$count",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    // 🔔 NOTIFICATION ICON
                     const Icon(Icons.notifications_none, size: 26),
                   ],
                 ),

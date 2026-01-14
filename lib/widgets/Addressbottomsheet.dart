@@ -120,8 +120,13 @@ class AddressSelector extends StatelessWidget {
                       elevation: 1,
                       child: ListTile(
                         onTap: () {
+                          // ✅ Address text
                           cartCtrl.selectedAddress.value =
                               "${adr.street}, ${adr.area}, ${adr.city}";
+
+                          // ✅ Address ID (THIS FIXES YOUR ISSUE)
+                          cartCtrl.selectedAddressId.value = adr.id ?? "";
+
                           Get.back();
                         },
 

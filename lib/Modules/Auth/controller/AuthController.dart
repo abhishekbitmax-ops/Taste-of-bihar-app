@@ -124,59 +124,77 @@ class Authcontroller extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      final url = ApiEndpoint.getUrl(ApiEndpoint.basicDetails);
 
+      final url = ApiEndpoint.getUrl(ApiEndpoint.basicDetails);
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      final mobile = await SharedPre.getMobile(); //  GET SAVED MOBILE
+      // 📱 Get verified mobile
+      final mobile = await SharedPre.getMobile();
       if (mobile.isEmpty) {
         Get.snackbar(
           "Error",
-          "No verified mobile found in storage",
+          "No verified mobile found",
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
         return;
       }
 
-      request.fields['mobile'] = mobile;
-      request.fields['name'] = name;
-      request.fields['email'] = email;
-      request.fields['gender'] = gender;
-      request.fields['dob'] = dob;
-      request.fields['location'] = jsonEncode({
-        "address": address,
-        "lat": lat,
-        "lng": lng,
+      // 🧾 Request Fields
+      request.fields.addAll({
+        "mobile": mobile,
+        "name": name,
+        "email": email,
+        "gender": gender,
+        "dob": dob,
+        "address[type]": "home",
+        "address[street]": address,
+        "address[lat]": lat.toString(),
+        "address[lng]": lng.toString(),
       });
 
+      // 📸 Profile Image
       if (imageFile != null) {
         request.files.add(
           await http.MultipartFile.fromPath('profile', imageFile.path),
         );
       }
 
-      var response = await request.send();
-      var resBody = await response.stream.bytesToString();
-      var data = jsonDecode(resBody);
-      debugPrint(data.toString());
+      // 🚀 Send request
+      final response = await request.send();
+      final resBody = await response.stream.bytesToString();
+      final data = jsonDecode(resBody);
+
+      debugPrint("BASIC DETAILS RESPONSE => $data");
 
       if (data["success"] == true) {
-        //  Save Tokens
-        if (data["tokens"] != null) {
+        // 🔐 Save Tokens
+        final tokens = data["tokens"];
+        if (tokens != null) {
           await SharedPre.saveTokens(
-            accessToken: data["tokens"]["accessToken"],
-            refreshToken: data["tokens"]["refreshToken"],
-            expiresIn: data["tokens"]["expiresIn"],
+            accessToken: tokens["accessToken"],
+            refreshToken: tokens["refreshToken"],
+            expiresIn: tokens["expiresIn"],
           );
         }
 
-        Get.snackbar("Success", "Registration successful!");
-        Get.offAll(() => BottomNavBar()); //  Now correct redirect
+        // (Optional) Save user basic info if needed later
+        // await SharedPre.saveUserId(data["user"]["_id"]);
+        // await SharedPre.saveUserName(data["user"]["name"]);
+
+        Get.snackbar(
+          "Success",
+          data["message"] ?? "Registration successful",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // 🏠 Redirect to Home
+        Get.offAll(() => BottomNavBar());
       } else {
         Get.snackbar(
           "Error",
-          data['message'] ?? "Submission failed",
+          data["message"] ?? "Submission failed",
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
+import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
+
+// ✅ correct model import
 
 class OrderDetailScreen extends StatelessWidget {
-  final OrderModel order;
+  final OrderData order;
 
   const OrderDetailScreen({super.key, required this.order});
 
@@ -38,25 +40,11 @@ class OrderDetailScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Order ID", style: GoogleFonts.poppins(fontSize: 12)),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B0000).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    order.status ?? "",
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: const Color(0xFF8B0000),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                Text(
+                  "Order ID - ${order.orderId ?? "N/A"}",
+                  style: GoogleFonts.poppins(fontSize: 12),
                 ),
+                _statusChip(order.status),
               ],
             ),
           ),
@@ -67,7 +55,7 @@ class OrderDetailScreen extends StatelessWidget {
           _sectionCard(
             title: "Restaurant",
             child: Text(
-              order.restaurant?.name ?? "",
+              order.restaurant?.name ?? "-",
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -92,7 +80,9 @@ class OrderDetailScreen extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      "${address.name}\n${address.addressLine}, ${address.city} - ${address.pincode}",
+                      "${address.name ?? ""}\n"
+                      "${address.addressLine ?? ""}, "
+                      "${address.city ?? ""} - ${address.pincode ?? ""}",
                       style: GoogleFonts.poppins(fontSize: 13),
                     ),
                   ),
@@ -106,7 +96,7 @@ class OrderDetailScreen extends StatelessWidget {
           _sectionCard(
             title: "Items",
             child: Column(
-              children: order.items!
+              children: (order.items ?? [])
                   .map(
                     (item) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -115,12 +105,12 @@ class OrderDetailScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              "${item.name} x${item.quantity}",
+                              "${item.name ?? ""} x${item.quantity ?? 0}",
                               style: GoogleFonts.poppins(fontSize: 13),
                             ),
                           ),
                           Text(
-                            "₹${item.finalItemPrice}",
+                            "₹${item.finalItemPrice ?? 0}",
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -157,7 +147,8 @@ class OrderDetailScreen extends StatelessWidget {
           _sectionCard(
             title: "Payment",
             child: Text(
-              "${order.payment?.method} • ${order.payment?.status}",
+              "${order.payment?.method ?? "-"} • "
+              "${order.payment?.status ?? "-"}",
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -171,7 +162,7 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  // ---------- HELPERS ----------
+  // ================= HELPERS =================
 
   Widget _sectionCard({String? title, required Widget child}) {
     return Container(
@@ -203,7 +194,7 @@ class OrderDetailScreen extends StatelessWidget {
 
   Widget _billRow(
     String label,
-    int? value, {
+    num? value, {
     bool isBold = false,
     bool isDiscount = false,
   }) {
@@ -220,7 +211,7 @@ class OrderDetailScreen extends StatelessWidget {
             ),
           ),
           Text(
-            "${isDiscount ? "-" : ""}₹${value ?? 0}",
+            "${isDiscount && (value ?? 0) > 0 ? "-" : ""}₹${value ?? 0}",
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
@@ -228,6 +219,30 @@ class OrderDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _statusChip(String? status) {
+    Color color = const Color(0xFF8B0000);
+
+    if (status == "READY") color = Colors.green;
+    if (status == "REJECTED") color = Colors.red;
+    if (status == "PLACED") color = Colors.orange;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status ?? "-",
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 
 class ApplyCouponScreen extends StatelessWidget {
@@ -53,26 +54,27 @@ class ApplyCouponScreen extends StatelessWidget {
                 ),
                 Obx(
                   () => TextButton(
-                    onPressed: cartCtrl.isLoading.value
+                    onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
                         ? null
                         : () async {
-                            if (couponCtrl.text.trim().isEmpty) {
-                              Get.snackbar(
-                                "Error",
-                                "Please enter coupon code",
-                              );
+                            final code = couponCtrl.text.trim();
+
+                            if (code.isEmpty) {
+                              Get.snackbar("Error", "Please enter coupon code");
                               return;
                             }
 
-                            final success = await cartCtrl.applyCouponApi(
-                              couponCtrl.text.trim(),
-                            );
+                            final success = await cartCtrl.applyCouponApi(code);
 
                             if (success) {
-                              Get.back(); // 👈 back to CartScreen
+                              Get.to(CartScreen()); // ✅ ONLY THIS IS NEEDED
                             }
                           },
-                    child: cartCtrl.isLoading.value
+
+                    child:
+                        cartCtrl.applyingCouponCode.value.isNotEmpty &&
+                            cartCtrl.applyingCouponCode.value ==
+                                couponCtrl.text.trim()
                         ? const SizedBox(
                             height: 16,
                             width: 16,
@@ -176,16 +178,16 @@ class _CouponTile extends StatelessWidget {
           ),
           Obx(
             () => TextButton(
-              onPressed: cartCtrl.isLoading.value
+              onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
                   ? null
                   : () async {
-                      final success =
-                          await cartCtrl.applyCouponApi(code);
+                      final success = await cartCtrl.applyCouponApi(code);
                       if (success) {
-                        Get.back(); // 👈 back to CartScreen
+                        Get.to(CartScreen()); // ✅ back to CartScreen
                       }
                     },
-              child: cartCtrl.isLoading.value
+
+              child: cartCtrl.applyingCouponCode.value == code
                   ? const SizedBox(
                       height: 16,
                       width: 16,

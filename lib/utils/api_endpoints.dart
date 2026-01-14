@@ -20,6 +20,8 @@ class ApiEndpoint {
   static const String ClearCart = "/cart/clear";
   static const String ApplyCoupan = "/cart/coupon";
   static const String Orderhistorycard = "/order/history";
+  static const String Orderplace = "/order/place";
+  static const String PaymentVerify = "/payment/verify";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

@@ -450,32 +450,56 @@ class CartScreen extends StatelessWidget {
                     flex: 5,
                     child: SizedBox(
                       height: 48,
-                      child: ElevatedButton(
-                        onPressed: cartCtrl.isLoading.value
-                            ? null
-                            : () {
-                                // handle payment
-                                print(
-                                  "Pay via ${cartCtrl.selectedPaymentMethod.value}",
-                                );
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B0000),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Obx(
-                          () => Text(
-                            cartCtrl.selectedPaymentMethod.value ==
-                                    "Cash on Delivery"
-                                ? "Place Order"
-                                : "Pay ₹${s?.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                      child: Obx(
+                        () => ElevatedButton(
+                          onPressed: cartCtrl.isPlacingOrder.value
+                              ? null
+                              : () {
+                                  if (cartCtrl
+                                      .selectedAddressId
+                                      .value
+                                      .isEmpty) {
+                                    Get.snackbar(
+                                      "Address Required",
+                                      "Please select a delivery address",
+                                    );
+                                    return;
+                                  }
+
+                                  final paymentMethod =
+                                      cartCtrl.selectedPaymentMethod.value ==
+                                          "Cash on Delivery"
+                                      ? "COD"
+                                      : "UPI";
+
+                                  cartCtrl.placeOrder(
+                                    addressId: cartCtrl.selectedAddressId.value,
+                                    paymentMethod: paymentMethod,
+                                  );
+                                },
+
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B0000),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
+                          child: cartCtrl.isPlacingOrder.value
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  "Place Order",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
