@@ -645,3 +645,66 @@ class Timeline {
     return Timeline(status: json['status'], at: json['at']);
   }
 }
+
+
+
+
+// Banner section ----------model ------
+
+
+class BannerResponse {
+  final bool? success;
+  final String? message;
+  final List<BannerItem>? data;
+
+  BannerResponse({
+    this.success,
+    this.message,
+    this.data,
+  });
+
+  factory BannerResponse.fromJson(Map<String, dynamic> json) {
+    return BannerResponse(
+      success: json['success'],
+      message: json['message'],
+      data: (json['data'] as List?)
+          ?.map((e) => BannerItem.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+class BannerItem {
+  final String? id;
+  final String? title;
+  final String? description;
+  final String? image;
+  final bool? isActive;
+  final String? createdAt;
+  final String? updatedAt;
+  final int? order;
+
+  BannerItem({
+    this.id,
+    this.title,
+    this.description,
+    this.image,
+    this.isActive,
+    this.createdAt,
+    this.updatedAt,
+    this.order,
+  });
+
+  factory BannerItem.fromJson(Map<String, dynamic> json) {
+    return BannerItem(
+      id: json['_id'],
+      title: json['title'],
+      description: json['description'],
+      image: json['image'],
+      isActive: json['isActive'],
+      createdAt: json['createdAt'],
+      updatedAt: json['updatedAt'],
+      order: json['order'],
+    );
+  }
+}

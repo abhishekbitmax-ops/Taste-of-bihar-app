@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,9 @@ class Authcontroller extends GetxController {
   final mobileCtrl = TextEditingController();
   var isLoading = false.obs;
   var isDataBound = false.obs;
+  var isBannerLoading = true.obs;
+  var isCategoryLoading = true.obs;
+  var isHomeRefreshing = false.obs;
 
   String getCategoryId(CategoryData cat) => cat.id ?? "";
 
@@ -25,6 +29,7 @@ class Authcontroller extends GetxController {
     super.onInit();
     fetchAddresses();
     fetchCategories();
+    fetchBanners();
   }
 
   Future<void> sendOtp() async {
@@ -221,6 +226,8 @@ class Authcontroller extends GetxController {
 
   Future<void> fetchCategories() async {
     try {
+      isCategoryLoading(true);
+
       String token = await SharedPre.getAccessToken();
 
       final res = await http.get(
@@ -233,12 +240,12 @@ class Authcontroller extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         categoryResponse = CategoryResponse.fromJson(jsonDecode(res.body));
-        if (categoryResponse?.data != null) {
-          categories.value = categoryResponse!.data!; // 👈 assign list
-        }
+        categories.value = categoryResponse?.data ?? [];
       }
     } catch (e) {
       debugPrint("Category API Error: $e");
+    } finally {
+      isCategoryLoading(false);
     }
   }
 
@@ -530,6 +537,82 @@ class Authcontroller extends GetxController {
       return false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Banner controller method is here -----
+
+  final PageController pageController = PageController();
+
+  var banners = <BannerItem>[].obs;
+
+  var currentIndex = 0.obs;
+
+  Timer? _timer;
+
+  Future<void> fetchBanners() async {
+    try {
+      isBannerLoading(true);
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final res = await http.get(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.GetBanners)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final decoded = jsonDecode(res.body);
+        final response = BannerResponse.fromJson(decoded);
+
+        banners.value = response.data ?? [];
+
+        /// sort by order
+        banners.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+
+        _startAutoScroll();
+      }
+    } catch (_) {
+      banners.clear();
+    } finally {
+      isBannerLoading(false);
+    }
+  }
+
+  void _startAutoScroll() {
+    _timer?.cancel();
+
+    if (banners.length <= 1) return;
+
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      currentIndex.value = (currentIndex.value + 1) % banners.length;
+
+      pageController.animateToPage(
+        currentIndex.value,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    pageController.dispose();
+    super.onClose();
+  }
+
+  Future<void> refreshHome() async {
+    try {
+      isHomeRefreshing(true);
+
+      await Future.wait([fetchBanners(), fetchCategories()]);
+    } finally {
+      isHomeRefreshing(false);
     }
   }
 }

@@ -55,460 +55,476 @@ class CartScreen extends StatelessWidget {
             return _emptyCartView();
           }
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              // TOP BAR
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Get.offAll(BottomNavBar(initialIndex: 0)),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 24,
-                        color: Color(0xFF8B0000),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      "Cart",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8B0000),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.favorite_border, color: Color(0xFF8B0000)),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.more_horiz, color: Color(0xFF8B0000)),
-                    const SizedBox(width: 8),
-                    CircleAvatar(
-                      radius: 11,
-                      backgroundColor: const Color(0xFF8B0000),
-                      child: Text(
-                        "${s?.itemCount ?? 0}",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // RESTAURANT SECTION
-              if (restaurant != null)
-                Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        restaurant.image ?? "",
-                        height: 46,
-                        width: 46,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          "assets/images/popular.png",
-                          height: 46,
-                          width: 46,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        restaurant.name ?? "",
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.star, size: 15),
-                    const SizedBox(width: 4),
-                    Text(
-                      "4.5  (5k+ ratings) • ",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-              Divider(),
-              const SizedBox(height: 10),
-
-              // CART ITEMS
-              if (cartCtrl.cartItems.isEmpty)
-                const Center(child: Text("Your cart is empty"))
-              else
-                for (int i = 0; i < cartCtrl.cartItems.length; i++)
-                  _CartItemTile(index: i),
-
-              const SizedBox(height: 20),
-
-              // 🎟 Apply Coupon Card
-              InkWell(
-                onTap: () => Get.to(() => ApplyCouponScreen()),
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 1,
-                    vertical: 5,
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF1F1), Color(0xFFFFE0E0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: const Color(0xFF8B0000).withOpacity(0.25),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.15),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+          return RefreshIndicator(
+            color: const Color(0xFF8B0000),
+            onRefresh: () async {
+              await cartCtrl.fetchCartApi();
+            },
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                // TOP BAR
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
                   child: Row(
                     children: [
-                      // 🎟️ COUPON ICON WITH BADGE
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF8B0000),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.local_offer,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-
-                          // 🔥 10% OFF BADGE
-                          Positioned(
-                            top: -6,
-                            right: -10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                "10% OFF",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      InkWell(
+                        onTap: () => Get.offAll(BottomNavBar(initialIndex: 0)),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          size: 24,
+                          color: Color(0xFF8B0000),
+                        ),
                       ),
-
+                      const SizedBox(width: 12),
+                      Text(
+                        "Cart",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF8B0000),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.favorite_border,
+                        color: Color(0xFF8B0000),
+                      ),
                       const SizedBox(width: 16),
+                      const Icon(Icons.more_horiz, color: Color(0xFF8B0000)),
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundColor: const Color(0xFF8B0000),
+                        child: Text(
+                          "${s?.itemCount ?? 0}",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-                      // TEXT
+                const SizedBox(height: 14),
+
+                // RESTAURANT SECTION
+                if (restaurant != null)
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          restaurant.image ?? "",
+                          height: 46,
+                          width: 46,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            "assets/images/popular.png",
+                            height: 46,
+                            width: 46,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Text(
+                          restaurant.name ?? "",
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.star, size: 15),
+                      const SizedBox(width: 4),
+                      Text(
+                        "4.5  (5k+ ratings) • ",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+                Divider(),
+                const SizedBox(height: 10),
+
+                // CART ITEMS
+                if (cartCtrl.cartItems.isEmpty)
+                  const Center(child: Text("Your cart is empty"))
+                else
+                  for (int i = 0; i < cartCtrl.cartItems.length; i++)
+                    _CartItemTile(index: i),
+
+                const SizedBox(height: 20),
+
+                // 🎟 Apply Coupon Card
+                InkWell(
+                  onTap: () => Get.to(() => ApplyCouponScreen()),
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 1,
+                      vertical: 5,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFF1F1), Color(0xFFFFE0E0)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFF8B0000).withOpacity(0.25),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // 🎟️ COUPON ICON WITH BADGE
+                        Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            Text(
-                              "Apply Coupon",
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF8B0000),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF8B0000),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.local_offer,
+                                color: Colors.white,
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Save 10% instantly on this order",
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.black87,
+
+                            // 🔥 10% OFF BADGE
+                            Positioned(
+                              top: -6,
+                              right: -10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  "10% OFF",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
 
-                      // 👉 ARROW
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 18,
-                        color: Color(0xFF8B0000),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 25),
-              Divider(),
+                        const SizedBox(width: 16),
 
-              // BILL DETAILS
-              if (s != null) ...[
-                const Text(
-                  "Bill Details",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                _buildBillRow("Subtotal", "₹${s.subtotal ?? 0}"),
-                _buildBillRow("Tax", "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}"),
-                _buildBillRow(
-                  "Delivery",
-                  s.deliveryCharge == 0 ? "Free" : "₹${s.deliveryCharge ?? 0}",
-                ),
-                _buildBillRow(
-                  "Discount",
-                  "-₹${s.discount?.toStringAsFixed(2) ?? "0.00"}",
-                ),
-                const Divider(),
-                _buildBillRow(
-                  "Grand Total",
-                  "₹${s.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
-                  isBold: true,
-                  color: const Color(0xFF8B0000),
-                ),
-              ],
-
-              const SizedBox(height: 20),
-
-              // 📍 Delivery Address Selector Card
-              InkWell(
-                onTap: () => Get.bottomSheet(
-                  const AddressSelector(heightFactor: 0.5),
-                  isScrollControlled: true,
-                ),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      // 📍 Location Icon
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B0000).withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Color(0xFF8B0000),
-                          size: 20,
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // Address Text
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Deliver to",
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Obx(
-                              () => Text(
-                                cartCtrl.selectedAddress.value,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        // TEXT
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Apply Coupon",
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF8B0000),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Save 10% instantly on this order",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
                                   color: Colors.black87,
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
 
-                      // Dropdown Arrow
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
+                        // 👉 ARROW
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 18,
+                          color: Color(0xFF8B0000),
                         ),
-                        child: const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.black54,
-                          size: 22,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 25),
+                Divider(),
 
-              const SizedBox(height: 20),
-
-              // PAY BUTTON
-              // PAYMENT METHOD + PAY BUTTON ROW
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 🔽 PAYMENT DROPDOWN
-                  Expanded(
-                    flex: 5,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Obx(
-                        () => DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: cartCtrl.selectedPaymentMethod.value,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                            items: cartCtrl.paymentMethods
-                                .map(
-                                  (method) => DropdownMenuItem(
-                                    value: method,
-                                    child: Text(
-                                      method,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                cartCtrl.selectedPaymentMethod.value = value;
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
+                // BILL DETAILS
+                if (s != null) ...[
+                  const Text(
+                    "Bill Details",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-
-                  const SizedBox(width: 12),
-
-                  // 💳 PAY BUTTON
-                  Expanded(
-                    flex: 5,
-                    child: SizedBox(
-                      height: 48,
-                      child: Obx(
-                        () => ElevatedButton(
-                          onPressed: cartCtrl.isPlacingOrder.value
-                              ? null
-                              : () {
-                                  if (cartCtrl
-                                      .selectedAddressId
-                                      .value
-                                      .isEmpty) {
-                                    Get.snackbar(
-                                      "Address Required",
-                                      "Please select a delivery address",
-                                    );
-                                    return;
-                                  }
-
-                                  final paymentMethod =
-                                      cartCtrl.selectedPaymentMethod.value ==
-                                          "Cash on Delivery"
-                                      ? "COD"
-                                      : "UPI";
-
-                                  cartCtrl.placeOrder(
-                                    addressId: cartCtrl.selectedAddressId.value,
-                                    paymentMethod: paymentMethod,
-                                  );
-                                },
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B0000),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: cartCtrl.isPlacingOrder.value
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  "Place Order",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 6),
+                  _buildBillRow("Subtotal", "₹${s.subtotal ?? 0}"),
+                  _buildBillRow(
+                    "Tax",
+                    "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}",
+                  ),
+                  _buildBillRow(
+                    "Delivery",
+                    s.deliveryCharge == 0
+                        ? "Free"
+                        : "₹${s.deliveryCharge ?? 0}",
+                  ),
+                  _buildBillRow(
+                    "Discount",
+                    "-₹${s.discount?.toStringAsFixed(2) ?? "0.00"}",
+                  ),
+                  const Divider(),
+                  _buildBillRow(
+                    "Grand Total",
+                    "₹${s.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
+                    isBold: true,
+                    color: const Color(0xFF8B0000),
                   ),
                 ],
-              ),
 
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 20),
+
+                // 📍 Delivery Address Selector Card
+                InkWell(
+                  onTap: () => Get.bottomSheet(
+                    const AddressSelector(heightFactor: 0.5),
+                    isScrollControlled: true,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        // 📍 Location Icon
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B0000).withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Color(0xFF8B0000),
+                            size: 20,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // Address Text
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Deliver to",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Obx(
+                                () => Text(
+                                  cartCtrl.selectedAddress.value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Dropdown Arrow
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.black54,
+                            size: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // PAY BUTTON
+                // PAYMENT METHOD + PAY BUTTON ROW
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // 🔽 PAYMENT DROPDOWN
+                    Expanded(
+                      flex: 5,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Obx(
+                          () => DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: cartCtrl.selectedPaymentMethod.value,
+                              isExpanded: true,
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                              items: cartCtrl.paymentMethods
+                                  .map(
+                                    (method) => DropdownMenuItem(
+                                      value: method,
+                                      child: Text(
+                                        method,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  cartCtrl.selectedPaymentMethod.value = value;
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // 💳 PAY BUTTON
+                    Expanded(
+                      flex: 5,
+                      child: SizedBox(
+                        height: 48,
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed: cartCtrl.isPlacingOrder.value
+                                ? null
+                                : () {
+                                    if (cartCtrl
+                                        .selectedAddressId
+                                        .value
+                                        .isEmpty) {
+                                      Get.snackbar(
+                                        "Address Required",
+                                        "Please select a delivery address",
+                                      );
+                                      return;
+                                    }
+
+                                    final paymentMethod =
+                                        cartCtrl.selectedPaymentMethod.value ==
+                                            "Cash on Delivery"
+                                        ? "COD"
+                                        : "UPI";
+
+                                    cartCtrl.placeOrder(
+                                      addressId:
+                                          cartCtrl.selectedAddressId.value,
+                                      paymentMethod: paymentMethod,
+                                    );
+                                  },
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B0000),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: cartCtrl.isPlacingOrder.value
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    "Place Order",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
           );
         }),
       ),

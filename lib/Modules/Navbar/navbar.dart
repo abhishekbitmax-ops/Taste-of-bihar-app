@@ -7,6 +7,7 @@ import 'package:restro_app/Modules/Dashboard/view/dsahboard.dart';
 import 'package:restro_app/Modules/Dashboard/view/menuscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/ProfileSection/view/Profile.dart';
+import 'package:restro_app/widgets/Comingsoon.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int initialIndex; // ✔ initial index support
@@ -22,7 +23,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> screens = [
     const FoodHomeScreen(),
-    const Dineinscreen(),
+    const ComingSoonScreen(),
     MenuScreen(),
     ProfileHomeScreen(),
   ];

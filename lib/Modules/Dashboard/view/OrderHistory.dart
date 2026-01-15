@@ -5,11 +5,13 @@ import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/widgets/OrderHistorydetails.dart';
+import 'package:restro_app/widgets/OrderTackingScreen.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
   OrderHistoryScreen({super.key});
 
   final CartController ctrl = Get.put(CartController());
+  late Map<String, dynamic> order;
 
   @override
   Widget build(BuildContext context) {
@@ -219,11 +221,43 @@ class _OrderHistoryCard extends StatelessWidget {
                         color: const Color(0xFF8B0000),
                       ),
                     ),
-                    Text(
-                      formatOrderDate(order.createdAt),
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
+
+                    // 🔥 BEAUTIFIED ORDER TRACK BUTTON
+                    SizedBox(
+                      height: 38,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final oid = order.orderId;
+
+                          if (oid == null || oid.isEmpty) {
+                            Get.snackbar("Error", "Invalid Order ID");
+                            return;
+                          }
+
+                          Get.to(() => OrderTrackingScreen(orderId: oid));
+                        },
+                        icon: const Icon(
+                          Icons.location_searching,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          "Track Order",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B0000),
+                          elevation: 4,
+                          shadowColor: Colors.red.withOpacity(0.3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                        ),
                       ),
                     ),
                   ],
