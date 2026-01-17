@@ -11,6 +11,8 @@ import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'dart:convert';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 import 'package:restro_app/utils/api_endpoints.dart';
 
@@ -152,16 +154,36 @@ class Authcontroller extends GetxController {
         "email": email,
         "gender": gender,
         "dob": dob,
-        "address[type]": "home",
-        "address[street]": address,
-        "address[lat]": lat.toString(),
-        "address[lng]": lng.toString(),
+
+        "addresses[0][type]": "home",
+        "addresses[0][street]": address,
+        "addresses[0][coordinates][lat]": lat.toString(),
+        "addresses[0][coordinates][lng]": lng.toString(),
       });
 
       // 📸 Profile Image
       if (imageFile != null) {
+        final ext = path.extension(imageFile.path).toLowerCase();
+
+        MediaType mediaType;
+
+        if (ext == '.png') {
+          mediaType = MediaType('image', 'png');
+        } else if (ext == '.webp') {
+          mediaType = MediaType('image', 'webp');
+        } else if (ext == '.avif') {
+          mediaType = MediaType('image', 'avif');
+        } else {
+          // default JPG
+          mediaType = MediaType('image', 'jpeg');
+        }
+
         request.files.add(
-          await http.MultipartFile.fromPath('profile', imageFile.path),
+          await http.MultipartFile.fromPath(
+            'profile',
+            imageFile.path,
+            contentType: mediaType,
+          ),
         );
       }
 
@@ -271,7 +293,7 @@ class Authcontroller extends GetxController {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         var jsonData = jsonDecode(response.body);
         var data = CategoryItemsResponse.fromJson(jsonData);
 
@@ -599,13 +621,6 @@ class Authcontroller extends GetxController {
     });
   }
 
-  @override
-  void onClose() {
-    _timer?.cancel();
-    pageController.dispose();
-    super.onClose();
-  }
-
   Future<void> refreshHome() async {
     try {
       isHomeRefreshing(true);
@@ -615,4 +630,6 @@ class Authcontroller extends GetxController {
       isHomeRefreshing(false);
     }
   }
+
+  // Popluar Dishes api method
 }

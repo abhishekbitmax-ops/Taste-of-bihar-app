@@ -18,7 +18,7 @@ class _MenuScreenState extends State<MenuScreen> {
   String selectedCategory = "";
   String selectedCategoryId = "";
 
-  final Authcontroller authCtrl = Get.put(Authcontroller());
+  final Authcontroller authCtrl = Get.find<Authcontroller>();
 
   @override
   void initState() {

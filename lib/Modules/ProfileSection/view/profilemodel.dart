@@ -382,7 +382,10 @@ class OrderTrackingData {
   final String? id;
   final String? status;
   final List<OrderTimeline>? timeline;
-  final EstimatedDelivery? estimatedDelivery;
+
+  /// 🔥 Can be String OR Map (API + Socket safe)
+  final dynamic estimatedDelivery;
+
   final Restaurant? restaurant;
   final DeliveryAddress? deliveryAddress;
   final List<OrderItem>? items;
@@ -416,9 +419,7 @@ class OrderTrackingData {
       timeline: (json['timeline'] as List?)
           ?.map((e) => OrderTimeline.fromJson(e))
           .toList(),
-      estimatedDelivery: json['estimatedDelivery'] != null
-          ? EstimatedDelivery.fromJson(json['estimatedDelivery'])
-          : null,
+      estimatedDelivery: json['estimatedDelivery'],
       restaurant: json['restaurant'] != null
           ? Restaurant.fromJson(json['restaurant'])
           : null,
@@ -429,12 +430,65 @@ class OrderTrackingData {
           ?.map((e) => OrderItem.fromJson(e))
           .toList(),
       price: json['price'] != null ? Price.fromJson(json['price']) : null,
-      payment:
-          json['payment'] != null ? Payment.fromJson(json['payment']) : null,
-      delivery:
-          json['delivery'] != null ? Delivery.fromJson(json['delivery']) : null,
+      payment: json['payment'] != null
+          ? Payment.fromJson(json['payment'])
+          : null,
+      delivery: json['delivery'] != null
+          ? Delivery.fromJson(json['delivery'])
+          : null,
       createdAt: json['createdAt'],
       canCancel: json['canCancel'],
+    );
+  }
+
+  // 🔥 SOCKET HELPER
+  OrderTrackingData copyWith({
+    String? status,
+    List<OrderTimeline>? timeline,
+    dynamic estimatedDelivery,
+    Payment? payment,
+    Delivery? delivery,
+    bool? canCancel,
+  }) {
+    return OrderTrackingData(
+      orderId: orderId,
+      id: id,
+      status: status ?? this.status,
+      timeline: timeline ?? this.timeline,
+      estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
+      restaurant: restaurant,
+      deliveryAddress: deliveryAddress,
+      items: items,
+      price: price,
+      payment: payment ?? this.payment,
+      delivery: delivery ?? this.delivery,
+      createdAt: createdAt,
+      canCancel: canCancel ?? this.canCancel,
+    );
+  }
+
+  /// 🔌 SOCKET MERGE
+  factory OrderTrackingData.fromSocket({
+    required OrderTrackingData old,
+    required Map<String, dynamic> json,
+  }) {
+    return old.copyWith(
+      status: json['status'] ?? old.status,
+      estimatedDelivery: json.containsKey('estimatedDelivery')
+          ? json['estimatedDelivery']
+          : old.estimatedDelivery,
+      timeline:
+          (json['timeline'] as List?)
+              ?.map((e) => OrderTimeline.fromJson(e))
+              .toList() ??
+          old.timeline,
+      payment: json['payment'] != null
+          ? Payment.fromJson(json['payment'])
+          : old.payment,
+      delivery: json['delivery'] != null
+          ? Delivery.fromJson(json['delivery'])
+          : old.delivery,
+      canCancel: json['canCancel'] ?? old.canCancel,
     );
   }
 }
@@ -446,26 +500,7 @@ class OrderTimeline {
   OrderTimeline({this.at, this.status});
 
   factory OrderTimeline.fromJson(Map<String, dynamic> json) {
-    return OrderTimeline(
-      at: json['at'],
-      status: json['status'],
-    );
-  }
-}
-
-class EstimatedDelivery {
-  final String? time;
-  final int? minutes;
-  final String? message;
-
-  EstimatedDelivery({this.time, this.minutes, this.message});
-
-  factory EstimatedDelivery.fromJson(Map<String, dynamic> json) {
-    return EstimatedDelivery(
-      time: json['time'],
-      minutes: json['minutes'],
-      message: json['message'],
-    );
+    return OrderTimeline(at: json['at'], status: json['status']);
   }
 }
 
@@ -476,10 +511,7 @@ class Restaurant {
   Restaurant({this.id, this.name});
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
-    return Restaurant(
-      id: json['_id'],
-      name: json['name'],
-    );
+    return Restaurant(id: json['_id'], name: json['name']);
   }
 }
 
@@ -534,8 +566,7 @@ class OrderItem {
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      itemId:
-          json['itemId'] != null ? ItemRef.fromJson(json['itemId']) : null,
+      itemId: json['itemId'] != null ? ItemRef.fromJson(json['itemId']) : null,
       name: json['name'],
       quantity: json['quantity'],
       basePrice: json['basePrice'],
@@ -553,11 +584,7 @@ class ItemRef {
   ItemRef({this.id, this.name, this.image});
 
   factory ItemRef.fromJson(Map<String, dynamic> json) {
-    return ItemRef(
-      id: json['_id'],
-      name: json['name'],
-      image: json['image'],
-    );
+    return ItemRef(id: json['_id'], name: json['name'], image: json['image']);
   }
 }
 
@@ -605,13 +632,212 @@ class Payment {
 
 class Delivery {
   final String? otp;
+  final String? assignedAt;
+  final String? otpCreatedAt;
+  final String? pickedUpAt;
+  final String? deliveredAt;
+  final DeliveryPartner? partner;
 
-  Delivery({this.otp});
+  Delivery({
+    this.otp,
+    this.assignedAt,
+    this.otpCreatedAt,
+    this.pickedUpAt,
+    this.deliveredAt,
+    this.partner,
+  });
 
   factory Delivery.fromJson(Map<String, dynamic> json) {
     return Delivery(
       otp: json['otp'],
+      assignedAt: json['assignedAt'],
+      otpCreatedAt: json['otpCreatedAt'],
+      pickedUpAt: json['pickedUpAt'],
+      deliveredAt: json['deliveredAt'],
+      partner: json['partner'] != null
+          ? DeliveryPartner.fromJson(json['partner'])
+          : null,
     );
   }
 }
 
+class DeliveryPartner {
+  final String? id;
+  final String? name;
+  final String? phone;
+  final Vehicle? vehicle;
+
+  DeliveryPartner({this.id, this.name, this.phone, this.vehicle});
+
+  factory DeliveryPartner.fromJson(Map<String, dynamic> json) {
+    return DeliveryPartner(
+      id: json['_id'],
+      name: json['name'],
+      phone: json['phone'],
+      vehicle: json['vehicle'] != null
+          ? Vehicle.fromJson(json['vehicle'])
+          : null,
+    );
+  }
+}
+
+class Vehicle {
+  final String? type;
+
+  Vehicle({this.type});
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(type: json['type']);
+  }
+}
+
+// popluar dishes------------------------------
+
+class ProductResponse {
+  final bool? success;
+  final int? count;
+  final List<ProductData>? data;
+
+  ProductResponse({this.success, this.count, this.data});
+
+  factory ProductResponse.fromJson(Map<String, dynamic> json) {
+    return ProductResponse(
+      success: json['success'],
+      count: json['count'],
+      data: json['data'] != null
+          ? List<ProductData>.from(
+              json['data'].map((x) => ProductData.fromJson(x)),
+            )
+          : null,
+    );
+  }
+}
+
+class ProductData {
+  final int? totalSold;
+  final String? id;
+  final String? name;
+  final String? image;
+  final int? price;
+  final String? description;
+  final bool? isVeg;
+  final double? rating;
+
+  ProductData({
+    this.totalSold,
+    this.id,
+    this.name,
+    this.image,
+    this.price,
+    this.description,
+    this.isVeg,
+    this.rating,
+  });
+
+  factory ProductData.fromJson(Map<String, dynamic> json) {
+    return ProductData(
+      totalSold: json['totalSold'],
+      id: json['_id'],
+      name: json['name'],
+      image: json['image'],
+      price: json['price'],
+      description: json['description'],
+      isVeg: json['isVeg'],
+      rating: json['rating'] != null
+          ? (json['rating'] as num).toDouble()
+          : null,
+    );
+  }
+}
+
+// Get multiple apply coupan list model class
+
+class CouponResponse {
+  final bool? success;
+  final String? message;
+  final List<Coupon>? data;
+
+  CouponResponse({this.success, this.message, this.data});
+
+  factory CouponResponse.fromJson(Map<String, dynamic> json) {
+    return CouponResponse(
+      success: json['success'] as bool?,
+      message: json['message'] as String?,
+      data: json['data'] != null
+          ? List<Coupon>.from(json['data'].map((x) => Coupon.fromJson(x)))
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'success': success,
+      'message': message,
+      'data': data?.map((x) => x.toJson()).toList(),
+    };
+  }
+}
+
+class Coupon {
+  final String? id;
+  final String? code;
+  final String? description;
+  final String? discountType;
+  final int? value;
+  final int? minOrderValue;
+  final int? maxDiscountLimit;
+  final bool? isActive;
+  final String? expiryDate;
+  final int? usageLimit;
+  final String? createdAt;
+  final String? updatedAt;
+
+  Coupon({
+    this.id,
+    this.code,
+    this.description,
+    this.discountType,
+    this.value,
+    this.minOrderValue,
+    this.maxDiscountLimit,
+    this.isActive,
+    this.expiryDate,
+    this.usageLimit,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory Coupon.fromJson(Map<String, dynamic> json) {
+    return Coupon(
+      id: json['_id'] as String?,
+      code: json['code'] as String?,
+      description: json['description'] as String?,
+      discountType: json['discountType'] as String?,
+      value: json['value'] as int?,
+      minOrderValue: json['minOrderValue'] as int?,
+      maxDiscountLimit: json['maxDiscountLimit'] as int?,
+      isActive: json['isActive'] as bool?,
+      expiryDate: json['expiryDate'] as String?,
+      usageLimit: json['usageLimit'] as int?,
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'code': code,
+      'description': description,
+      'discountType': discountType,
+      'value': value,
+      'minOrderValue': minOrderValue,
+      'maxDiscountLimit': maxDiscountLimit,
+      'isActive': isActive,
+      'expiryDate': expiryDate,
+      'usageLimit': usageLimit,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
+  }
+}

@@ -146,7 +146,6 @@ class ProfileHomeScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // HEADER
-                      // HEADER
                       Stack(
                         children: [
                           Container(
@@ -160,34 +159,38 @@ class ProfileHomeScreen extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 5.w),
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const SizedBox(height: 18),
-                                  Center(
-                                    child: CircleAvatar(
-                                      radius: 38,
-                                      backgroundColor: Colors.white,
-                                      child: CircleAvatar(
-                                        radius: 35,
-                                        backgroundColor: Colors.white,
-                                        backgroundImage: user.profile != null
-                                            ? NetworkImage(
-                                                "${ApiEndpoint.baseUrl}/image/${user.profile}",
-                                              )
-                                            : const AssetImage(
-                                                "assets/images/profile.jpg",
-                                              ),
-                                        onBackgroundImageError: (_, __) {},
-                                        child: const Icon(
-                                          Icons.person,
-                                          size: 35,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ),
+                                  CircleAvatar(
+                                    radius: 35,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage:
+                                        (user.profile != null &&
+                                            user.profile!.isNotEmpty)
+                                        ? NetworkImage(user.profile!)
+                                        : null,
+
+                                    // ✅ ERROR HANDLER ONLY WHEN IMAGE EXISTS
+                                    onBackgroundImageError:
+                                        (user.profile != null &&
+                                            user.profile!.isNotEmpty)
+                                        ? (_, __) {}
+                                        : null,
+
+                                    child:
+                                        (user.profile == null ||
+                                            user.profile!.isEmpty)
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 35,
+                                            color: Colors.black54,
+                                          )
+                                        : null,
                                   ),
+
                                   const SizedBox(height: 10),
                                   Center(
                                     child: Column(
@@ -211,7 +214,6 @@ class ProfileHomeScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 14),
                                 ],
                               ),
                             ),
@@ -254,11 +256,7 @@ class ProfileHomeScreen extends StatelessWidget {
                               "View your order history",
                               onTap: () => Get.to(OrderHistoryScreen()),
                             ),
-                            _quickCard(
-                              Icons.favorite,
-                              "Favorites",
-                              "Your saved restaurants",
-                            ),
+
                             _quickCard(
                               Icons.location_on,
                               "My Addresses",
@@ -267,11 +265,6 @@ class ProfileHomeScreen extends StatelessWidget {
                                 const AddressSelector(heightFactor: 1),
                                 isScrollControlled: true,
                               ),
-                            ),
-                            _quickCard(
-                              Icons.payment,
-                              "Payments",
-                              "Manage payment",
                             ),
                           ],
                         ),

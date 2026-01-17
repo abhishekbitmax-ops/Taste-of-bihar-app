@@ -20,7 +20,9 @@ class FoodHomeScreen extends StatefulWidget {
 }
 
 class _FoodHomeScreenState extends State<FoodHomeScreen> {
-  final Authcontroller authCtrl = Get.put(Authcontroller());
+  final Authcontroller authCtrl = Get.find<Authcontroller>();
+  final CartController popularCtrl = Get.find<CartController>();
+
   RxString address = "Fetching location...".obs;
 
   @override
@@ -28,21 +30,21 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     super.initState();
 
     _getCurrentLocation();
-    authCtrl.fetchBanners();
 
-    authCtrl.fetchCategories().then((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      authCtrl.fetchBanners(); // ✅ ONLY ONCE
+      await authCtrl.fetchCategories();
+
       if (authCtrl.categories.isNotEmpty) {
-        setState(() {
-          selectedCategory = authCtrl.categories[0].name ?? "";
-          selectedCategoryId = authCtrl.categories[0].id ?? "";
-        });
-        authCtrl.fetchCategoryItems(selectedCategoryId);
+        selectedCategory.value = authCtrl.categories.first.name ?? "";
+        selectedCategoryId.value = authCtrl.categories.first.id ?? "";
+        authCtrl.fetchCategoryItems(selectedCategoryId.value);
       }
     });
   }
 
-  String selectedCategory = ""; // 👈 ADD THIS
-  String selectedCategoryId = "";
+  RxString selectedCategory = "".obs;
+  RxString selectedCategoryId = "".obs;
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -112,6 +114,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         child: RefreshIndicator(
           onRefresh: authCtrl.refreshHome,
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -142,7 +145,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       // 🛒 CART ICON (NEW)
                       InkWell(
                         onTap: () {
-                          Get.to(() => CartScreen()); // 🔥 OPEN CART
+                          Get.to(() => CartScreen()); //  OPEN CART
                         },
                         child: Stack(
                           children: [
@@ -425,19 +428,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
                           return InkWell(
                             onTap: () {
-                              setState(() {
-                                selectedCategory = cat.name ?? "";
-                                selectedCategoryId = cat.id ?? "";
-                              });
+                              selectedCategory.value = cat.name ?? "";
+                              selectedCategoryId.value = cat.id ?? "";
 
-                              Get.offAll(
-                                () => const BottomNavBar(initialIndex: 2),
-                                arguments: {
-                                  "categoryId": cat.id ?? "",
-                                  "categoryName": cat.name ?? "",
-                                },
-                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Get.offAll(
+                                  () => const BottomNavBar(initialIndex: 2),
+                                  arguments: {
+                                    "categoryId": cat.id ?? "",
+                                    "categoryName": cat.name ?? "",
+                                  },
+                                );
+                              });
                             },
+
                             child: Container(
                               width: 90,
                               margin: const EdgeInsets.only(right: 14),
@@ -542,48 +546,54 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      popularDishFullCard(
-                        image: "assets/images/popular.png",
-                        name: "Shahi Paneer",
-                        rating: "4.6",
-                        category: "North Indian",
-                        time: "35 mins",
-                        price: "₹399",
-                        onAdd: () {
-                          print("Added Shahi Paneer");
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                      Obx(() {
+                        if (popularCtrl.isLoading.value) {
+                          return popularDishShimmer(); // 🔥
+                        }
 
-                      popularDishFullCard(
-                        image: "assets/images/popular.png",
-                        name: "Cheese Burger",
-                        rating: "4.4",
-                        category: "Fast Food",
-                        time: "25 mins",
-                        price: "₹499",
-                        onAdd: () {
-                          print("Added Burger");
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                        if (popularCtrl.popularDishes.isEmpty) {
+                          return const Center(
+                            child: Text("No popular dishes found"),
+                          );
+                        }
 
-                      popularDishFullCard(
-                        image: "assets/images/popular.png",
-                        name: "Farmhouse Pizza",
-                        rating: "4.7",
-                        category: "Italian",
-                        time: "40 mins",
-                        price: "₹699",
-                        onAdd: () {
-                          print("Added Pizza");
-                        },
-                      ),
+                        return Column(
+                          children: popularCtrl.popularDishes.map((dish) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: popularDishFullCard(
+                                image: dish.image?.isNotEmpty == true
+                                    ? dish.image ?? ""
+                                    : "assets/images/popular.png",
+                                name: dish.name ?? "Unknown",
+                                description:
+                                    dish.description?.isNotEmpty == true
+                                    ? dish.description!
+                                    : "Delight in every bite",
+                                rating:
+                                    dish.rating?.toStringAsFixed(1) ?? "0.0",
+                                category: dish.isVeg == true
+                                    ? "Veg"
+                                    : "Non-Veg",
+                                time: "${dish.totalSold ?? 0} sold",
+                                price: "₹${dish.price ?? 0}",
+                                onAdd: () {
+                                  openProductBottomSheet(context, {
+                                    "id": dish.id ?? "",
+                                    "name": dish.name ?? "",
+                                    "desc": dish.description ?? "",
+                                    "price": "₹${dish.price ?? 0}",
+                                    "image": dish.image ?? "",
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 40),
 
                 const SizedBox(height: 40),
               ],
@@ -593,6 +603,122 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       ),
     );
   }
+}
+
+Widget popularDishShimmer() {
+  return Column(
+    children: List.generate(3, (index) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // IMAGE SHIMMER
+            Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // TITLE
+                  Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      height: 16,
+                      width: 160,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // DESCRIPTION
+                  Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      height: 12,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      height: 12,
+                      width: 220,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // BOTTOM ROW
+                  Row(
+                    children: [
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          height: 12,
+                          width: 60,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          height: 12,
+                          width: 80,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          height: 28,
+                          width: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }),
+  );
 }
 
 Widget categoryShimmer() {
@@ -644,6 +770,7 @@ Widget bannerShimmer() {
 Widget popularDishFullCard({
   required String image,
   required String name,
+  required String description,
   required String rating,
   required String category,
   required String time,
@@ -662,12 +789,24 @@ Widget popularDishFullCard({
         // FULL IMAGE
         ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: Image.asset(
-            image,
-            height: 150,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
+          child: image.startsWith("http")
+              ? Image.network(
+                  image,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Image.asset(
+                    "assets/images/popular.png",
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Image.asset(
+                  image,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
         ),
 
         Padding(
@@ -718,7 +857,16 @@ Widget popularDishFullCard({
                 ],
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
+
+              Text(
+                description,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
 
               // CATEGORY
               Text(

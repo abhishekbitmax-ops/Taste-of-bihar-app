@@ -29,99 +29,118 @@ class ApplyCouponScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // 🔍 COUPON INPUT
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: couponCtrl,
-                    decoration: InputDecoration(
-                      hintText: "Enter coupon code",
-                      border: InputBorder.none,
-                      hintStyle: GoogleFonts.poppins(fontSize: 14),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await cartCtrl.fetchAvailableCoupons();
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            // 🔍 COUPON INPUT
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: couponCtrl,
+                      decoration: InputDecoration(
+                        hintText: "Enter coupon code",
+                        border: InputBorder.none,
+                        hintStyle: GoogleFonts.poppins(fontSize: 14),
+                      ),
                     ),
                   ),
-                ),
-                Obx(
-                  () => TextButton(
-                    onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
-                        ? null
-                        : () async {
-                            final code = couponCtrl.text.trim();
+                  Obx(
+                    () => TextButton(
+                      onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
+                          ? null
+                          : () async {
+                              final code = couponCtrl.text.trim();
 
-                            if (code.isEmpty) {
-                              Get.snackbar("Error", "Please enter coupon code");
-                              return;
-                            }
+                              if (code.isEmpty) {
+                                Get.snackbar(
+                                  "Error",
+                                  "Please enter coupon code",
+                                );
+                                return;
+                              }
 
-                            final success = await cartCtrl.applyCouponApi(code);
+                              final success = await cartCtrl.applyCouponApi(
+                                code,
+                              );
 
-                            if (success) {
-                              Get.to(CartScreen()); // ✅ ONLY THIS IS NEEDED
-                            }
-                          },
+                              if (success) {
+                                Get.to(CartScreen()); // ✅ ONLY THIS IS NEEDED
+                              }
+                            },
 
-                    child:
-                        cartCtrl.applyingCouponCode.value.isNotEmpty &&
-                            cartCtrl.applyingCouponCode.value ==
-                                couponCtrl.text.trim()
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            "APPLY",
-                            style: GoogleFonts.poppins(
-                              color: const Color(0xFF8B0000),
-                              fontWeight: FontWeight.bold,
+                      child:
+                          cartCtrl.applyingCouponCode.value.isNotEmpty &&
+                              cartCtrl.applyingCouponCode.value ==
+                                  couponCtrl.text.trim()
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              "APPLY",
+                              style: GoogleFonts.poppins(
+                                color: const Color(0xFF8B0000),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // 🎟 AVAILABLE COUPONS
-          Text(
-            "Available Coupons",
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
+            // 🎟 AVAILABLE COUPONS
+            Text(
+              "Available Coupons",
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+            GetBuilder<CartController>(
+              initState: (_) {
+                Future.microtask(() => cartCtrl.fetchAvailableCoupons());
+              },
+              builder: (_) {
+                if (cartCtrl.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          _CouponTile(
-            code: "SAVE50",
-            desc: "Get ₹50 off on orders above ₹299",
-            cartCtrl: cartCtrl,
-          ),
-          _CouponTile(
-            code: "FREEDEL",
-            desc: "Free delivery on your order",
-            cartCtrl: cartCtrl,
-          ),
-          _CouponTile(
-            code: "WELCOME100",
-            desc: "₹100 off for new users",
-            cartCtrl: cartCtrl,
-          ),
-        ],
+                if (cartCtrl.availableCoupons.isEmpty) {
+                  return const Center(child: Text("No coupons available"));
+                }
+
+                return Column(
+                  children: cartCtrl.availableCoupons.map((coupon) {
+                    return _CouponTile(
+                      code: coupon.code ?? "",
+                      desc: coupon.description ?? "",
+                      cartCtrl: cartCtrl,
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

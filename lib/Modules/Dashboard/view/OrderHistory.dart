@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/widgets/OrderHistorydetails.dart';
 import 'package:restro_app/widgets/OrderTackingScreen.dart';
 
@@ -11,7 +10,6 @@ class OrderHistoryScreen extends StatelessWidget {
   OrderHistoryScreen({super.key});
 
   final CartController ctrl = Get.put(CartController());
-  late Map<String, dynamic> order;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +38,7 @@ class OrderHistoryScreen extends StatelessWidget {
           return _emptyOrderView();
         }
 
-        /// 🔥 SORT ORDERS (LATEST FIRST)
+        /// 🔥 SORT LATEST FIRST
         final sortedOrders = [...ctrl.orders];
         sortedOrders.sort((a, b) {
           final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
@@ -73,7 +71,7 @@ class OrderHistoryScreen extends StatelessWidget {
 }
 
 class _OrderHistoryCard extends StatelessWidget {
-  final OrderData order; // ✅ FIXED
+  final OrderData order;
   final bool isLatest;
 
   const _OrderHistoryCard(this.order, {this.isLatest = false});
@@ -102,6 +100,7 @@ class _OrderHistoryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          /// TOP STRIP
           Container(
             height: 6,
             decoration: const BoxDecoration(
@@ -109,11 +108,13 @@ class _OrderHistoryCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// RESTAURANT + STATUS
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -128,6 +129,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         ),
                       ),
                     ),
+
                     if (isLatest) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -149,6 +151,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         ),
                       ),
                     ],
+
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -170,7 +173,36 @@ class _OrderHistoryCard extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                /// 🔥 ORDER ID
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      "Order ID: ",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        order.orderId ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 8),
+
+                /// ITEMS
                 Text(
                   order.items
                           ?.map((e) => "${e.name} x${e.quantity}")
@@ -183,7 +215,10 @@ class _OrderHistoryCard extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
+                /// ADDRESS
                 if (address != null)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,8 +243,11 @@ class _OrderHistoryCard extends StatelessWidget {
                       ),
                     ],
                   ),
+
                 const SizedBox(height: 10),
                 Divider(color: Colors.grey.shade300),
+
+                /// PRICE + TRACK BUTTON
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -221,19 +259,15 @@ class _OrderHistoryCard extends StatelessWidget {
                         color: const Color(0xFF8B0000),
                       ),
                     ),
-
-                    // 🔥 BEAUTIFIED ORDER TRACK BUTTON
                     SizedBox(
                       height: 38,
                       child: ElevatedButton.icon(
                         onPressed: () {
                           final oid = order.orderId;
-
                           if (oid == null || oid.isEmpty) {
                             Get.snackbar("Error", "Invalid Order ID");
                             return;
                           }
-
                           Get.to(() => OrderTrackingScreen(orderId: oid));
                         },
                         icon: const Icon(
@@ -252,7 +286,6 @@ class _OrderHistoryCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B0000),
                           elevation: 4,
-                          shadowColor: Colors.red.withOpacity(0.3),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(22),
                           ),
@@ -271,14 +304,7 @@ class _OrderHistoryCard extends StatelessWidget {
   }
 }
 
-String formatOrderDate(String? date) {
-  if (date == null || date.isEmpty) return "";
-  final dt = DateTime.tryParse(date);
-  if (dt == null) return "";
-  return "${dt.day}/${dt.month}/${dt.year} • "
-      "${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
-}
-
+/// EMPTY STATE
 Widget _emptyOrderView() {
   return Center(
     child: Column(

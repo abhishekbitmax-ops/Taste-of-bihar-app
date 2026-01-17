@@ -8,6 +8,8 @@ import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 class ProfileController extends GetxController {
   var isLoading = false.obs;
@@ -92,8 +94,18 @@ class ProfileController extends GetxController {
       });
 
       if (imageFile.value != null) {
+        final ext = path.extension(imageFile.value!.path).toLowerCase();
+
+        MediaType mediaType = ext == '.png'
+            ? MediaType('image', 'png')
+            : MediaType('image', 'jpeg');
+
         request.files.add(
-          await http.MultipartFile.fromPath("profile", imageFile.value!.path),
+          await http.MultipartFile.fromPath(
+            "profile",
+            imageFile.value!.path,
+            contentType: mediaType,
+          ),
         );
       }
 
@@ -109,28 +121,33 @@ class ProfileController extends GetxController {
         "name": nameCtrl.text.trim().isNotEmpty
             ? nameCtrl.text.trim()
             : oldName,
+
         "email": emailCtrl.text.trim().isNotEmpty
             ? emailCtrl.text.trim()
             : oldEmail,
-        "gender": selectedGender.value.toLowerCase().isNotEmpty
+
+        "gender": selectedGender.value.isNotEmpty
             ? selectedGender.value.toLowerCase()
             : oldGender,
+
         "dob": selectedDOB.value != null
             ? "${selectedDOB.value!.year}-${selectedDOB.value!.month.toString().padLeft(2, '0')}-${selectedDOB.value!.day.toString().padLeft(2, '0')}T00:00:00.000Z"
             : oldDob,
-        "address": addressCtrl.text.trim().isNotEmpty
+
+        // ✅ CORRECT ADDRESS FORMAT
+        "addresses[0][type]": "home",
+        "addresses[0][street]": addressCtrl.text.trim().isNotEmpty
             ? addressCtrl.text.trim()
             : oldAddress,
-        "lat": "28.5559",
-        "lng": "77.3466",
+        "addresses[0][coordinates][lat]": "28.5559",
+        "addresses[0][coordinates][lng]": "77.3466",
       });
 
       var response = await request.send();
       var resBody = await response.stream.bytesToString();
       var jsonRes = jsonDecode(resBody);
-
       if (jsonRes["success"] == true) {
-        Get.snackbar("Success", "Profile updated successfully ✔");
+        await fetchProfile(); // 👈 refresh data
         Get.offAll(() => const BottomNavBar(initialIndex: 3));
       } else {
         Get.snackbar("Failed", jsonRes["message"] ?? "Update failed");

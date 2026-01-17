@@ -73,7 +73,14 @@ class CartScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       InkWell(
-                        onTap: () => Get.offAll(BottomNavBar(initialIndex: 0)),
+                        onTap: () {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            Get.until(
+                              (route) => route.settings.name == '/BottomNavBar',
+                            );
+                          });
+                        },
+
                         child: const Icon(
                           Icons.arrow_back,
                           size: 24,
@@ -809,8 +816,11 @@ Widget _emptyCartView() {
             height: 46,
             child: ElevatedButton(
               onPressed: () {
-                Get.offAll(() => BottomNavBar(initialIndex: 0));
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Get.off(() => BottomNavBar(initialIndex: 0));
+                });
               },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B0000),
                 shape: RoundedRectangleBorder(

@@ -8,8 +8,10 @@ import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
 import 'package:http/http.dart' as http;
+import 'package:restro_app/widgets/Globalnotifation.dart';
 import 'package:restro_app/widgets/OrderConfrimscreen.dart';
 import 'package:restro_app/widgets/RazorpayBottompay.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
@@ -37,7 +39,9 @@ class CartController extends GetxController {
   void onInit() {
     super.onInit();
     fetchCartApi();
-    fetchOrderHistory(); // 👈 AUTO RESTORE CART ON APP START
+    fetchOrderHistory();
+    fetchPopularDishes();
+    fetchAvailableCoupons(); // 👈 AUTO RESTORE CART ON APP START
   }
 
   var address = "".obs;
@@ -462,11 +466,7 @@ class CartController extends GetxController {
     }
   }
 
-
-  // order tracking api method 
-
-
-
+  // order tracking api method
 
   final Rx<OrderTrackingData?> order = Rx<OrderTrackingData?>(null);
 
@@ -505,6 +505,143 @@ class CartController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  var popularDishes = <ProductData>[].obs;
+
+  Future<void> fetchPopularDishes() async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final res = await http.get(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.PopluarDishs)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final decoded = jsonDecode(res.body);
+        final response = ProductResponse.fromJson(decoded);
+
+        popularDishes.value = response.data ?? [];
+      }
+    } catch (e) {
+      print("POPULAR DISH ERROR => $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Get all Applycoupan api method
+  var availableCoupons = <Coupon>[].obs;
+
+  Future<void> fetchAvailableCoupons() async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final res = await http.get(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.GetCoupancode)),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final decoded = jsonDecode(res.body);
+
+        final couponResponse = CouponResponse.fromJson(decoded);
+
+        availableCoupons.value = couponResponse.data ?? [];
+      } else {
+        availableCoupons.clear();
+      }
+    } catch (e) {
+      debugPrint("❌ FETCH COUPONS ERROR => $e");
+      availableCoupons.clear();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ----------------------------------
+
+  void handleSocketStatusUpdate(dynamic data) {
+    if (order.value == null || data == null) return;
+
+    String? status;
+    String? otp;
+
+    if (data is Map) {
+      status = data["status"];
+      otp = data["otp"];
+    } else if (data is String) {
+      status = data;
+    }
+
+    /// 🔥 OTP UPDATE (STATUS BAR NOTIFICATION)
+    if (otp != null && otp.isNotEmpty) {
+      order.value = order.value!.copyWith(delivery: Delivery(otp: otp));
+
+      GlobalNotificationService.show(
+        title: "Delivery OTP",
+        message: "Your delivery OTP is $otp",
+      );
+      return;
+    }
+
+    if (status == null || status.isEmpty) return;
+
+    final normalized = status.toUpperCase().trim();
+
+    /// 🔥 UPDATE STATUS (AUTO UI + TIMELINE)
+    order.value = order.value!.copyWith(status: normalized);
+
+    /// 🔔 NOTIFICATIONS
+    switch (normalized) {
+      case "ACCEPTED":
+        GlobalNotificationService.show(
+          title: "Order Accepted",
+          message: "Restaurant has accepted your order 🍽️",
+        );
+        break;
+
+      case "OUT_FOR_DELIVERY":
+        GlobalNotificationService.show(
+          title: "Out for Delivery",
+          message: "Your order is on the way 🚴",
+        );
+        break;
+
+      case "DELIVERED":
+        GlobalNotificationService.show(
+          title: "Order Delivered",
+          message: "Enjoy your meal 🍽️",
+        );
+        break;
+    }
+  }
+
+  void handleSocketTrackingInfo(dynamic data) {
+    if (order.value == null || data == null) return;
+
+    // 🔥 CASE 1: Only status string
+    if (data is String) {
+      order.value = order.value!.copyWith(status: data);
+      return;
+    }
+
+    // 🔥 CASE 2: Full object
+    if (data is Map<String, dynamic>) {
+      order.value = OrderTrackingData.fromSocket(old: order.value!, json: data);
+    }
+  }
 }
-
-

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Dashboard/view/DineInScreen.dart';
 import 'package:restro_app/Modules/Dashboard/view/dsahboard.dart';
 import 'package:restro_app/Modules/Dashboard/view/menuscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
@@ -20,6 +19,7 @@ class BottomNavBar extends StatefulWidget {
 
 class _BottomNavBarState extends State<BottomNavBar> {
   late int selectedIndex;
+  
 
   final List<Widget> screens = [
     const FoodHomeScreen(),

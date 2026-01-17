@@ -23,6 +23,8 @@ class ApiEndpoint {
   static const String Orderplace = "/order/place";
   static const String PaymentVerify = "/payment/verify";
   static const String GetBanners = "/banners/active";
+  static const String PopluarDishs = "/order/popular";
+  static const String GetCoupancode = "/coupons/active";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

@@ -2,26 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
+import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
 import 'package:restro_app/Modules/Navbar/Splashscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:restro_app/widgets/Globalnotifation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 void main() async {
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF8B0000),
-      statusBarIconBrightness: Brightness.light,
-    ),
-  );
-
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPreferences.getInstance();
 
-  Get.put(CartController(), permanent: true);
+  final cartCtrl = Get.put(CartController(), permanent: true);
   Get.put(Authcontroller(), permanent: true);
+
+  OrderSocketService.connect(
+    onStatusUpdate: cartCtrl.handleSocketStatusUpdate,
+    onTrackingInfo: cartCtrl.handleSocketTrackingInfo,
+    onDeliveryAssigned: (data) {
+      GlobalNotificationService.show(
+        title: "Delivery Assigned",
+        message: "Your order has been assigned to a rider 🚴",
+      );
+    },
+  );
 
   runApp(const MyApp());
 }

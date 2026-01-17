@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:restro_app/widgets/Globalnotifation.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -20,9 +22,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   void initState() {
     super.initState();
 
-    /// 🔥 FIRST API CALL
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ctrl.fetchOrderTracking(widget.orderId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ctrl.fetchOrderTracking(widget.orderId);
     });
   }
 
@@ -248,10 +249,28 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final eta = order.estimatedDelivery;
     if (eta == null) return const SizedBox();
 
+    String? time;
+    int? minutes;
+    String? message;
+
+    /// 🔥 CASE 1: API sent STRING
+    if (eta is String) {
+      time = eta;
+    }
+
+    /// 🔥 CASE 2: API sent OBJECT
+    if (eta is Map<String, dynamic>) {
+      time = eta["time"];
+      minutes = eta["minutes"];
+      message = eta["message"];
+    }
+
     String timeText = "";
     try {
-      final dt = DateTime.parse(eta.time);
-      timeText = DateFormat('hh:mm a').format(dt.toLocal());
+      if (time != null) {
+        final dt = DateTime.parse(time);
+        timeText = DateFormat('hh:mm a').format(dt.toLocal());
+      }
     } catch (_) {}
 
     return _card(
@@ -283,7 +302,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  "${eta.minutes ?? "--"} mins"
+                  "${minutes ?? "--"} mins"
                   "${timeText.isNotEmpty ? " • by $timeText" : ""}",
                   style: GoogleFonts.poppins(
                     fontSize: 16,
@@ -291,10 +310,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     color: Colors.green.shade700,
                   ),
                 ),
-                if (eta.message != null) ...[
+                if (message != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    eta.message!,
+                    message!,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: Colors.black87,
@@ -312,6 +331,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   // ───────── TIMELINE ─────────
   Widget _timeline(String? status) {
     final steps = ["PLACED", "ACCEPTED", "OUT_FOR_DELIVERY", "DELIVERED"];
+
     final labels = [
       "Order Placed",
       "Restaurant Accepted",
@@ -319,7 +339,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       "Delivered",
     ];
 
-    int activeIndex = steps.indexWhere((e) => e == status?.toUpperCase());
+    // 🔥 VERY IMPORTANT: normalize status
+    final currentStatus = status?.toUpperCase().trim() ?? "";
+    int activeIndex = steps.indexOf(currentStatus);
+
+    // fallback safety (prevents -1 bug)
+    if (activeIndex < 0) activeIndex = 0;
 
     return _card(
       child: Column(
@@ -330,44 +355,66 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
               color: const Color(0xFF8B0000),
+              fontSize: 14,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
           Column(
             children: List.generate(steps.length, (i) {
-              final isActive = i <= activeIndex;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        size: 12,
-                        color: isActive ? Colors.green : Colors.grey,
-                      ),
-                      if (i != steps.length - 1)
+              final isCompleted = i < activeIndex;
+              final isActive = i == activeIndex;
+
+              final dotColor = (isCompleted || isActive)
+                  ? Colors.green
+                  : Colors.grey.shade400;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// DOT + LINE
+                    Column(
+                      children: [
                         Container(
-                          width: 2,
-                          height: 40,
-                          color: isActive ? Colors.green : Colors.grey.shade300,
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: dotColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      labels[i],
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+                        if (i != steps.length - 1)
+                          Container(
+                            width: 2,
+                            height: 28,
+                            color: isCompleted
+                                ? Colors.green
+                                : Colors.grey.shade300,
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    /// LABEL
+                    Expanded(
+                      child: Text(
+                        labels[i],
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: (isCompleted || isActive)
+                              ? Colors.black87
+                              : Colors.black45,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }),
           ),
