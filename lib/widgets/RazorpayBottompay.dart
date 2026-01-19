@@ -17,6 +17,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   final CartController ctrl = Get.find<CartController>();
   late Razorpay _razorpay;
   bool isPaying = false;
+  bool paymentCompleted = false;
 
   @override
   void initState() {
@@ -25,41 +26,63 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handleError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleWallet);
+    // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleWallet);
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    try {
+      _razorpay.clear();
+    } catch (_) {}
     super.dispose();
   }
 
-  void openCheckout() {
-    final int amountInPaise = (widget.amount * 100).round();
+  /// 🔥 PAY NOW FLOW
+  Future<void> openCheckout() async {
+    if (isPaying) return;
 
-    if (ctrl.razorpayOrderId.value.isEmpty) {
-      Get.snackbar("Error", "Invalid Razorpay order");
-      return;
+    try {
+      setState(() => isPaying = true);
+
+      /// 👉 STEP 1: PLACE ORDER (UPI)
+      await ctrl.placeOrder(
+        addressId: ctrl.selectedAddressId.value,
+        paymentMethod: "UPI",
+      );
+
+      /// 👉 STEP 2: CHECK RAZORPAY ORDER ID
+      if (ctrl.razorpayOrderId.value.isEmpty) {
+        setState(() => isPaying = false);
+        Get.snackbar("Error", "Unable to initiate payment");
+        return;
+      }
+
+      /// 👉 STEP 3: OPEN RAZORPAY
+      _razorpay.open({
+        'key': razorpayKey,
+        'amount': (widget.amount * 100).round(), // paise
+        'currency': 'INR',
+        'order_id': ctrl.razorpayOrderId.value,
+        'name': 'Resto Grandma',
+        'description': 'Food Order Payment',
+        'retry': {
+          'enabled': false, // 🔥 STOP retry popup
+        },
+        'theme': {'color': '#8B0000'},
+      });
+    } catch (e) {
+      setState(() => isPaying = false);
+      Get.snackbar("Error", "Payment initiation failed");
     }
-
-    var options = {
-      'key': razorpayKey,
-      'amount': amountInPaise,
-      'currency': 'INR',
-      'order_id': ctrl.razorpayOrderId.value,
-      'name': 'Resto Grandma',
-      'description': 'Food Order Payment',
-      'notes': {'backendOrderId': ctrl.orderId.value},
-      'prefill': {'contact': '', 'email': ''},
-      'theme': {'color': '#8B0000'},
-    };
-
-    _razorpay.open(options);
   }
 
   /// ✅ PAYMENT SUCCESS
   void _handleSuccess(PaymentSuccessResponse response) {
-    Get.back(); // 🔥 CLOSE DIALOG
+    paymentCompleted = true; // 🔥 IMPORTANT
+
+    _razorpay.clear(); // 🔥 STOP all further callbacks
+
+    Get.back(); // close dialog
 
     ctrl.verifyPayment(
       razorpayOrderId: response.orderId!,
@@ -68,13 +91,16 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     );
   }
 
+  /// ❌ PAYMENT FAILED / CANCELLED
   void _handleError(PaymentFailureResponse response) {
-    setState(() => isPaying = false);
-    Get.snackbar("Payment Failed", response.message ?? "Payment cancelled");
-  }
+    if (paymentCompleted) {
+      // 🔥 Payment already success, ignore fake error
+      return;
+    }
 
-  void _handleWallet(ExternalWalletResponse response) {
-    Get.snackbar("Wallet", response.walletName ?? "");
+    setState(() => isPaying = false);
+
+    Get.snackbar("Payment Failed", response.message ?? "Payment cancelled");
   }
 
   @override
@@ -87,37 +113,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 💳 ICON
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF8B0000).withOpacity(0.1),
-              ),
-              child: const Icon(
-                Icons.payment,
-                color: Color(0xFF8B0000),
-                size: 36,
-              ),
-            ),
-
+            const Icon(Icons.payment, size: 36, color: Color(0xFF8B0000)),
             const SizedBox(height: 16),
-
             const Text(
               "Confirm Payment",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
-            const SizedBox(height: 6),
-
-            Text(
-              "Pay securely using UPI",
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-
-            const SizedBox(height: 20),
-
-            // 💰 AMOUNT
+            const SizedBox(height: 8),
             Text(
               "₹${widget.amount}",
               style: const TextStyle(
@@ -126,20 +128,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 color: Color(0xFF8B0000),
               ),
             ),
-
             const SizedBox(height: 24),
 
-            // ✅ PAY BUTTON
+            /// PAY BUTTON
             SizedBox(
               width: double.infinity,
               height: 46,
               child: ElevatedButton(
-                onPressed: isPaying
-                    ? null
-                    : () {
-                        setState(() => isPaying = true);
-                        openCheckout();
-                      },
+                onPressed: isPaying ? null : openCheckout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B0000),
                   shape: RoundedRectangleBorder(
@@ -147,13 +143,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   ),
                 ),
                 child: isPaying
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
+                    ? const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
                       )
                     : const Text(
                         "Pay Now",
@@ -165,11 +157,12 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               ),
             ),
 
-            const SizedBox(height: 10),
-
-            // ❌ CANCEL
+            /// CANCEL
             TextButton(
-              onPressed: () => Get.back(),
+              onPressed: () {
+                setState(() => isPaying = false);
+                Get.back();
+              },
               child: const Text("Cancel"),
             ),
           ],

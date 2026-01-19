@@ -3,13 +3,27 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/widgets/OrderHistorydetails.dart';
 import 'package:restro_app/widgets/OrderTackingScreen.dart';
 
-class OrderHistoryScreen extends StatelessWidget {
-  OrderHistoryScreen({super.key});
+class OrderHistoryScreen extends StatefulWidget {
+  const OrderHistoryScreen({super.key});
 
+  @override
+  State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
+}
+
+class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final CartController ctrl = Get.put(CartController());
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔥 AUTO REFRESH WHEN SCREEN OPENS
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ctrl.fetchOrderHistory();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +52,7 @@ class OrderHistoryScreen extends StatelessWidget {
           return _emptyOrderView();
         }
 
-        /// 🔥 SORT LATEST FIRST
+        /// 🔥 SORT ALL ORDERS BY TIME (LATEST FIRST)
         final sortedOrders = [...ctrl.orders];
         sortedOrders.sort((a, b) {
           final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
@@ -46,23 +60,71 @@ class OrderHistoryScreen extends StatelessWidget {
           return db.compareTo(da);
         });
 
+        /// 🔥 ACTIVE ORDERS (NOT DELIVERED)
+        final activeOrders = sortedOrders
+            .where((o) => (o.status ?? "").toUpperCase() != "DELIVERED")
+            .toList();
+
+        /// 🔥 SORT ACTIVE ORDERS BY TIME
+        activeOrders.sort((a, b) {
+          final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
+          final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
+          return db.compareTo(da);
+        });
+
+        /// 🔥 ONLY ONE LATEST ACTIVE ORDER
+        OrderData? latestActiveOrder = activeOrders.isNotEmpty
+            ? activeOrders.first
+            : null;
+
         return RefreshIndicator(
           color: const Color(0xFF8B0000),
           onRefresh: () async {
             await ctrl.fetchOrderHistory();
           },
-          child: ListView.builder(
+          child: ListView(
             padding: const EdgeInsets.all(16),
-            itemCount: sortedOrders.length,
-            itemBuilder: (context, index) {
-              final order = sortedOrders[index];
-              return InkWell(
-                onTap: () {
-                  Get.to(() => OrderDetailScreen(order: order));
-                },
-                child: _OrderHistoryCard(order, isLatest: index == 0),
-              );
-            },
+            children: [
+              /// 🔥 TOP — LATEST ACTIVE ORDER
+              if (latestActiveOrder != null) ...[
+                Text(
+                  "Latest Order",
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF8B0000),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                InkWell(
+                  onTap: () {
+                    Get.to(
+                      () => OrderTrackingScreen(
+                        orderId: latestActiveOrder!.orderId!,
+                      ),
+                    );
+                  },
+                  child: _OrderHistoryCard(latestActiveOrder!, isLatest: true),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+
+              /// 🔥 REST OF ORDERS (HISTORY)
+              ...sortedOrders
+                  .where((o) => o.orderId != latestActiveOrder?.orderId)
+                  .map(
+                    (order) => InkWell(
+                      onTap: () {
+                        Get.to(
+                          () => OrderTrackingScreen(orderId: order.orderId!),
+                        );
+                      },
+                      child: _OrderHistoryCard(order),
+                    ),
+                  ),
+            ],
           ),
         );
       }),
@@ -70,6 +132,9 @@ class OrderHistoryScreen extends StatelessWidget {
   }
 }
 
+/// ─────────────────────────────────────────────
+/// ORDER CARD
+/// ─────────────────────────────────────────────
 class _OrderHistoryCard extends StatelessWidget {
   final OrderData order;
   final bool isLatest;
@@ -79,6 +144,7 @@ class _OrderHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final address = order.deliveryAddress;
+    final status = (order.status ?? "").toUpperCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -130,7 +196,7 @@ class _OrderHistoryCard extends StatelessWidget {
                       ),
                     ),
 
-                    if (isLatest) ...[
+                    if (isLatest && status != "DELIVERED") ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -142,7 +208,7 @@ class _OrderHistoryCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          "LATEST",
+                          "ONGOING",
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -174,30 +240,15 @@ class _OrderHistoryCard extends StatelessWidget {
                   ],
                 ),
 
-                /// 🔥 ORDER ID
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      "Order ID: ",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        order.orderId ?? "",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+
+                /// ORDER ID
+                Text(
+                  "Order ID: ${order.orderId ?? ""}",
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
                 ),
 
                 const SizedBox(height: 8),
@@ -210,10 +261,7 @@ class _OrderHistoryCard extends StatelessWidget {
                       "",
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 13),
                 ),
 
                 const SizedBox(height: 8),
@@ -221,7 +269,6 @@ class _OrderHistoryCard extends StatelessWidget {
                 /// ADDRESS
                 if (address != null)
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
                         Icons.location_on,
@@ -247,7 +294,7 @@ class _OrderHistoryCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Divider(color: Colors.grey.shade300),
 
-                /// PRICE + TRACK BUTTON
+                /// PRICE + TRACK
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -259,38 +306,22 @@ class _OrderHistoryCard extends StatelessWidget {
                         color: const Color(0xFF8B0000),
                       ),
                     ),
-                    SizedBox(
-                      height: 38,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          final oid = order.orderId;
-                          if (oid == null || oid.isEmpty) {
-                            Get.snackbar("Error", "Invalid Order ID");
-                            return;
-                          }
-                          Get.to(() => OrderTrackingScreen(orderId: oid));
-                        },
-                        icon: const Icon(
-                          Icons.location_searching,
-                          size: 18,
-                          color: Colors.white,
+                    ElevatedButton(
+                      onPressed: () {
+                        if (order.orderId == null) return;
+                        Get.to(
+                          () => OrderTrackingScreen(orderId: order.orderId!),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B0000),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
                         ),
-                        label: Text(
-                          "Track Order",
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B0000),
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                        ),
+                      ),
+                      child: const Text(
+                        "Track Order",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -304,7 +335,9 @@ class _OrderHistoryCard extends StatelessWidget {
   }
 }
 
+/// ─────────────────────────────────────────────
 /// EMPTY STATE
+/// ─────────────────────────────────────────────
 Widget _emptyOrderView() {
   return Center(
     child: Column(

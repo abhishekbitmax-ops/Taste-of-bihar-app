@@ -1,7 +1,6 @@
 class ApiEndpoint {
   //  Base API URL (for all API requests)
-  static const String baseUrl =
-      "https://resto-grandma.onrender.com/api/v1/user";
+  static const String baseUrl = "https://sog.bitmaxtest.com/api/v1/user";
 
   // Patient App Endpoints
 

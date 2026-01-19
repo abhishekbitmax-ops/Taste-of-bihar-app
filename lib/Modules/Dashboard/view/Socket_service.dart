@@ -14,7 +14,7 @@ class OrderSocketService {
     if (token.isEmpty) return;
 
     ordersocket = IO.io(
-      "https://resto-grandma.onrender.com/orders",
+      "https://sog.bitmaxtest.com/orders",
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({"token": token})

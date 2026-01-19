@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
 import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/utils/api_endpoints.dart';
@@ -40,7 +41,7 @@ class CartController extends GetxController {
     super.onInit();
     fetchCartApi();
     fetchOrderHistory();
-    fetchPopularDishes();
+
     fetchAvailableCoupons(); // 👈 AUTO RESTORE CART ON APP START
   }
 
@@ -118,7 +119,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "https://resto-grandma.onrender.com/api/v1/user/cart/$cartItemId/remove";
+          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -376,9 +377,11 @@ class CartController extends GetxController {
         orderId.value = data["data"]["orderId"] ?? "";
 
         if (paymentMethod == "COD") {
+          // ✅ COD SAME
           clearCartAfterOrder();
           Get.offAll(() => OrderConfirmationScreen(), arguments: data["data"]);
         } else {
+          // 🔥 UPI → DO NOT CLEAR CART HERE
           razorpayOrderId.value = data["data"]["razorpay"]?["orderId"] ?? "";
           final int amountInPaise = (data["data"]["razorpay"]?["amount"] ?? 0)
               .toInt();
@@ -480,8 +483,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url =
-          "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/track";
+      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -509,6 +511,7 @@ class CartController extends GetxController {
   var popularDishes = <ProductData>[].obs;
 
   Future<void> fetchPopularDishes() async {
+    if (popularDishes.isNotEmpty) return;
     try {
       isLoading.value = true;
 
@@ -605,6 +608,10 @@ class CartController extends GetxController {
     /// 🔥 UPDATE STATUS (AUTO UI + TIMELINE)
     order.value = order.value!.copyWith(status: normalized);
 
+    if (normalized == "DELIVERED") {
+      fetchOrderHistory(); // 🔥 refresh list automatically
+    }
+
     /// 🔔 NOTIFICATIONS
     switch (normalized) {
       case "ACCEPTED":
@@ -644,4 +651,23 @@ class CartController extends GetxController {
       order.value = OrderTrackingData.fromSocket(old: order.value!, json: data);
     }
   }
+
+  // socket connect 
+
+  /// =========================
+/// INIT ORDER SOCKET (LOGIN / REGISTER KE BAAD CALL KARNA)
+/// =========================
+Future<void> initOrderSocket() async {
+  await OrderSocketService.connect(
+    onStatusUpdate: handleSocketStatusUpdate,
+    onTrackingInfo: handleSocketTrackingInfo,
+    onDeliveryAssigned: (data) {
+      GlobalNotificationService.show(
+        title: "Delivery Assigned",
+        message: "Your order has been assigned to a rider 🚴",
+      );
+    },
+  );
+}
+
 }

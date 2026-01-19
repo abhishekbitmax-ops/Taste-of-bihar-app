@@ -19,6 +19,34 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController otpInputCtrl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+
+    // 🔥 SHOW OTP IN TOP SNACKBAR (DEV MODE)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments;
+      final otp = args?["otp"];
+
+      if (otp != null && otp.toString().isNotEmpty) {
+        Get.snackbar(
+          "DEV OTP",
+          "Your OTP is $otp",
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 7),
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          icon: const Icon(Icons.lock, color: Colors.white),
+        );
+
+        // (optional) auto-fill OTP field
+        otpInputCtrl.text = otp.toString();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mobile = Get.arguments['mobile']; // passed mobile number
 

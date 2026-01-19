@@ -35,6 +35,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       authCtrl.fetchBanners(); // ✅ ONLY ONCE
       await authCtrl.fetchCategories();
 
+      // ✅ FETCH POPULAR DISHES HERE
+      await popularCtrl.fetchPopularDishes();
+
       if (authCtrl.categories.isNotEmpty) {
         selectedCategory.value = authCtrl.categories.first.name ?? "";
         selectedCategoryId.value = authCtrl.categories.first.id ?? "";

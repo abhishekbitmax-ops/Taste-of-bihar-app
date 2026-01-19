@@ -5,6 +5,7 @@ import 'package:restro_app/Modules/Dashboard/view/ApplyCoupanscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
+import 'package:restro_app/widgets/RazorpayBottompay.dart';
 
 class CartScreen extends StatelessWidget {
   CartScreen({super.key});
@@ -473,32 +474,34 @@ class CartScreen extends StatelessWidget {
                         height: 48,
                         child: Obx(
                           () => ElevatedButton(
-                            onPressed: cartCtrl.isPlacingOrder.value
-                                ? null
-                                : () {
-                                    if (cartCtrl
-                                        .selectedAddressId
-                                        .value
-                                        .isEmpty) {
-                                      Get.snackbar(
-                                        "Address Required",
-                                        "Please select a delivery address",
-                                      );
-                                      return;
-                                    }
+                            onPressed: () {
+                              if (cartCtrl.selectedAddressId.value.isEmpty) {
+                                Get.snackbar(
+                                  "Address Required",
+                                  "Please select a delivery address",
+                                );
+                                return;
+                              }
 
-                                    final paymentMethod =
-                                        cartCtrl.selectedPaymentMethod.value ==
-                                            "Cash on Delivery"
-                                        ? "COD"
-                                        : "UPI";
+                              final selected =
+                                  cartCtrl.selectedPaymentMethod.value;
 
-                                    cartCtrl.placeOrder(
-                                      addressId:
-                                          cartCtrl.selectedAddressId.value,
-                                      paymentMethod: paymentMethod,
-                                    );
-                                  },
+                              if (selected == "Cash on Delivery") {
+                                // ✅ COD FLOW SAME
+                                cartCtrl.placeOrder(
+                                  addressId: cartCtrl.selectedAddressId.value,
+                                  paymentMethod: "COD",
+                                );
+                              } else {
+                                // ✅ UPI FLOW — ONLY OPEN DIALOG
+                                Get.dialog(
+                                  PaymentBottomSheet(
+                                    amount: cartCtrl.grandTotal.value,
+                                  ),
+                                  barrierDismissible: false,
+                                );
+                              }
+                            },
 
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF8B0000),

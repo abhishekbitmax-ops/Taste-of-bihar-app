@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
 import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
+import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'dart:convert';
@@ -56,7 +57,11 @@ class Authcontroller extends GetxController {
       if (data["success"] == true) {
         Get.to(
           () => const OtpVerificationScreen(),
-          arguments: {"mobile": data["mobile"], "isLogin": false},
+          arguments: {
+            "mobile": data["mobile"],
+            "isLogin": false,
+            "otp": data["otp"],
+          },
         );
       } else {
         Get.snackbar("Failed", data["message"] ?? "Something went wrong");
@@ -106,6 +111,9 @@ class Authcontroller extends GetxController {
           Get.off(() => const UserBasicDetails());
         } else {
           Get.offAll(() => BottomNavBar());
+          Future.delayed(const Duration(milliseconds: 400), () {
+            Get.find<CartController>().initOrderSocket();
+          });
         }
       } else {
         Get.snackbar("Error", data["message"] ?? "Invalid OTP");
@@ -218,6 +226,10 @@ class Authcontroller extends GetxController {
 
         // 🏠 Redirect to Home
         Get.offAll(() => BottomNavBar());
+
+        Future.delayed(const Duration(milliseconds: 400), () {
+          Get.find<CartController>().initOrderSocket();
+        });
       } else {
         Get.snackbar(
           "Error",
@@ -285,7 +297,7 @@ class Authcontroller extends GetxController {
 
       var response = await http.get(
         Uri.parse(
-          "https://resto-grandma.onrender.com/api/v1/user/categories/$categoryId/items",
+          "https://sog.bitmaxtest.com/api/v1/user/categories/$categoryId/items",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -502,9 +514,7 @@ class Authcontroller extends GetxController {
       };
 
       final response = await http.put(
-        Uri.parse(
-          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
-        ),
+        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -537,9 +547,7 @@ class Authcontroller extends GetxController {
       String token = await SharedPre.getAccessToken();
 
       final response = await http.delete(
-        Uri.parse(
-          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
-        ),
+        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
