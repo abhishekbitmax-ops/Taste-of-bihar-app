@@ -381,6 +381,10 @@ class OrderTrackingData {
   final String? orderId;
   final String? id;
   final String? status;
+
+  /// 🔥 OTP from API (deliveryOTP) OR Socket
+  final String? deliveryOTP;
+
   final List<OrderTimeline>? timeline;
 
   /// 🔥 Can be String OR Map (API + Socket safe)
@@ -399,6 +403,7 @@ class OrderTrackingData {
     this.orderId,
     this.id,
     this.status,
+    this.deliveryOTP,
     this.timeline,
     this.estimatedDelivery,
     this.restaurant,
@@ -412,38 +417,55 @@ class OrderTrackingData {
   });
 
   factory OrderTrackingData.fromJson(Map<String, dynamic> json) {
+    final delivery = json['delivery'] != null
+        ? Delivery.fromJson(json['delivery'])
+        : null;
+
     return OrderTrackingData(
       orderId: json['orderId'],
-      id: json['_id'],
+      id: json['_id'] ?? json['id'], // 🔥 API safety
       status: json['status'],
+
+      /// 🔥 API may send deliveryOTP
+      deliveryOTP: json['deliveryOTP'],
+
       timeline: (json['timeline'] as List?)
           ?.map((e) => OrderTimeline.fromJson(e))
           .toList(),
+
       estimatedDelivery: json['estimatedDelivery'],
+
       restaurant: json['restaurant'] != null
           ? Restaurant.fromJson(json['restaurant'])
           : null,
+
       deliveryAddress: json['deliveryAddress'] != null
           ? DeliveryAddress.fromJson(json['deliveryAddress'])
           : null,
+
       items: (json['items'] as List?)
           ?.map((e) => OrderItem.fromJson(e))
           .toList(),
+
       price: json['price'] != null ? Price.fromJson(json['price']) : null,
+
       payment: json['payment'] != null
           ? Payment.fromJson(json['payment'])
           : null,
-      delivery: json['delivery'] != null
-          ? Delivery.fromJson(json['delivery'])
-          : null,
+
+      delivery: delivery,
+
       createdAt: json['createdAt'],
       canCancel: json['canCancel'],
     );
   }
 
+  // ─────────────────────────────────────
   // 🔥 SOCKET HELPER
+  // ─────────────────────────────────────
   OrderTrackingData copyWith({
     String? status,
+    String? deliveryOTP,
     List<OrderTimeline>? timeline,
     dynamic estimatedDelivery,
     Payment? payment,
@@ -454,6 +476,10 @@ class OrderTrackingData {
       orderId: orderId,
       id: id,
       status: status ?? this.status,
+
+      /// 🔥 Preserve existing OTP
+      deliveryOTP: deliveryOTP ?? this.deliveryOTP,
+
       timeline: timeline ?? this.timeline,
       estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
       restaurant: restaurant,
@@ -467,30 +493,51 @@ class OrderTrackingData {
     );
   }
 
-  /// 🔌 SOCKET MERGE
+  // ─────────────────────────────────────
+  // 🔌 SOCKET MERGE
+  // ─────────────────────────────────────
   factory OrderTrackingData.fromSocket({
     required OrderTrackingData old,
     required Map<String, dynamic> json,
   }) {
     return old.copyWith(
       status: json['status'] ?? old.status,
+
+      /// 🔥 Socket may send otp OR deliveryOTP
+      deliveryOTP: json['deliveryOTP'] ?? json['otp'] ?? old.deliveryOTP,
+
       estimatedDelivery: json.containsKey('estimatedDelivery')
           ? json['estimatedDelivery']
           : old.estimatedDelivery,
+
       timeline:
           (json['timeline'] as List?)
               ?.map((e) => OrderTimeline.fromJson(e))
               .toList() ??
           old.timeline,
+
       payment: json['payment'] != null
           ? Payment.fromJson(json['payment'])
           : old.payment,
+
       delivery: json['delivery'] != null
           ? Delivery.fromJson(json['delivery'])
           : old.delivery,
+
       canCancel: json['canCancel'] ?? old.canCancel,
     );
   }
+
+  // ─────────────────────────────────────
+  // 🔥 UI HELPERS (VERY IMPORTANT)
+  // ─────────────────────────────────────
+
+  /// ✅ OTP from API OR socket OR delivery object
+  String? get effectiveOtp => deliveryOTP ?? delivery?.otp;
+
+  /// ✅ Used to show Track Button & Delivery Partner
+  bool get isDeliveryAssigned =>
+      effectiveOtp != null || delivery?.partner != null;
 }
 
 class OrderTimeline {
@@ -571,7 +618,7 @@ class OrderItem {
       quantity: json['quantity'],
       basePrice: json['basePrice'],
       addons: json['addons'],
-      finalItemPrice: json['finalItemPrice'],
+      finalItemPrice: json['finalItemPrice'] ?? json['price'], // 🔥 FIX
     );
   }
 }
@@ -648,30 +695,30 @@ class Delivery {
   });
 
   factory Delivery.fromJson(Map<String, dynamic> json) {
+    final partner = json['partner'] != null
+        ? DeliveryPartner.fromJson(json['partner'])
+        : null;
+
     return Delivery(
       otp: json['otp'],
       assignedAt: json['assignedAt'],
       otpCreatedAt: json['otpCreatedAt'],
-      pickedUpAt: json['pickedUpAt'],
-      deliveredAt: json['deliveredAt'],
-      partner: json['partner'] != null
-          ? DeliveryPartner.fromJson(json['partner'])
-          : null,
+      pickedUpAt: json['pickedUpAt'], // future-safe
+      deliveredAt: json['deliveredAt'], // future-safe
+      partner: partner,
     );
   }
 }
 
 class DeliveryPartner {
-  final String? id;
   final String? name;
   final String? phone;
   final Vehicle? vehicle;
 
-  DeliveryPartner({this.id, this.name, this.phone, this.vehicle});
+  DeliveryPartner({this.name, this.phone, this.vehicle});
 
   factory DeliveryPartner.fromJson(Map<String, dynamic> json) {
     return DeliveryPartner(
-      id: json['_id'],
       name: json['name'],
       phone: json['phone'],
       vehicle: json['vehicle'] != null

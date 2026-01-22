@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,6 +23,139 @@ class CartController extends GetxController {
   var selectedAddressId = "".obs;
   var applyingCouponCode = "".obs;
 
+  // ================= LIVE MAP DATA =================
+  var userLat = 0.0.obs;
+  var userLng = 0.0.obs;
+  var hasUserLocation = false.obs;
+
+  var deliveryLat = 0.0.obs;
+  var deliveryLng = 0.0.obs;
+  var hasLiveLocation = false.obs;
+  var roadDistance = 0.0.obs; // 🔥 Road distance in km (cached)
+  var roadDistanceLoading = false.obs;
+  var roadDirection = "".obs; // 🔥 Turn-by-turn direction
+  var roadDuration = 0.obs; // 🔥 Duration in minutes
+
+  // 🔥 Fetch road directions using Google Maps Directions API
+  Future<void> fetchRoadDistance() async {
+    if (roadDistanceLoading.value) return; // Prevent multiple calls
+    if (userLat.value == 0 || deliveryLat.value == 0) return;
+
+    try {
+      roadDistanceLoading.value = true;
+
+      const String googleMapsApiKey =
+          "AIzaSyATQ_YYpnU1_tvoyRis0mmZPv8ifP2qbbM"; // ✅ Your API Key
+
+      final String url =
+          "https://maps.googleapis.com/maps/api/directions/json?"
+          "origin=${userLat.value},${userLng.value}&"
+          "destination=${deliveryLat.value},${deliveryLng.value}&"
+          "mode=driving&"
+          "key=$googleMapsApiKey";
+
+      debugPrint("📡 Fetching directions from Google Maps API...");
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+
+        if (json["status"] == "OK" &&
+            json["routes"] != null &&
+            json["routes"].isNotEmpty) {
+          final route = json["routes"][0];
+          final leg = route["legs"][0];
+
+          // 📍 Distance and Duration
+          final distanceMeters = leg["distance"]["value"]; // in meters
+          final durationSeconds = leg["duration"]["value"]; // in seconds
+
+          roadDistance.value = distanceMeters / 1000; // Convert to km
+          roadDuration.value = (durationSeconds / 60)
+              .toInt(); // Convert to minutes
+
+          // 🎯 First direction instruction
+          if (leg["steps"] != null && leg["steps"].isNotEmpty) {
+            final firstStep = leg["steps"][0];
+            String instruction =
+                firstStep["html_instructions"] ?? "Head towards destination";
+
+            // Remove HTML tags
+            instruction = instruction
+                .replaceAll(RegExp(r'<[^>]*>'), '')
+                .replaceAll("&quot;", '"')
+                .replaceAll("&amp;", "&")
+                .replaceAll("&deg;", "°");
+
+            roadDirection.value = instruction;
+
+            debugPrint(
+              "✅ Road Distance: ${roadDistance.value.toStringAsFixed(2)} km | Duration: ${roadDuration.value} min",
+            );
+            debugPrint("🎯 Direction: $instruction");
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching road distance: $e");
+      roadDistance.value = 0;
+    } finally {
+      roadDistanceLoading.value = false;
+    }
+  }
+
+  void handleDeliveryLocation(dynamic data) {
+    if (data == null) return;
+
+    try {
+      /// 🚴 DELIVERY PARTNER LOCATION
+      final loc = data["location"];
+      if (loc != null && loc["lat"] != null && loc["lng"] != null) {
+        final newLat = (loc["lat"] as num).toDouble();
+        final newLng = (loc["lng"] as num).toDouble();
+
+        deliveryLat.value = newLat;
+        deliveryLng.value = newLng;
+        hasLiveLocation.value = true;
+
+        debugPrint("✅ Delivery Location Set: $newLat, $newLng");
+      }
+
+      /// 👤 USER LOCATION (FROM SOCKET — SAFE NOW)
+      if (!hasUserLocation.value) {
+        final address = data["assignedOrder"]?["deliveryAddress"];
+        if (address != null &&
+            address["lat"] != null &&
+            address["lng"] != null) {
+          final newUserLat = (address["lat"] as num).toDouble();
+          final newUserLng = (address["lng"] as num).toDouble();
+
+          userLat.value = newUserLat;
+          userLng.value = newUserLng;
+          hasUserLocation.value = true;
+
+          debugPrint("✅ User Location Set: $newUserLat, $newUserLng");
+        }
+      }
+
+      // 🔥 FETCH ROAD DISTANCE (only once when both locations are set)
+      if (hasUserLocation.value &&
+          hasLiveLocation.value &&
+          roadDistance.value == 0) {
+        fetchRoadDistance();
+      }
+
+      debugPrint(
+        "📍 UPDATED → Rider: ${deliveryLat.value},${deliveryLng.value} | "
+        "User: ${userLat.value},${userLng.value}",
+      );
+    } catch (e, s) {
+      debugPrint("❌ Error in handleDeliveryLocation: $e");
+      debugPrint("Stack: $s");
+    }
+  }
+
   var removingIndex = (-1).obs; // 👈 per-item delete loader
 
   final Authcontroller authCtrl = Get.put(Authcontroller());
@@ -41,8 +175,27 @@ class CartController extends GetxController {
     super.onInit();
     fetchCartApi();
     fetchOrderHistory();
-
+    restoreSelectedAddress();
     fetchAvailableCoupons(); // 👈 AUTO RESTORE CART ON APP START
+    initOrderSocket(); // 🔥 START SOCKET LISTENER FOR LIVE TRACKING
+  }
+
+  Future<void> restoreSelectedAddress() async {
+    final savedId = await SharedPre.getSelectedAddressId();
+    if (savedId.isEmpty) return;
+
+    selectedAddressId.value = savedId;
+
+    final authCtrl = Get.find<Authcontroller>();
+
+    if (authCtrl.addressList.isEmpty) {
+      await authCtrl.fetchAddresses();
+    }
+
+    final adr = authCtrl.getAddressById(savedId);
+    if (adr != null) {
+      selectedAddress.value = "${adr.street}, ${adr.area}, ${adr.city}";
+    }
   }
 
   var address = "".obs;
@@ -119,7 +272,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
+          "http://192.168.1.108:5004/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -483,7 +636,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
+      final url = "http://192.168.1.108:5004/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -495,13 +648,25 @@ class CartController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
-        final res = OrderTrackingResponse.fromJson(decoded);
 
-        order.value = res.data;
+        debugPrint("📡 FETCH ORDER TRACKING RESPONSE => $decoded");
+
+        /// ✅ DIRECT PARSE (API HAS NO success/data WRAPPER)
+        final trackingData = OrderTrackingData.fromJson(decoded);
+
+       
+        // 🔥 SET THE ORDER WITH ALL DATA
+        order.value = trackingData;
+        order.refresh(); // Force UI update
+
+      
       } else {
+        debugPrint("❌ API Error: ${response.statusCode}");
         Get.snackbar("Error", "Failed to fetch order tracking");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("❌ FETCH ORDER TRACKING ERROR => $e");
+      debugPrint("📋 StackTrace: $stackTrace");
       Get.snackbar("Exception", e.toString());
     } finally {
       isLoading.value = false;
@@ -580,25 +745,39 @@ class CartController extends GetxController {
   void handleSocketStatusUpdate(dynamic data) {
     if (order.value == null || data == null) return;
 
+    debugPrint("📡 SOCKET STATUS UPDATE RECEIVED => $data");
+
     String? status;
-    String? otp;
+    String? deliveryOTP;
 
     if (data is Map) {
       status = data["status"];
-      otp = data["otp"];
+
+      // 🔥 SUPPORT BOTH KEYS (SAFETY)
+      deliveryOTP = data["deliveryOTP"] ?? data["otp"];
+
+      if (deliveryOTP != null) {
+        debugPrint("🔑 OTP EXTRACTED FROM SOCKET => $deliveryOTP");
+      }
     } else if (data is String) {
       status = data;
     }
 
-    /// 🔥 OTP UPDATE (STATUS BAR NOTIFICATION)
-    if (otp != null && otp.isNotEmpty) {
-      order.value = order.value!.copyWith(delivery: Delivery(otp: otp));
+    /// 🔥 OTP UPDATE (SHOW OTP + ENABLE TRACK BUTTON)
+    if (deliveryOTP != null && deliveryOTP.isNotEmpty) {
+      debugPrint("✅ UPDATING ORDER WITH OTP => $deliveryOTP");
+      order.value = order.value!.copyWith(
+        deliveryOTP: deliveryOTP, // 🔥 VERY IMPORTANT
+        delivery:
+            order.value!.delivery ?? Delivery(otp: deliveryOTP, partner: null),
+      );
 
       GlobalNotificationService.show(
         title: "Delivery OTP",
-        message: "Your delivery OTP is $otp",
+        message: "Your delivery OTP is $deliveryOTP",
       );
-      return;
+
+      return; // 🔥 STOP HERE
     }
 
     if (status == null || status.isEmpty) return;
@@ -649,25 +828,78 @@ class CartController extends GetxController {
     // 🔥 CASE 2: Full object
     if (data is Map<String, dynamic>) {
       order.value = OrderTrackingData.fromSocket(old: order.value!, json: data);
+      order.refresh(); // 🔥 FORCE UI REFRESH
     }
   }
 
-  // socket connect 
+  // 🔥 HANDLE DELIVERY ASSIGNED WITH PARTNER DATA
+  void handleDeliveryAssigned(dynamic data) {
+    debugPrint("👤 DELIVERY ASSIGNED EVENT => $data");
+    debugPrint("📦 Data Type: ${data.runtimeType}");
+
+    if (order.value == null || data == null) return;
+
+    try {
+      if (data is Map<String, dynamic>) {
+        // 🔥 Extract delivery data (could be nested or direct)
+        Map<String, dynamic> deliveryData = {};
+
+        if (data.containsKey('delivery') && data['delivery'] != null) {
+          deliveryData = data['delivery'] as Map<String, dynamic>;
+        //  debugPrint("📦 Delivery found in nested 'delivery' key");
+        } else if (data.containsKey('partner') && data['partner'] != null) {
+          // If partner is direct, wrap it
+          deliveryData = {
+            'partner': data['partner'],
+            'otp': data['otp'] ?? data['deliveryOTP'],
+          };
+          debugPrint("👤 Partner found in direct 'partner' key");
+        } else {
+          deliveryData = data;
+          debugPrint("📦 Using entire data as delivery");
+        }
+
+        //debugPrint("🔍 Final delivery data: $deliveryData");
+
+        // Parse delivery
+        final delivery = Delivery.fromJson(deliveryData);
+
+    
+
+        // Update order with new delivery data
+        final updatedOrder = order.value!.copyWith(delivery: delivery);
+
+        // 🔥 Create NEW order instance to trigger rebuild
+        order.value = null;
+        order.value = updatedOrder;
+
+        // Additional refresh to ensure UI updates
+        order.refresh();
+
+      
+
+        GlobalNotificationService.show(
+          title: "Delivery Assigned",
+          message: "Your order has been assigned to a rider 🚴",
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint("❌ Error handling delivery assigned: $e");
+      debugPrint("📋 StackTrace: $stackTrace");
+    }
+  }
+
+  // socket connect
 
   /// =========================
-/// INIT ORDER SOCKET (LOGIN / REGISTER KE BAAD CALL KARNA)
-/// =========================
-Future<void> initOrderSocket() async {
-  await OrderSocketService.connect(
-    onStatusUpdate: handleSocketStatusUpdate,
-    onTrackingInfo: handleSocketTrackingInfo,
-    onDeliveryAssigned: (data) {
-      GlobalNotificationService.show(
-        title: "Delivery Assigned",
-        message: "Your order has been assigned to a rider 🚴",
-      );
-    },
-  );
-}
-
+  /// INIT ORDER SOCKET (LOGIN / REGISTER KE BAAD CALL KARNA)
+  /// =========================
+  Future<void> initOrderSocket() async {
+    await OrderSocketService.connect(
+      onStatusUpdate: handleSocketStatusUpdate,
+      onTrackingInfo: handleSocketTrackingInfo,
+      onDeliveryAssigned: handleDeliveryAssigned, // 🔥 Use new handler
+      onDeliveryLocationUpdated: handleDeliveryLocation,
+    );
+  }
 }

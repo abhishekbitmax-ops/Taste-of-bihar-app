@@ -56,4 +56,16 @@ class SharedPre {
     await prefs.remove(KEY_REFRESH_TOKEN);
     await prefs.remove(KEY_EXPIRES_IN);
   }
+
+  // SAVE SELECTED ADDRESS ID
+  static Future<void> saveSelectedAddressId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("selected_address_id", id);
+  }
+
+  // GET SELECTED ADDRESS ID
+  static Future<String> getSelectedAddressId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("selected_address_id") ?? "";
+  }
 }

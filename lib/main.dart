@@ -27,6 +27,7 @@ void main() async {
       OrderSocketService.connect(
         onStatusUpdate: cartCtrl.handleSocketStatusUpdate,
         onTrackingInfo: cartCtrl.handleSocketTrackingInfo,
+        
         onDeliveryAssigned: (data) {
           GlobalNotificationService.show(
             title: "Delivery Assigned",

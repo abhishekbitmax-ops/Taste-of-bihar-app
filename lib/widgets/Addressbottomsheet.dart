@@ -9,6 +9,7 @@ import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Dashboard/view/CurrentMapfetch.dart';
 import 'package:restro_app/Modules/Dashboard/view/UpdateAddrsss.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:restro_app/utils/Sharedpre.dart';
 
 class AddressSelector extends StatelessWidget {
   final double heightFactor; // 0.5 = half sheet, 1 = full screen
@@ -119,13 +120,12 @@ class AddressSelector extends StatelessWidget {
                       ),
                       elevation: 1,
                       child: ListTile(
-                        onTap: () {
-                          // ✅ Address text
+                        onTap: () async {
                           cartCtrl.selectedAddress.value =
                               "${adr.street}, ${adr.area}, ${adr.city}";
 
-                          // ✅ Address ID (THIS FIXES YOUR ISSUE)
                           cartCtrl.selectedAddressId.value = adr.id ?? "";
+                          await SharedPre.saveSelectedAddressId(adr.id ?? "");
 
                           Get.back();
                         },

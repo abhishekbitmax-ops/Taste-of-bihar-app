@@ -47,7 +47,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       /// 👉 STEP 1: PLACE ORDER (UPI)
       await ctrl.placeOrder(
         addressId: ctrl.selectedAddressId.value,
-        paymentMethod: "UPI",
+        paymentMethod: "ONLINE",
       );
 
       /// 👉 STEP 2: CHECK RAZORPAY ORDER ID

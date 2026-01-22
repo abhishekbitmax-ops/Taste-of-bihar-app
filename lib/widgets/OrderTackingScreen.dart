@@ -6,6 +6,7 @@ import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/widgets/Globalnotifation.dart';
+import 'package:restro_app/widgets/Googlemapbottomsheet.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -17,14 +18,45 @@ class OrderTrackingScreen extends StatefulWidget {
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final CartController ctrl = Get.find<CartController>();
-
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ctrl.fetchOrderTracking(widget.orderId);
+
+      final order = ctrl.order.value;
+      if (order?.deliveryAddress != null) {
+        ctrl.hasUserLocation.value = true;
+      }
     });
+  }
+
+  Widget _trackOrderButton(order) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Get.bottomSheet(
+            LiveTrackingBottomSheet(),
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+          );
+        },
+        icon: const Icon(Icons.location_on),
+        label: Text(
+          "Track Order Live",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF8B0000),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -85,11 +117,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               _orderSummary(order),
               const SizedBox(height: 16),
 
-              _deliveryPartner(order),
-              const SizedBox(height: 16),
+              // 🔥 OTP CARD (SHOW PROMINENTLY WHEN AVAILABLE - TOP PRIORITY)
+              if (order.effectiveOtp != null &&
+                  order.effectiveOtp!.isNotEmpty) ...[
+                _otpCard(order),
+                const SizedBox(height: 16),
+              ],
 
-              _otpCard(order),
-              const SizedBox(height: 16),
+              // 🔥 SHOW TRACK BUTTON WHEN OTP AVAILABLE
+              if (order.effectiveOtp != null &&
+                  order.effectiveOtp!.isNotEmpty) ...[
+                _trackOrderButton(order),
+                const SizedBox(height: 16),
+              ],
+
+              // 🔥 SHOW DELIVERY PARTNER WHEN ASSIGNED (HAS PARTNER DATA)
+              if (order.delivery?.partner != null) ...[
+                _deliveryPartner(order),
+                const SizedBox(height: 16),
+              ],
 
               /// 🔥 ETA CARD
               _estimatedDelivery(order),
@@ -161,9 +207,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   // ───────── DELIVERY PARTNER ─────────
   Widget _deliveryPartner(order) {
-    final name = order.deliveryAddress?.name;
-    final phone = order.deliveryAddress?.phone;
-    if (name == null || phone == null) return const SizedBox();
+    final partner = order.delivery?.partner;
+
+    if (partner == null) return const SizedBox();
+
+    final name = partner.name ?? "Unknown";
+    final phone = partner.phone ?? "N/A";
+    final vehicle = partner.vehicle?.type;
 
     return _card(
       child: Row(
@@ -174,14 +224,20 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: Icon(Icons.delivery_dining, color: Colors.white),
           ),
           const SizedBox(width: 12),
+
+          /// 👤 NAME + PHONE + VEHICLE
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   phone,
                   style: GoogleFonts.poppins(
@@ -189,10 +245,28 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     color: Colors.black54,
                   ),
                 ),
+                if (vehicle != null && vehicle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    vehicle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.black45,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          const Icon(Icons.call, color: Colors.green),
+
+          /// 📞 CALL ICON
+          InkWell(
+            onTap: () {
+              // future: launch dialer with phone
+              // launchUrl(Uri(scheme: 'tel', path: phone));
+            },
+            child: const Icon(Icons.call, color: Colors.green, size: 22),
+          ),
         ],
       ),
     );
@@ -200,26 +274,66 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   // ───────── OTP ─────────
   Widget _otpCard(order) {
-    final otp = order.delivery?.otp;
+    /// 🔥 GET OTP FROM BOTH SOURCES (API + Socket)
+    final otp = order.effectiveOtp;
     if (otp == null || otp.isEmpty) return const SizedBox();
 
     return _card(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Delivery OTP",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          ),
-          Text(
-            otp,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green, width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "Delivery OTP",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green, width: 2),
+                  ),
+                  child: Text(
+                    otp,
+                    style: GoogleFonts.poppins(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade700,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Share this with delivery partner",
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.black54,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

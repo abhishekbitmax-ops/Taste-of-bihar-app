@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:restro_app/Modules/Dashboard/view/ApplyCoupanscreen.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/RazorpayBottompay.dart';
 
@@ -474,8 +475,11 @@ class CartScreen extends StatelessWidget {
                         height: 48,
                         child: Obx(
                           () => ElevatedButton(
-                            onPressed: () {
-                              if (cartCtrl.selectedAddressId.value.isEmpty) {
+                            onPressed: () async {
+                              final savedAddressId =
+                                  await SharedPre.getSelectedAddressId();
+
+                              if (savedAddressId.isEmpty) {
                                 Get.snackbar(
                                   "Address Required",
                                   "Please select a delivery address",
@@ -483,17 +487,18 @@ class CartScreen extends StatelessWidget {
                                 return;
                               }
 
+                              // 🔥 sync controller also (safety)
+                              cartCtrl.selectedAddressId.value = savedAddressId;
+
                               final selected =
                                   cartCtrl.selectedPaymentMethod.value;
 
                               if (selected == "Cash on Delivery") {
-                                // ✅ COD FLOW SAME
                                 cartCtrl.placeOrder(
-                                  addressId: cartCtrl.selectedAddressId.value,
+                                  addressId: savedAddressId,
                                   paymentMethod: "COD",
                                 );
                               } else {
-                                // ✅ UPI FLOW — ONLY OPEN DIALOG
                                 Get.dialog(
                                   PaymentBottomSheet(
                                     amount: cartCtrl.grandTotal.value,

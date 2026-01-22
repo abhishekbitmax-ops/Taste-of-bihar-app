@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/OrderConfrimscreen.dart';
+import 'package:restro_app/widgets/Privacy_policy.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
 class ProfileHomeScreen extends StatelessWidget {
@@ -278,12 +279,24 @@ class ProfileHomeScreen extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _menuTile(Icons.help_outline, "Help & Support"),
+                            _menuTile(
+                              Icons.help_outline,
+                              "Help & Support",
+                              onTap: () => Get.to(PrivacyPolicyScreen()),
+                            ),
                             _menuTile(Icons.restaurant, "Partner with Us"),
                             _menuTile(Icons.card_membership, "Pro Membership"),
                             const Divider(),
-                            _menuTile(Icons.lock, "Privacy Policy"),
-                            _menuTile(Icons.description, "Terms & Conditions"),
+                            _menuTile(
+                              Icons.lock,
+                              "Privacy Policy",
+                              onTap: () => Get.to(PrivacyPolicyScreen()),
+                            ),
+                            _menuTile(
+                              Icons.description,
+                              "Terms & Conditions",
+                              onTap: () => Get.to(PrivacyPolicyScreen()),
+                            ),
                           ],
                         ),
                       ),
