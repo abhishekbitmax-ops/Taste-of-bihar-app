@@ -1,6 +1,6 @@
 class ApiEndpoint {
   //  Base API URL (for all API requests)
-  static const String baseUrl = "http://192.168.1.108:5004/api/v1/user";
+  static const String baseUrl = "https://sog.bitmaxtest.com/api/v1/user";
 
   // Patient App Endpoints
 

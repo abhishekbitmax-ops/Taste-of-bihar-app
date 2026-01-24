@@ -272,7 +272,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "http://192.168.1.108:5004/api/v1/user/cart/$cartItemId/remove";
+          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -636,7 +636,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "http://192.168.1.108:5004/api/v1/user/order/$orderId/track";
+      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -654,12 +654,9 @@ class CartController extends GetxController {
         /// ✅ DIRECT PARSE (API HAS NO success/data WRAPPER)
         final trackingData = OrderTrackingData.fromJson(decoded);
 
-       
         // 🔥 SET THE ORDER WITH ALL DATA
         order.value = trackingData;
         order.refresh(); // Force UI update
-
-      
       } else {
         debugPrint("❌ API Error: ${response.statusCode}");
         Get.snackbar("Error", "Failed to fetch order tracking");
@@ -834,58 +831,51 @@ class CartController extends GetxController {
 
   // 🔥 HANDLE DELIVERY ASSIGNED WITH PARTNER DATA
   void handleDeliveryAssigned(dynamic data) {
-    debugPrint("👤 DELIVERY ASSIGNED EVENT => $data");
-    debugPrint("📦 Data Type: ${data.runtimeType}");
-
     if (order.value == null || data == null) return;
 
     try {
       if (data is Map<String, dynamic>) {
-        // 🔥 Extract delivery data (could be nested or direct)
-        Map<String, dynamic> deliveryData = {};
+        // 🔥 Normalize socket payload → API-like structure
+        final delivery = Delivery(
+          otp: order.value?.deliveryOTP,
+          assignedAt: data['assignedAt'],
+          partner: DeliveryPartner(
+            name: data['deliveryPartner']?['name'],
+            phone: data['deliveryPartner']?['phone'],
+            vehicle: Vehicle(type: data['deliveryPartner']?['vehicleType']),
+          ),
+        );
 
-        if (data.containsKey('delivery') && data['delivery'] != null) {
-          deliveryData = data['delivery'] as Map<String, dynamic>;
-        //  debugPrint("📦 Delivery found in nested 'delivery' key");
-        } else if (data.containsKey('partner') && data['partner'] != null) {
-          // If partner is direct, wrap it
-          deliveryData = {
-            'partner': data['partner'],
-            'otp': data['otp'] ?? data['deliveryOTP'],
-          };
-          debugPrint("👤 Partner found in direct 'partner' key");
-        } else {
-          deliveryData = data;
-          debugPrint("📦 Using entire data as delivery");
-        }
+        final old = order.value!;
 
-        //debugPrint("🔍 Final delivery data: $deliveryData");
+        /// 🔥 CREATE BRAND NEW ORDER OBJECT (VERY IMPORTANT)
+        order.value = OrderTrackingData(
+          orderId: old.orderId,
+          id: old.id,
+          status: old.status,
+          deliveryOTP: old.deliveryOTP,
+          timeline: old.timeline,
+          estimatedDelivery: old.estimatedDelivery,
+          restaurant: old.restaurant,
+          deliveryAddress: old.deliveryAddress,
+          items: old.items,
+          price: old.price,
+          payment: old.payment,
+          delivery: delivery, // ✅ FIXED
+          createdAt: old.createdAt,
+          canCancel: old.canCancel,
+        );
 
-        // Parse delivery
-        final delivery = Delivery.fromJson(deliveryData);
-
-    
-
-        // Update order with new delivery data
-        final updatedOrder = order.value!.copyWith(delivery: delivery);
-
-        // 🔥 Create NEW order instance to trigger rebuild
-        order.value = null;
-        order.value = updatedOrder;
-
-        // Additional refresh to ensure UI updates
-        order.refresh();
-
-      
+        order.refresh(); // 🔥 FORCE UI REBUILD
 
         GlobalNotificationService.show(
           title: "Delivery Assigned",
           message: "Your order has been assigned to a rider 🚴",
         );
       }
-    } catch (e, stackTrace) {
-      debugPrint("❌ Error handling delivery assigned: $e");
-      debugPrint("📋 StackTrace: $stackTrace");
+    } catch (e, s) {
+      debugPrint("❌ DELIVERY_ASSIGNED ERROR => $e");
+      debugPrint("$s");
     }
   }
 
@@ -901,5 +891,107 @@ class CartController extends GetxController {
       onDeliveryAssigned: handleDeliveryAssigned, // 🔥 Use new handler
       onDeliveryLocationUpdated: handleDeliveryLocation,
     );
+  }
+
+  // Cancel order api method ------
+
+  Future<bool> cancelOrderApi({
+    required String orderId,
+    required double amount,
+    required String paymentMethod, // COD / ONLINE
+    String? paymentId,
+  }) async {
+    try {
+      final token = await SharedPre.getAccessToken();
+
+      final url = Uri.parse(
+        "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/cancel",
+      );
+
+      /// 🔥 BUILD PAYMENT OBJECT AS BACKEND EXPECTS
+      final Map<String, dynamic> payment = {};
+
+      if (paymentMethod.toUpperCase() == "COD") {
+        payment["type"] = "COD";
+        payment["method"] = "CASH"; //  VALID ENUM
+      } else {
+        payment["type"] = "ONLINE";
+        payment["method"] = "RAZORPAY"; //  VALID ENUM
+
+        if (paymentId != null && paymentId.isNotEmpty) {
+          payment["paymentId"] = paymentId;
+        }
+      }
+
+      final body = {
+        "amount": amount,
+        "reason": "Order cancelled by user",
+        "payment": payment,
+      };
+
+      debugPrint("CANCEL ORDER BODY => $body");
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      debugPrint(" CANCEL ORDER RES => ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data["success"] == true) {
+        return true;
+      } else {
+        throw data["message"] ?? "Failed to cancel order";
+      }
+    } catch (e) {
+      debugPrint(" CANCEL ORDER ERROR => $e");
+      rethrow;
+    }
+  }
+
+  Future<void> cancelOrder({
+    required String orderId,
+    required double amount,
+    required String paymentMethod, // COD / ONLINE
+    String? paymentId,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final success = await cancelOrderApi(
+        orderId: orderId,
+        amount: amount,
+        paymentMethod: paymentMethod,
+        paymentId: paymentId,
+      );
+
+      if (success) {
+        Get.snackbar(
+          "Order Cancelled",
+          "Your order has been cancelled successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // 🔥 Refresh tracking + history
+        await fetchOrderTracking(orderId);
+        await fetchOrderHistory();
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Cancel Failed",
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

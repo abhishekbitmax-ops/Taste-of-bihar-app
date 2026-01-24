@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/widgets/Globalnotifation.dart';
 import 'package:restro_app/widgets/Googlemapbottomsheet.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
@@ -18,6 +16,23 @@ class OrderTrackingScreen extends StatefulWidget {
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final CartController ctrl = Get.find<CartController>();
+
+  bool _canCancel(String? status) {
+    if (status == null) return false;
+    final s = status.toUpperCase();
+    return s == "PLACED" || s == "ACCEPTED";
+  }
+
+  String getPaymentText(order) {
+    if (order.payment == null) return "Cash on Delivery";
+
+    if (order.payment?.method == null) {
+      return "Cash on Delivery";
+    }
+
+    return order.payment!.method!;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -44,10 +59,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             backgroundColor: Colors.white,
           );
         },
-        icon: const Icon(Icons.location_on),
+        icon: const Icon(Icons.location_on, color: Colors.white),
         label: Text(
           "Track Order Live",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF8B0000),
@@ -112,32 +130,49 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           return ListView(
             padding: const EdgeInsets.all(16),
-            physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              _orderSummary(order),
-              const SizedBox(height: 16),
-
-              // 🔥 OTP CARD (SHOW PROMINENTLY WHEN AVAILABLE - TOP PRIORITY)
-              if (order.effectiveOtp != null &&
-                  order.effectiveOtp!.isNotEmpty) ...[
-                _otpCard(order),
+              /// 🔴 CANCELLED BANNER
+              if (order.status == "CANCELLED") ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Text(
+                    "This order has been cancelled",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
               ],
 
-              // 🔥 SHOW TRACK BUTTON WHEN OTP AVAILABLE
-              if (order.effectiveOtp != null &&
-                  order.effectiveOtp!.isNotEmpty) ...[
+              if (_canCancel(order.status)) ...[
+                _cancelOrderButton(order),
+                const SizedBox(height: 16),
+              ],
+
+              _orderSummary(order),
+              const SizedBox(height: 16),
+
+              if (order.effectiveOtp?.isNotEmpty == true) ...[
+                _otpCard(order),
+                const SizedBox(height: 16),
                 _trackOrderButton(order),
                 const SizedBox(height: 16),
               ],
 
-              // 🔥 SHOW DELIVERY PARTNER WHEN ASSIGNED (HAS PARTNER DATA)
               if (order.delivery?.partner != null) ...[
                 _deliveryPartner(order),
                 const SizedBox(height: 16),
               ],
 
-              /// 🔥 ETA CARD
               _estimatedDelivery(order),
               const SizedBox(height: 20),
 
@@ -149,6 +184,113 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           );
         }),
       ),
+    );
+  }
+
+  Widget _cancelOrderButton(order) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: () => _showCancelConfirmation(order),
+        icon: const Icon(Icons.cancel, color: Colors.red),
+        label: Text(
+          "Cancel Order",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: Colors.red,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.red, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCancelConfirmation(order) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red,
+                size: 48,
+              ),
+              const SizedBox(height: 12),
+
+              Text(
+                "Cancel Order?",
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Are you sure you want to cancel this order?\nThis action cannot be undone.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54),
+              ),
+
+              const SizedBox(height: 22),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text("No"),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Get.back(); // close dialog
+
+                        await ctrl.cancelOrder(
+                          orderId: order.orderId!,
+                          amount: order.price?.grandTotal ?? 0,
+                          paymentMethod:
+                              order.payment?.method?.toUpperCase() == "ONLINE"
+                              ? "ONLINE"
+                              : "COD",
+                          paymentId: order.payment?.transactionId,
+                        );
+                      },
+                      child: const Text("Yes, Cancel"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false, // 👈 user must choose Yes / No
     );
   }
 
@@ -171,20 +313,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             style: GoogleFonts.poppins(fontSize: 12),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.location_on, size: 16, color: Color(0xFF8B0000)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  "${order.deliveryAddress?.addressLine}, "
-                  "${order.deliveryAddress?.city} - "
-                  "${order.deliveryAddress?.pincode}",
-                  style: GoogleFonts.poppins(fontSize: 13),
-                ),
-              ),
-            ],
-          ),
+
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

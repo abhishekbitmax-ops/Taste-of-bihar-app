@@ -297,7 +297,7 @@ class Authcontroller extends GetxController {
 
       var response = await http.get(
         Uri.parse(
-          "http://192.168.1.108:5004/api/v1/user/categories/$categoryId/items",
+          "https://sog.bitmaxtest.com/api/v1/user/categories/$categoryId/items",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -514,7 +514,7 @@ class Authcontroller extends GetxController {
       };
 
       final response = await http.put(
-        Uri.parse("http://192.168.1.108:5004/api/v1/user/address/$addressId"),
+        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -547,7 +547,7 @@ class Authcontroller extends GetxController {
       String token = await SharedPre.getAccessToken();
 
       final response = await http.delete(
-        Uri.parse("http://192.168.1.108:5004/api/v1/user/address/$addressId"),
+        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
