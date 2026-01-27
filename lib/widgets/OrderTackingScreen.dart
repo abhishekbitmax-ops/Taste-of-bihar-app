@@ -47,6 +47,22 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     });
   }
 
+  Widget _refundRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.poppins(fontSize: 13)),
+          Text(
+            value ?? "--",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _trackOrderButton(order) {
     return SizedBox(
       width: double.infinity,
@@ -133,23 +149,36 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             children: [
               /// 🔴 CANCELLED BANNER
               if (order.status == "CANCELLED") ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red),
-                  ),
-                  child: Text(
-                    "This order has been cancelled",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.red,
+                Obx(() {
+                  final refund = ctrl.refund.value;
+                  if (refund == null) return const SizedBox();
+
+                  return _card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Refund Details",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _refundRow("Refund Status", refund.refundStatus),
+                        _refundRow(
+                          "Amount Refunded",
+                          "₹${refund.totalRefunded ?? 0}",
+                        ),
+                        _refundRow(
+                          "Refund Request",
+                          refund.refundRequest?.status,
+                        ),
+                      ],
                     ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(height: 16),
               ],
 
@@ -281,7 +310,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           paymentId: order.payment?.transactionId,
                         );
                       },
-                      child: const Text("Yes, Cancel"),
+                      child: const Text(
+                        "Yes, Cancel",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ],

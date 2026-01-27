@@ -888,3 +888,138 @@ class Coupon {
     };
   }
 }
+
+
+//Refund payment model class -----
+
+class RefundResponse {
+  final bool? success;
+  final String? message;
+  final RefundData? data;
+
+  RefundResponse({
+    this.success,
+    this.message,
+    this.data,
+  });
+
+  factory RefundResponse.fromJson(Map<String, dynamic> json) {
+    return RefundResponse(
+      success: json['success'],
+      message: json['message'],
+      data: json['data'] != null
+          ? RefundData.fromJson(json['data'])
+          : null,
+    );
+  }
+}
+
+class RefundData {
+  final String? orderId;
+  final String? paymentId;
+  final String? status;
+  final String? refundStatus;
+  final num? totalRefunded;
+  final String? currency;
+  final RefundAmount? amount;
+  final List<RefundItem>? refunds;
+  final RefundRequest? refundRequest;
+
+  RefundData({
+    this.orderId,
+    this.paymentId,
+    this.status,
+    this.refundStatus,
+    this.totalRefunded,
+    this.currency,
+    this.amount,
+    this.refunds,
+    this.refundRequest,
+  });
+
+  factory RefundData.fromJson(Map<String, dynamic> json) {
+    return RefundData(
+      orderId: json['orderId'],
+      paymentId: json['paymentId'],
+      status: json['status'],
+      refundStatus: json['refundStatus'],
+      totalRefunded: json['totalRefunded'],
+      currency: json['currency'],
+      amount: json['amount'] != null
+          ? RefundAmount.fromJson(json['amount'])
+          : null,
+      refunds: (json['refunds'] as List?)
+          ?.map((e) => RefundItem.fromJson(e))
+          .toList(),
+      refundRequest: json['refundRequest'] != null
+          ? RefundRequest.fromJson(json['refundRequest'])
+          : null,
+    );
+  }
+}
+
+class RefundAmount {
+  final num? total;
+  final num? tax;
+  final num? deliveryFee;
+  final num? discount;
+  final num? payable;
+
+  RefundAmount({
+    this.total,
+    this.tax,
+    this.deliveryFee,
+    this.discount,
+    this.payable,
+  });
+
+  factory RefundAmount.fromJson(Map<String, dynamic> json) {
+    return RefundAmount(
+      total: json['total'],
+      tax: json['tax'],
+      deliveryFee: json['deliveryFee'],
+      discount: json['discount'],
+      payable: json['payable'],
+    );
+  }
+}
+
+class RefundItem {
+  final String? refundId;
+  final num? amount;
+  final String? status;
+  final String? createdAt;
+
+  RefundItem({
+    this.refundId,
+    this.amount,
+    this.status,
+    this.createdAt,
+  });
+
+  factory RefundItem.fromJson(Map<String, dynamic> json) {
+    return RefundItem(
+      refundId: json['refundId'],
+      amount: json['amount'],
+      status: json['status'],
+      createdAt: json['createdAt'],
+    );
+  }
+}
+
+class RefundRequest {
+  final bool? isRequested;
+  final String? status;
+
+  RefundRequest({
+    this.isRequested,
+    this.status,
+  });
+
+  factory RefundRequest.fromJson(Map<String, dynamic> json) {
+    return RefundRequest(
+      isRequested: json['isRequested'],
+      status: json['status'],
+    );
+  }
+}

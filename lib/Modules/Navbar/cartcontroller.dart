@@ -979,6 +979,8 @@ class CartController extends GetxController {
           colorText: Colors.white,
         );
 
+        await fetchRefund(orderId);
+
         // 🔥 Refresh tracking + history
         await fetchOrderTracking(orderId);
         await fetchOrderHistory();
@@ -994,4 +996,49 @@ class CartController extends GetxController {
       isLoading.value = false;
     }
   }
+
+
+
+  // Refund payment method -----
+
+
+ 
+  var refund = Rx<RefundData?>(null);
+
+  Future<void> fetchRefund(String orderId) async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final url =
+          "https://sog.bitmaxtest.com/api/v1/user/payment/refund/$orderId";
+
+      final res = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        final response = RefundResponse.fromJson(decoded);
+        refund.value = response.data;
+      } else {
+        refund.value = null;
+      }
+    } catch (e) {
+      refund.value = null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void clear() {
+    refund.value = null;
+  }
 }
+
