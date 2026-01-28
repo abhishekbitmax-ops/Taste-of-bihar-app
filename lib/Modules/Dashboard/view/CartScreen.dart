@@ -487,25 +487,18 @@ class CartScreen extends StatelessWidget {
                                 return;
                               }
 
-                              // 🔥 sync controller also (safety)
+                              // 🔥 sync controller also (single source of truth)
                               cartCtrl.selectedAddressId.value = savedAddressId;
 
-                              final selected =
-                                  cartCtrl.selectedPaymentMethod.value;
+                              final selected = cartCtrl
+                                  .selectedPaymentMethod
+                                  .value; // "ONLINE" or "COD"
 
-                              if (selected == "Cash on Delivery") {
-                                cartCtrl.placeOrder(
-                                  addressId: savedAddressId,
-                                  paymentMethod: "COD",
-                                );
-                              } else {
-                                Get.dialog(
-                                  PaymentBottomSheet(
-                                    amount: cartCtrl.grandTotal.value,
-                                  ),
-                                  barrierDismissible: false,
-                                );
-                              }
+                              // 🔥 ALWAYS PLACE ORDER FROM HERE
+                              await cartCtrl.placeOrder(
+                                addressId: savedAddressId,
+                                paymentMethod: selected, // EXACT VALUE
+                              );
                             },
 
                             style: ElevatedButton.styleFrom(

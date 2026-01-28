@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
+import 'package:restro_app/Modules/Dashboard/view/Notification.dart';
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/widgets/Addtocartbottom.dart';
@@ -192,7 +193,47 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       const SizedBox(width: 10),
 
                       // 🔔 NOTIFICATION ICON
-                      const Icon(Icons.notifications_none, size: 26),
+                      // 🔔 NOTIFICATION ICON WITH COUNT
+                      InkWell(
+                        onTap: () => Get.to(() => NotificationScreen()),
+                        child: Obx(() {
+                          final count = popularCtrl.unreadCount;
+
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(Icons.notifications_none, size: 26),
+
+                              if (count > 0)
+                                Positioned(
+                                  right: -4,
+                                  top: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        count > 9 ? "9+" : count.toString(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        }),
+                      ),
                     ],
                   ),
                 ),

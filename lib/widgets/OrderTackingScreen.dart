@@ -17,6 +17,11 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final CartController ctrl = Get.find<CartController>();
 
+  bool _isOnlinePayment(order) {
+    final method = order.payment?.method?.toUpperCase() ?? "";
+    return method == "UPI" || method == "RAZORPAY" || method == "ONLINE";
+  }
+
   bool _canCancel(String? status) {
     if (status == null) return false;
     final s = status.toUpperCase();
@@ -39,6 +44,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ctrl.fetchOrderTracking(widget.orderId);
+
+      if (ctrl.order.value?.status == "CANCELLED") {
+        await ctrl.fetchRefund(widget.orderId); // 🔥 ADD THIS
+      }
 
       final order = ctrl.order.value;
       if (order?.deliveryAddress != null) {
@@ -126,7 +135,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
       body: RefreshIndicator(
         color: const Color(0xFF8B0000),
-        onRefresh: () => ctrl.fetchOrderTracking(widget.orderId),
+        onRefresh: () async {
+          await ctrl.fetchOrderTracking(widget.orderId);
+
+          // 🔥 IF ORDER IS CANCELLED → FETCH REFUND AGAIN
+          if (ctrl.order.value?.status == "CANCELLED") {
+            await ctrl.fetchRefund(widget.orderId);
+          }
+        },
         child: Obx(() {
           if (ctrl.isLoading.value) {
             return const Center(
@@ -149,36 +165,64 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             children: [
               /// 🔴 CANCELLED BANNER
               if (order.status == "CANCELLED") ...[
-                Obx(() {
-                  final refund = ctrl.refund.value;
-                  if (refund == null) return const SizedBox();
+                if (_isOnlinePayment(order)) ...[
+                  /// ✅ ONLINE → SHOW REFUND DETAILS
+                  Obx(() {
+                    final refund = ctrl.refund.value;
+                    if (refund == null) return const SizedBox();
 
-                  return _card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Refund Details",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Colors.green.shade700,
+                    return _card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Refund Details",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.green.shade700,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        _refundRow("Refund Status", refund.refundStatus),
-                        _refundRow(
-                          "Amount Refunded",
-                          "₹${refund.totalRefunded ?? 0}",
-                        ),
-                        _refundRow(
-                          "Refund Request",
-                          refund.refundRequest?.status,
+                          const SizedBox(height: 10),
+                          _refundRow(
+                            "Refund ID",
+                            ctrl.refund.value?.refunds?.isNotEmpty == true
+                                ? ctrl.refund.value!.refunds!.first.refundId
+                                : "--",
+                          ),
+                          _refundRow("Refund Status", refund.refundStatus),
+                          _refundRow(
+                            "Amount Refunded",
+                            "₹${refund.totalRefunded ?? 0}",
+                          ),
+                          _refundRow(
+                            "Refund Request",
+                            refund.refundRequest?.status,
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ] else ...[
+                  /// ✅ COD → SHOW SIMPLE MESSAGE ONLY
+                  _card(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.orange),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "This was a Cash on Delivery order.\nNo online refund is applicable.",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  );
-                }),
+                  ),
+                ],
                 const SizedBox(height: 16),
               ],
 
@@ -299,14 +343,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                       onPressed: () async {
                         Get.back(); // close dialog
+                        final method = order.payment?.method?.toUpperCase();
+
+                        final cancelPaymentMethod =
+                            (method == "ONLINE" ||
+                                method == "RAZORPAY" ||
+                                method == "UPI")
+                            ? "ONLINE"
+                            : "COD";
 
                         await ctrl.cancelOrder(
                           orderId: order.orderId!,
-                          amount: order.price?.grandTotal ?? 0,
-                          paymentMethod:
-                              order.payment?.method?.toUpperCase() == "ONLINE"
-                              ? "ONLINE"
-                              : "COD",
+                          amount: (order.price?.grandTotal ?? 0).toDouble(),
+                          paymentMethod: cancelPaymentMethod,
                           paymentId: order.payment?.transactionId,
                         );
                       },

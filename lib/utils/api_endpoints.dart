@@ -24,6 +24,7 @@ class ApiEndpoint {
   static const String GetBanners = "/banners/active";
   static const String PopluarDishs = "/order/popular";
   static const String GetCoupancode = "/coupons/active";
+  static const String Getnotifaction = "/notifications";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {

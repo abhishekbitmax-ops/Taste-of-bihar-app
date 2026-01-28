@@ -34,7 +34,9 @@ class CartController extends GetxController {
   var roadDistance = 0.0.obs; // 🔥 Road distance in km (cached)
   var roadDistanceLoading = false.obs;
   var roadDirection = "".obs; // 🔥 Turn-by-turn direction
-  var roadDuration = 0.obs; // 🔥 Duration in minutes
+  var roadDuration = 0.obs;
+
+  // 🔥 Duration in minutes
 
   // 🔥 Fetch road directions using Google Maps Directions API
   Future<void> fetchRoadDistance() async {
@@ -109,37 +111,39 @@ class CartController extends GetxController {
     if (data == null) return;
 
     try {
-      /// 🚴 DELIVERY PARTNER LOCATION
-      final loc = data["location"];
-      if (loc != null && loc["lat"] != null && loc["lng"] != null) {
-        final newLat = (loc["lat"] as num).toDouble();
-        final newLng = (loc["lng"] as num).toDouble();
+      /// ================= RIDER LOCATION (ALWAYS FROM TOP LEVEL) =================
+      final rLat = data["lat"];
+      final rLng = data["lng"] ?? data["lon"];
 
-        deliveryLat.value = newLat;
-        deliveryLng.value = newLng;
+      if (rLat != null && rLng != null) {
+        deliveryLat.value = (rLat as num).toDouble();
+        deliveryLng.value = (rLng as num).toDouble();
         hasLiveLocation.value = true;
 
-        debugPrint("✅ Delivery Location Set: $newLat, $newLng");
+        debugPrint(
+          "✅ Rider Location Set: ${deliveryLat.value}, ${deliveryLng.value}",
+        );
       }
 
-      /// 👤 USER LOCATION (FROM SOCKET — SAFE NOW)
-      if (!hasUserLocation.value) {
-        final address = data["assignedOrder"]?["deliveryAddress"];
-        if (address != null &&
-            address["lat"] != null &&
-            address["lng"] != null) {
-          final newUserLat = (address["lat"] as num).toDouble();
-          final newUserLng = (address["lng"] as num).toDouble();
+      /// ================= USER LOCATION (ONLY FROM deliveryAddress) =================
+      final order = data["order"];
+      final address = order?["deliveryAddress"];
 
-          userLat.value = newUserLat;
-          userLng.value = newUserLng;
-          hasUserLocation.value = true;
+      final uLat = address?["lat"];
+      final uLng = address?["lng"];
 
-          debugPrint("✅ User Location Set: $newUserLat, $newUserLng");
-        }
+      if (uLat != null && uLng != null) {
+        userLat.value = (uLat as num).toDouble();
+        userLng.value = (uLng as num).toDouble();
+        hasUserLocation.value = true;
+
+        debugPrint(
+          "✅ User Location Set (deliveryAddress): "
+          "${userLat.value}, ${userLng.value}",
+        );
       }
 
-      // 🔥 FETCH ROAD DISTANCE (only once when both locations are set)
+      /// ================= FETCH ROAD ONCE =================
       if (hasUserLocation.value &&
           hasLiveLocation.value &&
           roadDistance.value == 0) {
@@ -151,8 +155,8 @@ class CartController extends GetxController {
         "User: ${userLat.value},${userLng.value}",
       );
     } catch (e, s) {
-      debugPrint("❌ Error in handleDeliveryLocation: $e");
-      debugPrint("Stack: $s");
+      debugPrint("❌ handleDeliveryLocation ERROR => $e");
+      debugPrint("STACK => $s");
     }
   }
 
@@ -174,6 +178,7 @@ class CartController extends GetxController {
   void onInit() {
     super.onInit();
     fetchCartApi();
+    fetchNotifications();
     fetchOrderHistory();
     restoreSelectedAddress();
     fetchAvailableCoupons(); // 👈 AUTO RESTORE CART ON APP START
@@ -204,9 +209,9 @@ class CartController extends GetxController {
   var savedAddresses = <Map<String, String>>[].obs;
 
   // CartController.dart
-  var selectedPaymentMethod = "UPI".obs;
+  var selectedPaymentMethod = "ONLINE".obs;
 
-  final paymentMethods = ["UPI", "Cash on Delivery"];
+  final paymentMethods = ["ONLINE", "COD"];
 
   void saveAddress(String addr) {
     address.value = addr;
@@ -997,12 +1002,8 @@ class CartController extends GetxController {
     }
   }
 
-
-
   // Refund payment method -----
 
-
- 
   var refund = Rx<RefundData?>(null);
 
   Future<void> fetchRefund(String orderId) async {
@@ -1023,10 +1024,11 @@ class CartController extends GetxController {
         },
       );
 
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200 || res.statusCode == 201) {
         final decoded = jsonDecode(res.body);
         final response = RefundResponse.fromJson(decoded);
         refund.value = response.data;
+        refund.refresh();
       } else {
         refund.value = null;
       }
@@ -1040,5 +1042,76 @@ class CartController extends GetxController {
   void clear() {
     refund.value = null;
   }
-}
 
+  // notifaction api method -----
+
+  var notifications = <AppNotification>[].obs;
+
+  int get unreadCount {
+    return notifications.where((n) => n.isRead != true).length;
+  }
+
+  Future<void> fetchNotifications() async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final url = ApiEndpoint.getUrl(ApiEndpoint.Getnotifaction);
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        final res = NotificationResponse.fromJson(decoded);
+        notifications.value = res.data ?? [];
+      } else {
+        notifications.clear();
+      }
+    } catch (e) {
+      notifications.clear();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // mark to read api method ------
+
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return;
+
+      final url = Uri.parse(
+        "https://sog.bitmaxtest.com/api/v1/user/notifications/$notificationId/read",
+      );
+
+      final response = await http.patch(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // 🔥 LOCAL LIST UPDATE (NO EXTRA API CALL)
+        final index = notifications.indexWhere((n) => n.id == notificationId);
+
+        if (index != -1) {
+          notifications[index] = notifications[index].copyWith(isRead: true);
+          notifications.refresh();
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ MARK READ ERROR => $e");
+    }
+  }
+}

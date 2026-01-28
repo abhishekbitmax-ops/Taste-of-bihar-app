@@ -41,7 +41,13 @@ class _LiveTrackingBottomSheetState extends State<LiveTrackingBottomSheet>
 
     /// camera fit only once
     _locationWorker = everAll(
-      [ctrl.userLat, ctrl.userLng, ctrl.deliveryLat, ctrl.deliveryLng],
+      [
+        ctrl.userLat,
+        ctrl.userLng,
+        ctrl.deliveryLat,
+        ctrl.deliveryLng,
+        ctrl.roadDistance, // 🔥 IMPORTANT
+      ],
       (_) {
         if (mapCtrl != null &&
             !_cameraFitted &&
@@ -51,7 +57,6 @@ class _LiveTrackingBottomSheetState extends State<LiveTrackingBottomSheet>
           Future.delayed(const Duration(milliseconds: 500), _fitCamera);
         }
 
-        /// 🔥 smooth delivery marker update
         _animateDeliveryMarker();
       },
     );
@@ -70,17 +75,20 @@ class _LiveTrackingBottomSheetState extends State<LiveTrackingBottomSheet>
   double _calculateDistance() {
     if (ctrl.userLat.value == 0 || ctrl.deliveryLat.value == 0) return 0;
 
+    // 1️⃣ Prefer Google road distance
     if (ctrl.roadDistance.value > 0) {
       return ctrl.roadDistance.value;
     }
 
-    return Geolocator.distanceBetween(
-          ctrl.userLat.value,
-          ctrl.userLng.value,
-          ctrl.deliveryLat.value,
-          ctrl.deliveryLng.value,
-        ) /
-        1000;
+    // 2️⃣ Fallback → straight line distance
+    final meters = Geolocator.distanceBetween(
+      ctrl.userLat.value,
+      ctrl.userLng.value,
+      ctrl.deliveryLat.value,
+      ctrl.deliveryLng.value,
+    );
+
+    return meters / 1000; // km
   }
 
   // ================= SMOOTH MARKER =================

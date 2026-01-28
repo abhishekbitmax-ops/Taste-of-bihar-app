@@ -1023,3 +1023,149 @@ class RefundRequest {
     );
   }
 }
+
+
+// Notification model classs ----------------
+
+
+class NotificationResponse {
+  final bool? success;
+  final List<AppNotification>? data;
+
+  NotificationResponse({
+    this.success,
+    this.data,
+  });
+
+  factory NotificationResponse.fromJson(Map<String, dynamic> json) {
+    return NotificationResponse(
+      success: json['success'] as bool?,
+      data: (json['data'] as List?)
+          ?.map(
+            (e) => AppNotification.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+    );
+  }
+}
+
+class AppNotification {
+  final String? id;
+  final String? user;
+  final String? recipientRole;
+  final String? type;
+  final String? title;
+  final String? message;
+  final NotificationPayload? data;
+  final bool? isRead;
+  final DateTime? createdAt;
+  final int? v;
+
+  AppNotification({
+    this.id,
+    this.user,
+    this.recipientRole,
+    this.type,
+    this.title,
+    this.message,
+    this.data,
+    this.isRead,
+    this.createdAt,
+    this.v,
+  });
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: json['_id'] as String?,
+      user: json['user'] as String?,
+      recipientRole: json['recipientRole'] as String?,
+      type: json['type'] as String?,
+      title: json['title'] as String?,
+      message: json['message'] as String?,
+      data: json['data'] != null
+          ? NotificationPayload.fromJson(
+              json['data'] as Map<String, dynamic>,
+            )
+          : null,
+      isRead: json['isRead'] as bool?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
+      v: json['__v'] as int?,
+    );
+  }
+
+  /// 🔥 REQUIRED FOR PATCH READ UPDATE
+  AppNotification copyWith({
+    bool? isRead,
+  }) {
+    return AppNotification(
+      id: id,
+      user: user,
+      recipientRole: recipientRole,
+      type: type,
+      title: title,
+      message: message,
+      data: data,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt,
+      v: v,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "_id": id,
+      "user": user,
+      "recipientRole": recipientRole,
+      "type": type,
+      "title": title,
+      "message": message,
+      "data": data?.toJson(),
+      "isRead": isRead,
+      "createdAt": createdAt?.toIso8601String(),
+      "__v": v,
+    };
+  }
+}
+
+class NotificationPayload {
+  final String? otp;
+  final String? orderId;
+  final String? orderCustomId;
+
+  final String? type; // DAILY_MENU
+  final String? itemId;
+  final String? image;
+
+  NotificationPayload({
+    this.otp,
+    this.orderId,
+    this.orderCustomId,
+    this.type,
+    this.itemId,
+    this.image,
+  });
+
+  factory NotificationPayload.fromJson(Map<String, dynamic> json) {
+    return NotificationPayload(
+      otp: json['otp']?.toString(),
+      orderId: json['orderId'] as String?,
+      orderCustomId: json['orderCustomId'] as String?,
+      type: json['type'] as String?,
+      itemId: json['itemId'] as String?,
+      image: json['image'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "otp": otp,
+      "orderId": orderId,
+      "orderCustomId": orderCustomId,
+      "type": type,
+      "itemId": itemId,
+      "image": image,
+    };
+  }
+}
