@@ -745,6 +745,50 @@ class CartController extends GetxController {
   // ----------------------------------
 
   Future<void> handleSocketStatusUpdate(dynamic data) async {
+    if (data == null) return;
+
+    // ================= 🔔 SOCKET NOTIFICATION =================
+    // ================= 🔔 SOCKET NOTIFICATION =================
+    if (data["type"] == "NOTIFICATION") {
+      final raw = data["notification"];
+
+      debugPrint("🔔 SOCKET NOTIFICATION => $raw");
+
+      /// 🔥 Build AppNotification manually (socket → model)
+      final socketNotification = AppNotification(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // temp id
+        title: raw["title"],
+        message: raw["message"],
+        type: raw["data"]?["type"], // DAILY_MENU etc
+        isRead: false,
+        createdAt: DateTime.now(),
+        data: raw["data"] != null
+            ? NotificationPayload(
+                type: raw["data"]["type"],
+                itemId: raw["data"]["itemId"],
+                image: raw["data"]["image"],
+              )
+            : null,
+      );
+
+      /// 1️⃣ Insert on TOP (instant UI update)
+      notifications.insert(0, socketNotification);
+      notifications.refresh();
+
+      /// 2️⃣ Global toast (smart message)
+      GlobalNotificationService.show(
+        title: raw["title"] ?? "New Notification",
+        message:
+            raw["message"] ??
+            (raw["data"]?["menuItem"]?["name"] != null
+                ? "New item: ${raw["data"]["menuItem"]["name"]}"
+                : ""),
+      );
+
+      return;
+    }
+    //-----------------------
+
     if (order.value == null || data == null) return;
 
     debugPrint("📡 SOCKET STATUS UPDATE RECEIVED => $data");

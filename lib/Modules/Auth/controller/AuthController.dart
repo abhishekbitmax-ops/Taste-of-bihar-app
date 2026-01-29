@@ -324,7 +324,6 @@ class Authcontroller extends GetxController {
   }
 
   /// Add to Cart Functionality
-  ///
 
   var isApiLoading = false.obs;
 

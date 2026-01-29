@@ -37,6 +37,22 @@ class OrderSocketService {
       print("📤 JOIN_RESTAURANT_ROOM EMITTED");
     });
 
+    // ================= 🔔 NEW BROADCAST NOTIFICATION =================
+    ordersocket!.on("NEW_BROADCAST", (data) {
+      print("🔔 NEW_BROADCAST RECEIVED => $data");
+
+      /*
+    Expected payload example:
+    {
+      "title": "New Offer",
+      "message": "Flat 20% off today",
+      "type": "DAILY_MENU"
+    }
+  */
+
+      onStatusUpdate({"type": "NOTIFICATION", "notification": data});
+    });
+
     // ================= STATUS EVENTS =================
 
     ordersocket!.on("ORDER_ACCEPTED", (data) {

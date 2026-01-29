@@ -126,43 +126,63 @@ class _MenuScreenState extends State<MenuScreen> {
                           vertical: 6,
                           horizontal: 6,
                         ),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF8B0000)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
+
+                          /// 🔥 SELECTED = GRADIENT
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF8B0000),
+                                    Color(0xFFB71C1C),
+                                  ],
+                                )
+                              : null,
+
+                          color: isSelected ? null : Colors.white,
+
                           border: Border.all(
-                            color: const Color(0xFF8B0000),
-                            width: isSelected ? 1.5 : 0.5,
+                            color: isSelected
+                                ? Colors.transparent
+                                : Colors.grey.shade300,
+                            width: 1,
                           ),
                         ),
                         child: Column(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                cat.image ?? "",
-                                height: 40,
-                                width: 40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Image.asset(
-                                  "assets/images/popular.png",
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: ClipOval(
+                                child: Image.network(
+                                  cat.image ?? "",
                                   height: 40,
                                   width: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    "assets/images/popular.png",
+                                    height: 40,
+                                    width: 40,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              cat.name ?? "Unknown",
+                              cat.name ?? "",
                               textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
                                 color: isSelected
                                     ? Colors.white
-                                    : const Color(0xFF8B0000),
+                                    : Colors.black87,
                               ),
                             ),
                           ],
@@ -240,128 +260,131 @@ class _MenuScreenState extends State<MenuScreen> {
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
-                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(18),
                                 boxShadow: [
                                   BoxShadow(
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 3),
-                                    color: Colors.black.withOpacity(0.15),
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
                                   ),
                                 ],
+                                border: Border.all(color: Colors.grey.shade200),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: Colors
-                                            .grey
-                                            .shade300, // 👈 subtle border
-                                        width: 0.8,
-                                      ),
+                                  /// IMAGE
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(20),
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(14),
-                                      child: imageUrl.isNotEmpty
-                                          ? Image.network(
-                                              imageUrl,
-                                              height: 140,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  Image.asset(
-                                                    "assets/images/popular.png",
-                                                    height: 140,
-                                                    width: double.infinity,
-                                                    fit: BoxFit.cover,
+                                    child: imageUrl.isNotEmpty
+                                        ? Image.network(
+                                            imageUrl,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.asset(
+                                            "assets/images/popular.png",
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                  ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name ?? "",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 4),
+
+                                        Text(
+                                          item.description ?? "",
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 10),
+
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "₹${item.basePrice ?? 0}",
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF8B0000),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            InkWell(
+                                              onTap: () =>
+                                                  openProductBottomSheet(
+                                                    context,
+                                                    {
+                                                      "id": item.id ?? "",
+                                                      "name": item.name ?? "",
+                                                      "desc":
+                                                          item.description ??
+                                                          "",
+                                                      "price": item.basePrice
+                                                          .toString(),
+                                                      "image": imageUrl,
+                                                      "type": item.isVeg == true
+                                                          ? "veg"
+                                                          : "nonveg",
+                                                    },
                                                   ),
-                                            )
-                                          : Image.asset(
-                                              "assets/images/popular.png",
-                                              height: 140,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 8,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
+                                                  gradient:
+                                                      const LinearGradient(
+                                                        colors: [
+                                                          Color(0xFF8B0000),
+                                                          Color(0xFFB71C1C),
+                                                        ],
+                                                      ),
+                                                ),
+                                                child: const Text(
+                                                  "ADD +",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  Text(
-                                    item.name ?? "",
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 4),
-
-                                  Text(
-                                    item.description ?? "",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 6),
-
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "₹${item.basePrice ?? 0}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF8B0000),
+                                          ],
                                         ),
-                                      ),
-                                      InkWell(
-                                        onTap: () => openProductBottomSheet(
-                                          context,
-                                          {
-                                            "id": item.id ?? "",
-                                            "name": item.name ?? "",
-                                            "desc": item.description ?? "",
-                                            "price": item.basePrice.toString(),
-                                            "image":
-                                                imageUrl, // ✅ correct image
-                                            "type": item.isVeg == true
-                                                ? "veg"
-                                                : "nonveg",
-                                          },
-                                        ),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF8B0000),
-                                            borderRadius: BorderRadius.circular(
-                                              30,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            "Add +",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -382,23 +405,39 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Widget _filterButton(String label, String value) {
     bool isActive = foodFilter == value;
+
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => foodFilter = value),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF8B0000) : Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(30),
+            gradient: isActive
+                ? const LinearGradient(
+                    colors: [Color(0xFF8B0000), Color(0xFFB71C1C)],
+                  )
+                : null,
+            color: isActive ? null : Colors.grey.shade200,
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.white : Colors.black,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                value == "veg" ? Icons.eco : Icons.local_fire_department,
+                size: 16,
+                color: isActive ? Colors.white : Colors.black54,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
           ),
         ),
       ),

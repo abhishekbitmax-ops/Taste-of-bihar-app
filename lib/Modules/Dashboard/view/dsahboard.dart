@@ -26,6 +26,15 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   RxString address = "Fetching location...".obs;
 
+  final List<List<Color>> categoryGradients = [
+    [Color(0xFF8B0000), Color(0xFF1E88E5)], // Maroon → Blue
+    [Color(0xFF2E7D32), Color(0xFF66BB6A)], // Green
+    [Color(0xFFF57C00), Color(0xFFFFB74D)], // Orange
+    [Color(0xFF6A1B9A), Color(0xFFAB47BC)], // Purple
+    [Color(0xFF0277BD), Color(0xFF4FC3F7)], // Blue
+    [Color(0xFFC62828), Color(0xFFEF5350)], // Red
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -464,11 +473,18 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         );
                       }
 
-                      // ✅ CATEGORY LIST
                       return Row(
-                        children: authCtrl.categories.map((cat) {
+                        children: authCtrl.categories.asMap().entries.map((
+                          entry,
+                        ) {
+                          final index = entry.key;
+                          final cat = entry.value;
                           final bool hasImage =
                               cat.image != null && cat.image!.isNotEmpty;
+
+                          final gradientColors =
+                              categoryGradients[index %
+                                  categoryGradients.length];
 
                           return InkWell(
                             onTap: () {
@@ -485,28 +501,25 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                 );
                               });
                             },
-
                             child: Container(
                               width: 90,
                               margin: const EdgeInsets.only(right: 14),
                               child: Column(
                                 children: [
+                                  /// 🌈 GRADIENT BORDER
                                   Container(
-                                    width: 74,
-                                    height: 74,
-                                    decoration: const BoxDecoration(
+                                    width: 76,
+                                    height: 76,
+                                    decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: SweepGradient(
-                                        startAngle: -1.57,
-                                        endAngle: 1.57,
-                                        colors: [
-                                          Color(0xFF8B0000),
-                                          Color(0xFF1E88E5),
-                                        ],
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: gradientColors,
                                       ),
                                     ),
                                     child: Padding(
-                                      padding: const EdgeInsets.all(2),
+                                      padding: const EdgeInsets.all(2.2),
                                       child: Container(
                                         decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
@@ -531,14 +544,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                       ),
                                     ),
                                   ),
+
                                   const SizedBox(height: 6),
+
+                                  /// CATEGORY NAME
                                   Text(
                                     cat.name ?? "Unknown",
                                     textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF8B0000),
+                                      color: gradientColors
+                                          .first, // 👈 text color match
                                     ),
                                   ),
                                 ],
@@ -821,51 +840,112 @@ Widget popularDishFullCard({
   required String price,
   VoidCallback? onAdd,
 }) {
+  final bool isVeg = category.toLowerCase().contains("veg");
+
   return Container(
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.grey.shade200),
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+      ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // FULL IMAGE
-        ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: image.startsWith("http")
-              ? Image.network(
-                  image,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Image.asset(
-                    "assets/images/popular.png",
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Image.asset(
-                  image,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+        /// IMAGE
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+              child: image.startsWith("http")
+                  ? Image.network(
+                      image,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        "assets/images/popular.png",
+                        height: 160,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      image,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+
+            /// GRADIENT
+            Container(
+              height: 160,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
                 ),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(0.45), Colors.transparent],
+                ),
+              ),
+            ),
+
+            /// VEG / NON-VEG
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.circle,
+                      size: 10,
+                      color: isVeg ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isVeg ? "Veg" : "Non-Veg",
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
 
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // NAME + ADD BUTTON
+              /// NAME + ADD
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -874,69 +954,62 @@ Widget popularDishFullCard({
                     onTap: onAdd,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 14,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFF8B0000),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Color(0xFF8B0000)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF8B0000)),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.add, size: 16, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            "ADD",
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        "ADD",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF8B0000),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
 
+              /// DESCRIPTION
               Text(
                 description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
                 ),
               ),
-              const SizedBox(height: 2),
 
-              // CATEGORY
-              Text(
-                category,
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
-              ),
+              const SizedBox(height: 10),
 
-              const SizedBox(height: 8),
-
-              // RATING + TIME + PRICE
+              /// META ROW
               Row(
                 children: [
                   const Icon(Icons.star, size: 14, color: Colors.orange),
                   const SizedBox(width: 4),
                   Text(rating, style: GoogleFonts.poppins(fontSize: 12)),
-                  const SizedBox(width: 12),
-                  const Icon(Icons.timer, size: 14, color: Colors.grey),
+                  const SizedBox(width: 14),
+                  const Icon(
+                    Icons.local_fire_department,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(time, style: GoogleFonts.poppins(fontSize: 12)),
                   const Spacer(),
                   Text(
                     price,
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B0000),
+                      color: const Color(0xFF8B0000),
                     ),
                   ),
                 ],

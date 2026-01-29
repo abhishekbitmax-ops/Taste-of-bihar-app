@@ -16,10 +16,45 @@ import 'package:restro_app/widgets/OrderConfrimscreen.dart';
 import 'package:restro_app/widgets/Privacy_policy.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
-class ProfileHomeScreen extends StatelessWidget {
+class ProfileHomeScreen extends StatefulWidget {
   ProfileHomeScreen({super.key});
 
+  @override
+  State<ProfileHomeScreen> createState() => _ProfileHomeScreenState();
+}
+
+class _ProfileHomeScreenState extends State<ProfileHomeScreen>
+    with SingleTickerProviderStateMixin {
   final ProfileController profileCtrl = Get.put(ProfileController());
+
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   Widget _menuTile(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(

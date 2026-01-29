@@ -47,7 +47,7 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
         child: Obx(() {
           final restaurant = cartCtrl.cartResponse?.data?.cart?.restaurant;
@@ -82,7 +82,6 @@ class CartScreen extends StatelessWidget {
                             );
                           });
                         },
-
                         child: const Icon(
                           Icons.arrow_back,
                           size: 24,
@@ -125,51 +124,55 @@ class CartScreen extends StatelessWidget {
 
                 // RESTAURANT SECTION
                 if (restaurant != null)
-                  Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          restaurant.image ?? "",
-                          height: 46,
-                          width: 46,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            "assets/images/popular.png",
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            restaurant.image ?? "",
                             height: 46,
                             width: 46,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              "assets/images/popular.png",
+                              height: 46,
+                              width: 46,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          restaurant.name ?? "",
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                restaurant.name ?? "",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "⭐ 4.5 • 5k+ ratings",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.star, size: 15),
-                      const SizedBox(width: 4),
-                      Text(
-                        "4.5  (5k+ ratings) • ",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
                 const SizedBox(height: 10),
                 Divider(),
@@ -299,32 +302,48 @@ class CartScreen extends StatelessWidget {
 
                 // BILL DETAILS
                 if (s != null) ...[
-                  const Text(
-                    "Bill Details",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  _buildBillRow("Subtotal", "₹${s.subtotal ?? 0}"),
-                  _buildBillRow(
-                    "Tax",
-                    "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}",
-                  ),
-                  _buildBillRow(
-                    "Delivery",
-                    s.deliveryCharge == 0
-                        ? "Free"
-                        : "₹${s.deliveryCharge ?? 0}",
-                  ),
-                  _buildBillRow(
-                    "Discount",
-                    "-₹${s.discount?.toStringAsFixed(2) ?? "0.00"}",
-                  ),
-                  const Divider(),
-                  _buildBillRow(
-                    "Grand Total",
-                    "₹${s.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
-                    isBold: true,
-                    color: const Color(0xFF8B0000),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Bill Details",
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildBillRow("Subtotal", "₹${s.subtotal ?? 0}"),
+                        _buildBillRow(
+                          "Tax",
+                          "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}",
+                        ),
+                        _buildBillRow(
+                          "Delivery",
+                          s.deliveryCharge == 0
+                              ? "Free"
+                              : "₹${s.deliveryCharge}",
+                        ),
+                        _buildBillRow(
+                          "Discount",
+                          "-₹${s.discount?.toStringAsFixed(2) ?? "0.00"}",
+                        ),
+                        const Divider(),
+                        _buildBillRow(
+                          "Grand Total",
+                          "₹${s.grandTotal?.toStringAsFixed(2) ?? "0.00"}",
+                          isBold: true,
+                          color: const Color(0xFF8B0000),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
 
