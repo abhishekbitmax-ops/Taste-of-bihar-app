@@ -82,6 +82,20 @@ class OrderSocketService {
       onDeliveryAssigned(data);
     });
 
+    // ================= 🔥 REFUND STATUS UPDATE =================
+    ordersocket!.on("REFUND_STATUS_UPDATED", (data) {
+      print("💸 REFUND_STATUS_UPDATED => $data");
+
+      final orderId = data["order"]?["orderId"] ?? data["orderId"];
+
+      if (orderId != null) {
+        onStatusUpdate({
+          "orderId": orderId,
+          "refundStatus": data["order"]?["payment"]?["status"],
+        });
+      }
+    });
+
     // ================= 🔥 NEW EVENT =================
     ordersocket!.on("DELIVERY_LOCATION_UPDATED", (data) {
       print("📍 DELIVERY_LOCATION_UPDATED => $data");

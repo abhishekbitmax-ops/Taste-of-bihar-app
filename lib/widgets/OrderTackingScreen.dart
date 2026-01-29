@@ -28,6 +28,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return s == "PLACED" || s == "ACCEPTED";
   }
 
+  String getRefundIdText() {
+    final refund = ctrl.refund.value;
+
+    // ❌ No refund object at all
+    if (refund == null) {
+      return "Refund not initiated yet";
+    }
+
+    final refunds = refund.refunds;
+
+    // ⏳ Refund requested but ID not generated
+    if (refunds == null || refunds.isEmpty) {
+      return "Refund is being processed";
+    }
+
+    // ✅ Refund ID available
+    return refunds.first.refundId ?? "Refund is being processed";
+  }
+
   String getPaymentText(order) {
     if (order.payment == null) return "Cash on Delivery";
 
@@ -184,12 +203,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          _refundRow(
-                            "Refund ID",
-                            ctrl.refund.value?.refunds?.isNotEmpty == true
-                                ? ctrl.refund.value!.refunds!.first.refundId
-                                : "--",
-                          ),
+                          _refundRow("Refund ID", getRefundIdText()),
                           _refundRow("Refund Status", refund.refundStatus),
                           _refundRow(
                             "Amount Refunded",

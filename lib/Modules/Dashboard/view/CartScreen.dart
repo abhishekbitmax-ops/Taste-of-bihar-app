@@ -487,18 +487,24 @@ class CartScreen extends StatelessWidget {
                                 return;
                               }
 
-                              // 🔥 sync controller also (single source of truth)
                               cartCtrl.selectedAddressId.value = savedAddressId;
 
-                              final selected = cartCtrl
-                                  .selectedPaymentMethod
-                                  .value; // "ONLINE" or "COD"
+                              final selected =
+                                  cartCtrl.selectedPaymentMethod.value;
 
-                              // 🔥 ALWAYS PLACE ORDER FROM HERE
-                              await cartCtrl.placeOrder(
-                                addressId: savedAddressId,
-                                paymentMethod: selected, // EXACT VALUE
-                              );
+                              /// 🔥 COD → DIRECT PLACE ORDER
+                              if (selected == "COD") {
+                                await cartCtrl.placeOrder(
+                                  addressId: savedAddressId,
+                                  paymentMethod: "COD",
+                                );
+                              }
+                              /// 🔥 ONLINE → ONLY OPEN PAYMENT SHEET
+                              else {
+                                cartCtrl.openRazorpaySheet(
+                                  amount: cartCtrl.grandTotal.value,
+                                );
+                              }
                             },
 
                             style: ElevatedButton.styleFrom(

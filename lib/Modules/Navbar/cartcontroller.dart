@@ -744,10 +744,29 @@ class CartController extends GetxController {
 
   // ----------------------------------
 
-  void handleSocketStatusUpdate(dynamic data) {
+  Future<void> handleSocketStatusUpdate(dynamic data) async {
     if (order.value == null || data == null) return;
 
     debugPrint("📡 SOCKET STATUS UPDATE RECEIVED => $data");
+
+    final socketOrderId = data["orderId"];
+    if (socketOrderId == null) return;
+
+    /// 🔥 ONLY HANDLE CURRENT ORDER
+    if (socketOrderId != order.value!.orderId) return;
+
+    /// ================= REFUND STATUS UPDATE =================
+    final refundStatus = data["refundStatus"];
+
+    if (refundStatus != null) {
+      debugPrint("💸 REFUND STATUS CHANGED => $refundStatus");
+
+      /// 🔥 SAME AS CANCEL FLOW → REFRESH SCREEN
+      await fetchOrderTracking(order.value!.orderId!);
+      await fetchRefund(order.value!.orderId!);
+
+      return; // ⛔ stop further processing
+    }
 
     String? status;
     String? deliveryOTP;
