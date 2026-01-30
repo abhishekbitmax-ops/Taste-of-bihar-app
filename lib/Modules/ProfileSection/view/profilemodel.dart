@@ -889,7 +889,6 @@ class Coupon {
   }
 }
 
-
 //Refund payment model class -----
 
 class RefundResponse {
@@ -897,19 +896,13 @@ class RefundResponse {
   final String? message;
   final RefundData? data;
 
-  RefundResponse({
-    this.success,
-    this.message,
-    this.data,
-  });
+  RefundResponse({this.success, this.message, this.data});
 
   factory RefundResponse.fromJson(Map<String, dynamic> json) {
     return RefundResponse(
       success: json['success'],
       message: json['message'],
-      data: json['data'] != null
-          ? RefundData.fromJson(json['data'])
-          : null,
+      data: json['data'] != null ? RefundData.fromJson(json['data']) : null,
     );
   }
 }
@@ -990,12 +983,7 @@ class RefundItem {
   final String? status;
   final String? createdAt;
 
-  RefundItem({
-    this.refundId,
-    this.amount,
-    this.status,
-    this.createdAt,
-  });
+  RefundItem({this.refundId, this.amount, this.status, this.createdAt});
 
   factory RefundItem.fromJson(Map<String, dynamic> json) {
     return RefundItem(
@@ -1011,10 +999,7 @@ class RefundRequest {
   final bool? isRequested;
   final String? status;
 
-  RefundRequest({
-    this.isRequested,
-    this.status,
-  });
+  RefundRequest({this.isRequested, this.status});
 
   factory RefundRequest.fromJson(Map<String, dynamic> json) {
     return RefundRequest(
@@ -1024,26 +1009,19 @@ class RefundRequest {
   }
 }
 
-
 // Notification model classs ----------------
-
 
 class NotificationResponse {
   final bool? success;
   final List<AppNotification>? data;
 
-  NotificationResponse({
-    this.success,
-    this.data,
-  });
+  NotificationResponse({this.success, this.data});
 
   factory NotificationResponse.fromJson(Map<String, dynamic> json) {
     return NotificationResponse(
       success: json['success'] as bool?,
       data: (json['data'] as List?)
-          ?.map(
-            (e) => AppNotification.fromJson(e as Map<String, dynamic>),
-          )
+          ?.map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -1083,9 +1061,7 @@ class AppNotification {
       title: json['title'] as String?,
       message: json['message'] as String?,
       data: json['data'] != null
-          ? NotificationPayload.fromJson(
-              json['data'] as Map<String, dynamic>,
-            )
+          ? NotificationPayload.fromJson(json['data'] as Map<String, dynamic>)
           : null,
       isRead: json['isRead'] as bool?,
       createdAt: json['createdAt'] != null
@@ -1096,9 +1072,7 @@ class AppNotification {
   }
 
   /// 🔥 REQUIRED FOR PATCH READ UPDATE
-  AppNotification copyWith({
-    bool? isRead,
-  }) {
+  AppNotification copyWith({bool? isRead}) {
     return AppNotification(
       id: id,
       user: user,
@@ -1130,13 +1104,21 @@ class AppNotification {
 }
 
 class NotificationPayload {
+  // ================= ORDER / OTP =================
   final String? otp;
   final String? orderId;
   final String? orderCustomId;
 
-  final String? type; // DAILY_MENU
+  // ================= TYPE =================
+  final String? type; // DAILY_MENU, DELIVERY_OTP etc
+
+  // ================= MENU ITEM =================
   final String? itemId;
+  final String? name;
+  final num? price;
+  final String? foodType; // VEG / NON_VEG
   final String? image;
+  final String? description;
 
   NotificationPayload({
     this.otp,
@@ -1144,7 +1126,11 @@ class NotificationPayload {
     this.orderCustomId,
     this.type,
     this.itemId,
+    this.name,
+    this.price,
+    this.foodType,
     this.image,
+    this.description,
   });
 
   factory NotificationPayload.fromJson(Map<String, dynamic> json) {
@@ -1153,8 +1139,14 @@ class NotificationPayload {
       orderId: json['orderId'] as String?,
       orderCustomId: json['orderCustomId'] as String?,
       type: json['type'] as String?,
+
+      // 🍽️ MENU ITEM
       itemId: json['itemId'] as String?,
+      name: json['name'] as String?,
+      price: json['price'],
+      foodType: json['foodType'] as String?,
       image: json['image'] as String?,
+      description: json['description'] as String?,
     );
   }
 
@@ -1164,8 +1156,14 @@ class NotificationPayload {
       "orderId": orderId,
       "orderCustomId": orderCustomId,
       "type": type,
+
+      // 🍽️ MENU ITEM
       "itemId": itemId,
+      "name": name,
+      "price": price,
+      "foodType": foodType,
       "image": image,
+      "description": description,
     };
   }
 }

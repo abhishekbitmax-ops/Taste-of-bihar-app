@@ -7,6 +7,7 @@ import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/utils/Sharedpre.dart';
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/RazorpayBottompay.dart';
+import 'package:flutter/services.dart';
 
 class CartScreen extends StatelessWidget {
   CartScreen({super.key});
@@ -46,157 +47,209 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // 🔥 IMPORTANT
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
-        child: Obx(() {
-          final restaurant = cartCtrl.cartResponse?.data?.cart?.restaurant;
-          final s = cartCtrl.cartResponse?.data?.cart?.summary;
+      body: Obx(() {
+        final restaurant = cartCtrl.cartResponse?.data?.cart?.restaurant;
+        final s = cartCtrl.cartResponse?.data?.cart?.summary;
 
-          if (cartCtrl.cartItems.isEmpty) {
-            return _emptyCartView();
-          }
+        if (cartCtrl.cartItems.isEmpty) {
+          return _emptyCartView();
+        }
 
-          return RefreshIndicator(
-            color: const Color(0xFF8B0000),
-            onRefresh: () async {
-              await cartCtrl.fetchCartApi();
-            },
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                // TOP BAR
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            Get.until(
-                              (route) => route.settings.name == '/BottomNavBar',
-                            );
-                          });
-                        },
-                        child: const Icon(
-                          Icons.arrow_back,
-                          size: 24,
-                          color: Color(0xFF8B0000),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        "Cart",
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF8B0000),
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.favorite_border,
-                        color: Color(0xFF8B0000),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.more_horiz, color: Color(0xFF8B0000)),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        radius: 11,
-                        backgroundColor: const Color(0xFF8B0000),
-                        child: Text(
-                          "${s?.itemCount ?? 0}",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+        return RefreshIndicator(
+          color: const Color(0xFF8B0000),
+          onRefresh: () async {
+            await cartCtrl.fetchCartApi();
+          },
+          child: ListView(
+            padding: EdgeInsets.zero,
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              // TOP BAR
+              // 🔥 PREMIUM GRADIENT HEADER
+              // 🔥 FULL WIDTH GRADIENT HEADER (STATUS BAR INCLUDED)
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: EdgeInsets.only(
+                  top:
+                      MediaQuery.of(context).padding.top +
+                      16, // 🔥 STATUS BAR SPACE
+                  bottom: 26,
+                  left: 16,
+                  right: 16,
+                ),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF8B0000),
+                      Color(0xFFB71C1C),
+                      Color(0xFFD32F2F),
                     ],
                   ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
                 ),
-
-                const SizedBox(height: 14),
-
-                // RESTAURANT SECTION
-                if (restaurant != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Row(
+                child: Column(
+                  children: [
+                    // 🔝 TOP BAR
+                    Row(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            restaurant.image ?? "",
-                            height: 46,
-                            width: 46,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Image.asset(
-                              "assets/images/popular.png",
-                              height: 46,
-                              width: 46,
+                        InkWell(
+                          onTap: () {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              Get.until(
+                                (route) =>
+                                    route.settings.name == '/BottomNavBar',
+                              );
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              size: 22,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                restaurant.name ?? "",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "⭐ 4.5 • 5k+ ratings",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(width: 14),
+                        Text(
+                          "Cart",
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(Icons.favorite_border, color: Colors.white),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.more_horiz, color: Colors.white),
+                        const SizedBox(width: 10),
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            "${s?.itemCount ?? 0}",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8B0000),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                const SizedBox(height: 10),
-                Divider(),
-                const SizedBox(height: 10),
+                    const SizedBox(height: 22),
 
-                // CART ITEMS
-                if (cartCtrl.cartItems.isEmpty)
-                  const Center(child: Text("Your cart is empty"))
-                else
-                  for (int i = 0; i < cartCtrl.cartItems.length; i++)
-                    _CartItemTile(index: i),
+                    // 🏪 RESTAURANT CARD
+                    if (restaurant != null)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 18,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.network(
+                                restaurant.image ?? "",
+                                height: 56,
+                                width: 56,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Image.asset(
+                                  "assets/images/popular.png",
+                                  height: 56,
+                                  width: 56,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    restaurant.name ?? "",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.star,
+                                        size: 14,
+                                        color: Colors.orange,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "4.5 • 5k+ ratings",
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              Divider(),
 
-                // 🎟 Apply Coupon Card
-                InkWell(
-                  onTap: () => Get.to(() => ApplyCouponScreen()),
-                  borderRadius: BorderRadius.circular(18),
+              // CART ITEMS
+              if (cartCtrl.cartItems.isEmpty)
+                const Center(child: Text("Your cart is empty"))
+              else
+                for (int i = 0; i < cartCtrl.cartItems.length; i++)
+                  _CartItemTile(index: i),
+
+              // 🎟 Apply Coupon Card
+              InkWell(
+                onTap: () => Get.to(() => ApplyCouponScreen()),
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: Container(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 1,
                       vertical: 5,
                     ),
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFFF1F1), Color(0xFFFFE0E0)],
@@ -297,12 +350,18 @@ class CartScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 25),
-                Divider(),
+              ),
+              const SizedBox(width: 15),
+              Divider(),
 
-                // BILL DETAILS
-                if (s != null) ...[
-                  Container(
+              // BILL DETAILS
+              if (s != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    //  vertical: 4.0,
+                  ),
+                  child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -345,53 +404,73 @@ class CartScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
+                ),
+              ],
 
-                const SizedBox(height: 20),
+              // const SizedBox(height: 10),
 
-                // 📍 Delivery Address Selector Card
-                InkWell(
-                  onTap: () => Get.bottomSheet(
-                    const AddressSelector(heightFactor: 0.5),
-                    isScrollControlled: true,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
+              // 📍 Delivery Address Selector Card (POLISHED)
+              InkWell(
+                onTap: () => Get.bottomSheet(
+                  const AddressSelector(heightFactor: 0.5),
+                  isScrollControlled: true,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFF5F5), Color(0xFFFFFFFF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFF8B0000).withOpacity(0.25),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
                       ],
-                      border: Border.all(color: Colors.grey.shade200),
                     ),
                     child: Row(
                       children: [
-                        // 📍 Location Icon
+                        // 🔴 LEFT ACCENT STRIP
                         Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF8B0000).withOpacity(0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
+                          width: 5,
+                          height: 70,
+                          decoration: const BoxDecoration(
                             color: Color(0xFF8B0000),
-                            size: 20,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              bottomLeft: Radius.circular(18),
+                            ),
                           ),
                         ),
 
                         const SizedBox(width: 12),
 
-                        // Address Text
+                        // 📍 LOCATION ICON
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B0000).withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Color(0xFF8B0000),
+                            size: 22,
+                          ),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        // ADDRESS TEXT
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,14 +482,14 @@ class CartScreen extends StatelessWidget {
                                   color: Colors.black54,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 4),
                               Obx(
                                 () => Text(
                                   cartCtrl.selectedAddress.value,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 14,
+                                    fontSize: 14.5,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black87,
                                   ),
@@ -420,9 +499,9 @@ class CartScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Dropdown Arrow
+                        // ⬇️ DROPDOWN ICON
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             shape: BoxShape.circle,
@@ -433,52 +512,61 @@ class CartScreen extends StatelessWidget {
                             size: 22,
                           ),
                         ),
+
+                        const SizedBox(width: 10),
                       ],
                     ),
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 20),
-
-                // PAY BUTTON
-                // PAYMENT METHOD + PAY BUTTON ROW
-                Row(
+              // PAY BUTTON
+              // PAYMENT METHOD + PAY BUTTON ROW
+              Padding(
+                padding: const EdgeInsets.only(
+                  bottom: 40,
+                ), // 👈 LIFT FROM BOTTOM
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // 🔽 PAYMENT DROPDOWN
                     Expanded(
                       flex: 5,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Obx(
-                          () => DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: cartCtrl.selectedPaymentMethod.value,
-                              isExpanded: true,
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              items: cartCtrl.paymentMethods
-                                  .map(
-                                    (method) => DropdownMenuItem(
-                                      value: method,
-                                      child: Text(
-                                        method,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Obx(
+                            () => DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: cartCtrl.selectedPaymentMethod.value,
+                                isExpanded: true,
+                                icon: const Icon(Icons.keyboard_arrow_down),
+                                items: cartCtrl.paymentMethods
+                                    .map(
+                                      (method) => DropdownMenuItem(
+                                        value: method,
+                                        child: Text(
+                                          method,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  cartCtrl.selectedPaymentMethod.value = value;
-                                }
-                              },
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    cartCtrl.selectedPaymentMethod.value =
+                                        value;
+                                  }
+                                },
+                              ),
                             ),
                           ),
                         ),
@@ -492,75 +580,75 @@ class CartScreen extends StatelessWidget {
                       flex: 5,
                       child: SizedBox(
                         height: 48,
-                        child: Obx(
-                          () => ElevatedButton(
-                            onPressed: () async {
-                              final savedAddressId =
-                                  await SharedPre.getSelectedAddressId();
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Obx(
+                            () => ElevatedButton(
+                              onPressed: () async {
+                                final savedAddressId =
+                                    await SharedPre.getSelectedAddressId();
 
-                              if (savedAddressId.isEmpty) {
-                                Get.snackbar(
-                                  "Address Required",
-                                  "Please select a delivery address",
-                                );
-                                return;
-                              }
+                                if (savedAddressId.isEmpty) {
+                                  Get.snackbar(
+                                    "Address Required",
+                                    "Please select a delivery address",
+                                  );
+                                  return;
+                                }
 
-                              cartCtrl.selectedAddressId.value = savedAddressId;
+                                cartCtrl.selectedAddressId.value =
+                                    savedAddressId;
 
-                              final selected =
-                                  cartCtrl.selectedPaymentMethod.value;
+                                final selected =
+                                    cartCtrl.selectedPaymentMethod.value;
 
-                              /// 🔥 COD → DIRECT PLACE ORDER
-                              if (selected == "COD") {
-                                await cartCtrl.placeOrder(
-                                  addressId: savedAddressId,
-                                  paymentMethod: "COD",
-                                );
-                              }
-                              /// 🔥 ONLINE → ONLY OPEN PAYMENT SHEET
-                              else {
-                                cartCtrl.openRazorpaySheet(
-                                  amount: cartCtrl.grandTotal.value,
-                                );
-                              }
-                            },
-
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8B0000),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                                if (selected == "COD") {
+                                  await cartCtrl.placeOrder(
+                                    addressId: savedAddressId,
+                                    paymentMethod: "COD",
+                                  );
+                                } else {
+                                  cartCtrl.openRazorpaySheet(
+                                    amount: cartCtrl.grandTotal.value,
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B0000),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
+                              child: cartCtrl.isPlacingOrder.value
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Place Order",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
-                            child: cartCtrl.isPlacingOrder.value
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(
-                                    "Place Order",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        }),
-      ),
+              const SizedBox(height: 40),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -576,217 +664,237 @@ class _CartItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final item = cartCtrl.cartItems[index];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF7F7), Color(0xFFFFFFFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: const Color(0xFF8B0000).withOpacity(0.18),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      child: Container(
+        // margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF7F7), Color(0xFFFFFFFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🔴 LEFT ACCENT STRIP
-          Container(
-            height: 80,
-            decoration: const BoxDecoration(
-              color: Color(0xFF8B0000),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                bottomLeft: Radius.circular(20),
+          border: Border.all(
+            color: const Color(0xFF8B0000).withOpacity(0.18),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔴 LEFT ACCENT STRIP
+            Container(
+              height: 80,
+              decoration: const BoxDecoration(
+                color: Color(0xFF8B0000),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // IMAGE
-          Padding(
-            padding: const EdgeInsets.only(top: 14, bottom: 14),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(
-                item["image"] ?? "",
-                width: 70,
-                height: 70,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Image.asset(
-                  "assets/images/popular.png",
+            // IMAGE
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 14),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.network(
+                  item["image"] ?? "",
                   width: 70,
                   height: 70,
                   fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Image.asset(
+                    "assets/images/popular.png",
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 14),
+            const SizedBox(width: 14),
 
-          // DETAILS
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 14, bottom: 14),
+            // DETAILS
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 14, bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // NAME
+                    Row(
+                      children: [
+                        Text(
+                          item["name"] ?? "Item",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          item["price"] ?? "Item",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // QTY CONTROLLER
+                    Obx(() {
+                      final isUpdating = cartCtrl.updatingIndex.value == index;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF8B0000).withOpacity(0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ➖
+                            InkWell(
+                              onTap: isUpdating
+                                  ? null
+                                  : () => cartCtrl.decreaseQty(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red.shade50,
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: isUpdating ? Colors.grey : Colors.red,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            // LOADER / QTY
+                            isUpdating
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "${item["qty"]}",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+
+                            const SizedBox(width: 14),
+
+                            // ➕
+                            InkWell(
+                              onTap: isUpdating
+                                  ? null
+                                  : () => cartCtrl.increaseQty(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.green.shade50,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: isUpdating
+                                      ? Colors.grey
+                                      : Colors.green,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+
+            // PRICE + DELETE
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // NAME
+                  Obx(() {
+                    final isRemoving = cartCtrl.removingIndex.value == index;
+
+                    return isRemoving
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF8B0000),
+                              ),
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: () => cartCtrl.removeItemApi(index),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
+                          );
+                  }),
+
+                  const SizedBox(height: 6),
+
                   Text(
-                    item["name"] ?? "Item",
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    "₹${item["itemTotal"]}",
                     style: GoogleFonts.poppins(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF8B0000),
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // QTY CONTROLLER
-                  Obx(() {
-                    final isUpdating = cartCtrl.updatingIndex.value == index;
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1F1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF8B0000).withOpacity(0.25),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // ➖
-                          InkWell(
-                            onTap: isUpdating
-                                ? null
-                                : () => cartCtrl.decreaseQty(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.red.shade50,
-                              ),
-                              child: Icon(
-                                Icons.remove,
-                                size: 16,
-                                color: isUpdating ? Colors.grey : Colors.red,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 14),
-
-                          // LOADER / QTY
-                          isUpdating
-                              ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  "${item["qty"]}",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                          const SizedBox(width: 14),
-
-                          // ➕
-                          InkWell(
-                            onTap: isUpdating
-                                ? null
-                                : () => cartCtrl.increaseQty(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.green.shade50,
-                              ),
-                              child: Icon(
-                                Icons.add,
-                                size: 16,
-                                color: isUpdating ? Colors.grey : Colors.green,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
                 ],
               ),
             ),
-          ),
-
-          // PRICE + DELETE
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Obx(() {
-                  final isRemoving = cartCtrl.removingIndex.value == index;
-
-                  return isRemoving
-                      ? const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF8B0000),
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          onPressed: () => cartCtrl.removeItemApi(index),
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.redAccent,
-                          ),
-                        );
-                }),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  "₹${item["itemTotal"]}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF8B0000),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

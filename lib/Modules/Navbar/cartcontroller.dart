@@ -36,6 +36,8 @@ class CartController extends GetxController {
   var roadDirection = "".obs; // 🔥 Turn-by-turn direction
   var roadDuration = 0.obs;
 
+  final _pendingSocketEvents = <Map<String, dynamic>>[];
+
   // 🔥 Duration in minutes
 
   // 🔥 Fetch road directions using Google Maps Directions API
@@ -748,115 +750,119 @@ class CartController extends GetxController {
     if (data == null) return;
 
     // ================= 🔔 SOCKET NOTIFICATION =================
-    // ================= 🔔 SOCKET NOTIFICATION =================
-    if (data["type"] == "NOTIFICATION") {
+    if (data is Map && data["type"] == "NOTIFICATION") {
       final raw = data["notification"];
+      final payload = raw?["data"];
 
       debugPrint("🔔 SOCKET NOTIFICATION => $raw");
 
-      /// 🔥 Build AppNotification manually (socket → model)
       final socketNotification = AppNotification(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // temp id
-        title: raw["title"],
-        message: raw["message"],
-        type: raw["data"]?["type"], // DAILY_MENU etc
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: raw?["title"] ?? "New Notification",
+        message: raw?["message"],
+        type: payload?["type"],
         isRead: false,
         createdAt: DateTime.now(),
-        data: raw["data"] != null
+        data: payload != null
             ? NotificationPayload(
-                type: raw["data"]["type"],
-                itemId: raw["data"]["itemId"],
-                image: raw["data"]["image"],
+                type: payload["type"],
+                itemId: payload["itemId"],
+                name: payload["name"],
+                price: payload["price"],
+                foodType: payload["foodType"],
+                image: payload["image"],
+                description: payload["description"],
+                otp: payload["otp"],
+                orderId: payload["orderId"],
+                orderCustomId: payload["orderCustomId"],
               )
             : null,
       );
 
-      /// 1️⃣ Insert on TOP (instant UI update)
       notifications.insert(0, socketNotification);
       notifications.refresh();
 
-      /// 2️⃣ Global toast (smart message)
+      String toastMessage = raw?["message"] ?? "";
+      if (payload?["type"] == "DELIVERY_OTP") {
+        toastMessage = "Your delivery OTP is ${payload["otp"]}";
+      }
+
       GlobalNotificationService.show(
-        title: raw["title"] ?? "New Notification",
-        message:
-            raw["message"] ??
-            (raw["data"]?["menuItem"]?["name"] != null
-                ? "New item: ${raw["data"]["menuItem"]["name"]}"
-                : ""),
+        title: raw?["title"] ?? "New Notification",
+        message: toastMessage,
       );
 
       return;
     }
-    //-----------------------
 
-    if (order.value == null || data == null) return;
+    // ================= 🔑 OTP EVENT (HANDLE FIRST — NO ID CHECK) =================
+    if (data is Map) {
+      final otp = data["deliveryOTP"] ?? data["otp"];
+
+      if (otp != null && otp.toString().isNotEmpty) {
+        debugPrint("🔑 OTP RECEIVED FROM SOCKET => $otp");
+
+        if (order.value != null) {
+          order.value = order.value!.copyWith(
+            deliveryOTP: otp.toString(),
+            delivery:
+                order.value!.delivery ??
+                Delivery(otp: otp.toString(), partner: null),
+          );
+          order.refresh();
+        }
+
+        GlobalNotificationService.show(
+          title: "Delivery OTP",
+          message: "Your delivery OTP is $otp",
+        );
+
+        return; // ⛔ STOP HERE
+      }
+    }
+
+    // ================= 💸 REFUND STATUS (SINGLE SOURCE OF TRUTH) =================
+    if (data is Map && data["order"] != null) {
+      final orderId = data["order"]["orderId"];
+      final paymentStatus = data["order"]["payment"]?["status"];
+
+      debugPrint(
+        "💸 REFUND SOCKET HIT → orderId=$orderId | status=$paymentStatus",
+      );
+
+      if (orderId != null) {
+        // 🔥 FORCE API REFRESH → UI AUTO UPDATE
+        await fetchOrderTracking(orderId);
+        await fetchRefund(orderId);
+      }
+
+      return; // ⛔ STOP EVERYTHING ELSE
+    }
+
+    // ================= ORDER STATUS EVENTS (NEED ID MATCH) =================
+    if (order.value == null || data is! Map) return;
 
     debugPrint("📡 SOCKET STATUS UPDATE RECEIVED => $data");
 
-    final socketOrderId = data["orderId"];
+    final socketOrderId = data["customOrderId"] ?? data["orderId"];
     if (socketOrderId == null) return;
 
-    /// 🔥 ONLY HANDLE CURRENT ORDER
-    if (socketOrderId != order.value!.orderId) return;
-
-    /// ================= REFUND STATUS UPDATE =================
-    final refundStatus = data["refundStatus"];
-
-    if (refundStatus != null) {
-      debugPrint("💸 REFUND STATUS CHANGED => $refundStatus");
-
-      /// 🔥 SAME AS CANCEL FLOW → REFRESH SCREEN
-      await fetchOrderTracking(order.value!.orderId!);
-      await fetchRefund(order.value!.orderId!);
-
-      return; // ⛔ stop further processing
+    if (socketOrderId != order.value!.orderId &&
+        socketOrderId != order.value!.id) {
+      return;
     }
 
-    String? status;
-    String? deliveryOTP;
+    // ================= STATUS UPDATE =================
+    final status = data["status"];
+    if (status == null || status.toString().isEmpty) return;
 
-    if (data is Map) {
-      status = data["status"];
-
-      // 🔥 SUPPORT BOTH KEYS (SAFETY)
-      deliveryOTP = data["deliveryOTP"] ?? data["otp"];
-
-      if (deliveryOTP != null) {
-        debugPrint("🔑 OTP EXTRACTED FROM SOCKET => $deliveryOTP");
-      }
-    } else if (data is String) {
-      status = data;
-    }
-
-    /// 🔥 OTP UPDATE (SHOW OTP + ENABLE TRACK BUTTON)
-    if (deliveryOTP != null && deliveryOTP.isNotEmpty) {
-      debugPrint("✅ UPDATING ORDER WITH OTP => $deliveryOTP");
-      order.value = order.value!.copyWith(
-        deliveryOTP: deliveryOTP, // 🔥 VERY IMPORTANT
-        delivery:
-            order.value!.delivery ?? Delivery(otp: deliveryOTP, partner: null),
-      );
-
-      GlobalNotificationService.show(
-        title: "Delivery OTP",
-        message: "Your delivery OTP is $deliveryOTP",
-      );
-
-      return; // 🔥 STOP HERE
-    }
-
-    if (status == null || status.isEmpty) return;
-
-    final normalized = status.toUpperCase().trim();
-
-    /// 🔥 UPDATE STATUS (AUTO UI + TIMELINE)
+    final normalized = status.toString().toUpperCase().trim();
     order.value = order.value!.copyWith(status: normalized);
 
     if (normalized == "DELIVERED") {
-      fetchOrderHistory(); // 🔥 refresh list automatically
+      fetchOrderHistory();
     }
 
-    /// 🔔 NOTIFICATIONS
     switch (normalized) {
       case "ACCEPTED":
         GlobalNotificationService.show(
@@ -880,6 +886,8 @@ class CartController extends GetxController {
         break;
     }
   }
+
+  // 🔥 HANDLE DETAILED TRACKING INFO
 
   void handleSocketTrackingInfo(dynamic data) {
     if (order.value == null || data == null) return;

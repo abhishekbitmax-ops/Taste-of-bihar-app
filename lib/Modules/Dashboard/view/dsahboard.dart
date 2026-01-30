@@ -845,68 +845,71 @@ Widget popularDishFullCard({
   return Container(
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(22),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 14,
-          offset: const Offset(0, 6),
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
         ),
       ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// IMAGE
+        // ================= IMAGE SECTION =================
         Stack(
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+                top: Radius.circular(22),
               ),
               child: image.startsWith("http")
                   ? Image.network(
                       image,
-                      height: 160,
+                      height: 170,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Image.asset(
                         "assets/images/popular.png",
-                        height: 160,
+                        height: 170,
                         fit: BoxFit.cover,
                       ),
                     )
                   : Image.asset(
                       image,
-                      height: 160,
+                      height: 170,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
             ),
 
-            /// GRADIENT
+            // 🔥 DARK GRADIENT
             Container(
-              height: 160,
+              height: 170,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
+                  top: Radius.circular(22),
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.45), Colors.transparent],
+                  colors: [Colors.black.withOpacity(0.55), Colors.transparent],
                 ),
               ),
             ),
 
-            /// VEG / NON-VEG
+            // VEG / NON-VEG CHIP
             Positioned(
-              top: 10,
-              left: 10,
+              top: 12,
+              left: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -916,11 +919,40 @@ Widget popularDishFullCard({
                       size: 10,
                       color: isVeg ? Colors.green : Colors.red,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       isVeg ? "Veg" : "Non-Veg",
                       style: GoogleFonts.poppins(
-                        fontSize: 10,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ⭐ RATING BADGE
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, size: 14, color: Colors.orange),
+                    const SizedBox(width: 4),
+                    Text(
+                      rating,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -931,13 +963,15 @@ Widget popularDishFullCard({
           ],
         ),
 
+        // ================= CONTENT =================
         Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// NAME + ADD
+              // NAME + ADD
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
@@ -945,28 +979,32 @@ Widget popularDishFullCard({
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
+
                   InkWell(
                     onTap: onAdd,
+                    borderRadius: BorderRadius.circular(30),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
+                        horizontal: 18,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF8B0000)),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B0000), Color(0xFFB11212)],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                       child: Text(
                         "ADD",
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8B0000),
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -976,30 +1014,26 @@ Widget popularDishFullCard({
 
               const SizedBox(height: 6),
 
-              /// DESCRIPTION
+              // DESCRIPTION
               Text(
                 description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   color: Colors.grey.shade700,
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
-              /// META ROW
+              // META ROW
               Row(
                 children: [
-                  const Icon(Icons.star, size: 14, color: Colors.orange),
-                  const SizedBox(width: 4),
-                  Text(rating, style: GoogleFonts.poppins(fontSize: 12)),
-                  const SizedBox(width: 14),
                   const Icon(
                     Icons.local_fire_department,
                     size: 14,
-                    color: Colors.grey,
+                    color: Colors.orange,
                   ),
                   const SizedBox(width: 4),
                   Text(time, style: GoogleFonts.poppins(fontSize: 12)),
@@ -1007,8 +1041,8 @@ Widget popularDishFullCard({
                   Text(
                     price,
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                       color: const Color(0xFF8B0000),
                     ),
                   ),
