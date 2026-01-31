@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
 import 'package:restro_app/Modules/Navbar/navbar.dart';
 import 'package:restro_app/widgets/Googlemapbottomsheet.dart';
@@ -16,6 +18,31 @@ class OrderTrackingScreen extends StatefulWidget {
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final CartController ctrl = Get.find<CartController>();
+
+  Future<void> _callDeliveryPartner(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      Get.snackbar(
+        "Unavailable",
+        "Delivery partner phone number not available",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final uri = Uri(scheme: 'tel', path: phone);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      Get.snackbar(
+        "Error",
+        "Could not open phone dialer",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
 
   bool _isOnlinePayment(order) {
     final method = order.payment?.method?.toUpperCase() ?? "";
@@ -275,24 +302,34 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _cancelOrderButton(order) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: () => _showCancelConfirmation(order),
-        icon: const Icon(Icons.cancel, color: Colors.red),
-        label: Text(
-          "Cancel Order",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: Colors.red,
-          ),
+    return GestureDetector(
+      onTap: () => _showCancelConfirmation(order),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.08), // 🔥 soft red
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.red.withOpacity(0.35), width: 1.2),
         ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.red, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.red,
+              size: 22,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Cancel Order",
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.red.shade700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -485,10 +522,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           /// 📞 CALL ICON
           InkWell(
-            onTap: () {
-              // future: launch dialer with phone
-              // launchUrl(Uri(scheme: 'tel', path: phone));
-            },
+            onTap: () => _callDeliveryPartner(phone),
             child: const Icon(Icons.call, color: Colors.green, size: 22),
           ),
         ],

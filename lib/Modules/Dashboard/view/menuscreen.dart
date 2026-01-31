@@ -100,7 +100,16 @@ class _MenuScreenState extends State<MenuScreen> {
             // LEFT CATEGORY MENU
             Container(
               width: 110,
-              color: Colors.white,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFFFEBEE), // very light red (top)
+                    Color(0xFFFFFFFF), // white (bottom)
+                  ],
+                ),
+              ),
               child: Obx(() {
                 return ListView.builder(
                   itemCount: authCtrl
@@ -130,14 +139,13 @@ class _MenuScreenState extends State<MenuScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
 
-                          /// 🔥 SELECTED = GRADIENT
                           gradient: isSelected
                               ? const LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFF8B0000),
-                                    Color(0xFFB71C1C),
+                                    Color(0xFFD32F2F), // red
+                                    Color(0xFFFF7043), // orange
                                   ],
                                 )
                               : null,

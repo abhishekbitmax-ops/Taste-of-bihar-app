@@ -12,6 +12,7 @@ import 'package:restro_app/utils/api_endpoints.dart';
 import 'package:http/http.dart' as http;
 import 'package:restro_app/widgets/Globalnotifation.dart';
 import 'package:restro_app/widgets/OrderConfrimscreen.dart';
+import 'package:restro_app/widgets/Rating_and_review.dart';
 import 'package:restro_app/widgets/RazorpayBottompay.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
@@ -35,6 +36,10 @@ class CartController extends GetxController {
   var roadDistanceLoading = false.obs;
   var roadDirection = "".obs; // 🔥 Turn-by-turn direction
   var roadDuration = 0.obs;
+
+  String? lastRestaurantId;
+  String? lastFoodItemId;
+  String? lastDeliveryPersonId; // already present
 
   final _pendingSocketEvents = <Map<String, dynamic>>[];
 
@@ -279,7 +284,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
+          "http://192.168.1.108:5004/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -360,6 +365,19 @@ class CartController extends GetxController {
         clearCartAndReset();
         return;
       }
+
+      // ================= CACHE IDS FOR RATING =================
+
+      // ✅ RESTAURANT ID
+      lastRestaurantId = cart.restaurant?.id;
+
+      // ✅ FIRST FOOD ITEM ID
+      lastFoodItemId = cart.items!.first.menuItemId;
+
+      debugPrint("🍽️ Cached restaurantId => $lastRestaurantId");
+      debugPrint("🍔 Cached foodItemId => $lastFoodItemId");
+
+      // ========================================================
 
       cartItems.clear();
 
@@ -643,7 +661,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
+      final url = "http://192.168.1.108:5004/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -672,6 +690,52 @@ class CartController extends GetxController {
       debugPrint("❌ FETCH ORDER TRACKING ERROR => $e");
       debugPrint("📋 StackTrace: $stackTrace");
       Get.snackbar("Exception", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  //  Rating and review api method
+
+  Future<bool> submitRating({
+    required int rating,
+    required String comment,
+    required String restaurantId,
+    required String orderId,
+    required String deliveryPersonId,
+    required String foodItemId,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+
+      final body = {
+        "restaurant": restaurantId,
+        "order": orderId,
+        "deliveryPerson": deliveryPersonId,
+        "foodItem": foodItemId,
+        "rating": {"overall": rating},
+        "comment": comment,
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoint.getUrl2(ApiEndpoint.Ratingreview)),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint("⭐ Rating API success");
+        return true; // 👈 IMPORTANT
+      }
+
+      return false;
+    } catch (e) {
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -744,6 +808,12 @@ class CartController extends GetxController {
     }
   }
 
+  String getFirstFoodItemIdFromCart() {
+    final items = cartResponse?.data?.cart?.items;
+    if (items == null || items.isEmpty) return "";
+    return items.first.menuItemId ?? "";
+  }
+
   // ----------------------------------
 
   Future<void> handleSocketStatusUpdate(dynamic data) async {
@@ -795,19 +865,61 @@ class CartController extends GetxController {
       return;
     }
 
+    // ================= ⭐ REVIEW ADDED =================
+    if (data is Map && data["type"] == "REVIEW_ADDED") {
+      GlobalNotificationService.show(
+        title: "Review Submitted ⭐",
+        message: data["message"] ?? "Thanks for sharing your feedback",
+      );
+      return;
+    }
+
     // ================= 🔑 OTP EVENT (HANDLE FIRST — NO ID CHECK) =================
     if (data is Map) {
+      // 🔑 OTP (support both keys)
       final otp = data["deliveryOTP"] ?? data["otp"];
+
+      // ================= 🚴 DELIVERY PERSON ID (ROBUST) =================
+
+      String? partnerId;
+
+      // CASE 1️⃣: order.delivery.partner  (preferred – full payload)
+      final orderMap = data["order"];
+      if (orderMap is Map) {
+        final delivery = orderMap["delivery"];
+        if (delivery is Map && delivery["partner"] != null) {
+          partnerId = delivery["partner"].toString();
+        }
+      }
+
+      // CASE 2️⃣: direct delivery.partner (fallback – flat payload)
+      if (partnerId == null && data["delivery"] is Map) {
+        final delivery = data["delivery"];
+        if (delivery["partner"] != null) {
+          partnerId = delivery["partner"].toString();
+        }
+      }
+
+      // SAVE IF FOUND
+      if (partnerId != null && partnerId.isNotEmpty) {
+        lastDeliveryPersonId = partnerId;
+      }
+
+      // ================================================================
 
       if (otp != null && otp.toString().isNotEmpty) {
         debugPrint("🔑 OTP RECEIVED FROM SOCKET => $otp");
+        debugPrint("🚴 DeliveryPersonId => $lastDeliveryPersonId");
 
         if (order.value != null) {
           order.value = order.value!.copyWith(
             deliveryOTP: otp.toString(),
             delivery:
                 order.value!.delivery ??
-                Delivery(otp: otp.toString(), partner: null),
+                Delivery(
+                  otp: otp.toString(),
+                  partner: null, // 👈 ID already cached separately
+                ),
           );
           order.refresh();
         }
@@ -817,7 +929,7 @@ class CartController extends GetxController {
           message: "Your delivery OTP is $otp",
         );
 
-        return; // ⛔ STOP HERE
+        return;
       }
     }
 
@@ -883,6 +995,21 @@ class CartController extends GetxController {
           title: "Order Delivered",
           message: "Enjoy your meal 🍽️",
         );
+
+        Future.delayed(const Duration(seconds: 2), () {
+          if (Get.context != null) {
+            Get.dialog(
+              RatingDialog(
+                restaurantId: lastRestaurantId ?? "",
+                orderId: order.value?.orderId ?? "",
+                deliveryPersonId: lastDeliveryPersonId ?? "",
+                foodItemId: lastFoodItemId ?? "",
+              ),
+              barrierDismissible: false,
+            );
+          }
+        });
+
         break;
     }
   }
@@ -981,7 +1108,7 @@ class CartController extends GetxController {
       final token = await SharedPre.getAccessToken();
 
       final url = Uri.parse(
-        "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/cancel",
+        "http://192.168.1.108:5004/api/v1/user/order/$orderId/cancel",
       );
 
       /// 🔥 BUILD PAYMENT OBJECT AS BACKEND EXPECTS
@@ -1085,7 +1212,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url =
-          "https://sog.bitmaxtest.com/api/v1/user/payment/refund/$orderId";
+          "http://192.168.1.108:5004/api/v1/user/payment/refund/$orderId";
 
       final res = await http.get(
         Uri.parse(url),
@@ -1161,7 +1288,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url = Uri.parse(
-        "https://sog.bitmaxtest.com/api/v1/user/notifications/$notificationId/read",
+        "http://192.168.1.108:5004/api/v1/user/notifications/$notificationId/read",
       );
 
       final response = await http.patch(

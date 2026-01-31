@@ -14,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:restro_app/widgets/Addressbottomsheet.dart';
 import 'package:restro_app/widgets/OrderConfrimscreen.dart';
 import 'package:restro_app/widgets/Privacy_policy.dart';
+import 'package:restro_app/widgets/Rating_and_review.dart';
 import 'package:restro_app/widgets/Viewcartbar.dart';
 
 class ProfileHomeScreen extends StatefulWidget {
@@ -30,6 +31,19 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
+
+  void openRatingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => RatingDialog(
+        restaurantId: "RESTAURANT_ID_HERE",
+        orderId: "ORDER_ID_HERE",
+        deliveryPersonId: "DELIVERY_PERSON_ID_HERE",
+        foodItemId: "FOOD_ITEM_ID_HERE",
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -319,7 +333,11 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                               "Help & Support",
                               onTap: () => Get.to(PrivacyPolicyScreen()),
                             ),
-                            _menuTile(Icons.restaurant, "Partner with Us"),
+                            _menuTile(
+                              Icons.restaurant,
+                              "Partner with Us",
+                              onTap: () => openRatingDialog(context),
+                            ),
                             _menuTile(Icons.card_membership, "Pro Membership"),
                             const Divider(),
                             _menuTile(

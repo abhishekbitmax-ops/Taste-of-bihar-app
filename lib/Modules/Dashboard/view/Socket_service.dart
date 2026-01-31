@@ -14,7 +14,7 @@ class OrderSocketService {
     if (token.isEmpty) return;
 
     ordersocket = IO.io(
-      "https://sog.bitmaxtest.com/orders",
+      "http://192.168.1.108:5004/orders",
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({"token": token})
@@ -84,13 +84,24 @@ class OrderSocketService {
       });
     });
 
+    // ================= ⭐ REVIEW ADDED =================
+    ordersocket!.on("REVIEW_ADDED", (data) {
+      print("⭐ REVIEW_ADDED => $data");
+
+      onStatusUpdate({
+        "type": "REVIEW_ADDED",
+        "message": data["message"] ?? "Thank you for your review ⭐",
+      });
+    });
+
     // ================= 🔑 OTP =================
     ordersocket!.on("OTP_SENT", (data) {
       print("🔑 OTP_SENT => $data");
 
       onStatusUpdate({
-        "customOrderId": data["customOrderId"], // ✅ FIXED
-        "otp": data["otp"],
+        "customOrderId": data["customOrderId"],
+        "otp": data["delivery"]?["otp"] ?? data["otp"],
+        "order": data["order"], // 🔥 THIS LINE FIXES EVERYTHING
       });
     });
 

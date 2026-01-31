@@ -15,11 +15,11 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final CartController ctrl = Get.put(CartController());
 
+  static const activeStatuses = ["PLACED", "ACCEPTED", "OUT_FOR_DELIVERY"];
+
   @override
   void initState() {
     super.initState();
-
-    /// 🔥 AUTO REFRESH WHEN SCREEN OPENS
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ctrl.fetchOrderHistory();
     });
@@ -52,7 +52,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           return _emptyOrderView();
         }
 
-        /// 🔥 SORT ALL ORDERS BY TIME (LATEST FIRST)
+        /// 🔥 SORT ALL ORDERS (LATEST FIRST)
         final sortedOrders = [...ctrl.orders];
         sortedOrders.sort((a, b) {
           final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
@@ -60,22 +60,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           return db.compareTo(da);
         });
 
-        /// 🔥 ACTIVE ORDERS (NOT DELIVERED)
-        final activeOrders = sortedOrders
-            .where((o) => (o.status ?? "").toUpperCase() != "DELIVERED")
-            .toList();
+        /// 🔥 FIND LATEST ORDER
+        OrderData? latestOrder;
 
-        /// 🔥 SORT ACTIVE ORDERS BY TIME
-        activeOrders.sort((a, b) {
-          final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
-          final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
-          return db.compareTo(da);
-        });
+        final activeOrder = sortedOrders.firstWhereOrNull(
+          (o) => activeStatuses.contains((o.status ?? "").toUpperCase()),
+        );
 
-        /// 🔥 ONLY ONE LATEST ACTIVE ORDER
-        OrderData? latestActiveOrder = activeOrders.isNotEmpty
-            ? activeOrders.first
-            : null;
+        if (activeOrder != null) {
+          latestOrder = activeOrder;
+        } else {
+          latestOrder = sortedOrders.isNotEmpty ? sortedOrders.first : null;
+        }
 
         return RefreshIndicator(
           color: const Color(0xFF8B0000),
@@ -85,8 +81,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              /// 🔥 TOP — LATEST ACTIVE ORDER
-              if (latestActiveOrder != null) ...[
+              /// 🔥 LATEST ORDER
+              if (latestOrder != null) ...[
                 Text(
                   "Latest Order",
                   style: GoogleFonts.poppins(
@@ -100,20 +96,23 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 InkWell(
                   onTap: () {
                     Get.to(
-                      () => OrderTrackingScreen(
-                        orderId: latestActiveOrder!.orderId!,
-                      ),
+                      () => OrderTrackingScreen(orderId: latestOrder!.orderId!),
                     );
                   },
-                  child: _OrderHistoryCard(latestActiveOrder!, isLatest: true),
+                  child: _OrderHistoryCard(
+                    latestOrder!,
+                    isLatest: activeStatuses.contains(
+                      (latestOrder!.status ?? "").toUpperCase(),
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
               ],
 
-              /// 🔥 REST OF ORDERS (HISTORY)
+              /// 🔥 ORDER HISTORY
               ...sortedOrders
-                  .where((o) => o.orderId != latestActiveOrder?.orderId)
+                  .where((o) => o.orderId != latestOrder?.orderId)
                   .map(
                     (order) => InkWell(
                       onTap: () {
@@ -166,7 +165,6 @@ class _OrderHistoryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          /// TOP STRIP
           Container(
             height: 6,
             decoration: const BoxDecoration(
@@ -174,7 +172,6 @@ class _OrderHistoryCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -182,7 +179,6 @@ class _OrderHistoryCard extends StatelessWidget {
               children: [
                 /// RESTAURANT + STATUS
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
@@ -241,8 +237,6 @@ class _OrderHistoryCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 6),
-
-                /// ORDER ID
                 Text(
                   "Order ID: ${order.orderId ?? ""}",
                   style: GoogleFonts.poppins(
@@ -252,8 +246,6 @@ class _OrderHistoryCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 8),
-
-                /// ITEMS
                 Text(
                   order.items
                           ?.map((e) => "${e.name} x${e.quantity}")
@@ -264,37 +256,9 @@ class _OrderHistoryCard extends StatelessWidget {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
 
-                const SizedBox(height: 8),
-
-                /// ADDRESS
-                if (address != null)
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: Color(0xFF8B0000),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          "${address.addressLine ?? ""}, "
-                          "${address.city ?? ""} - ${address.pincode ?? ""}",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
                 const SizedBox(height: 10),
                 Divider(color: Colors.grey.shade300),
 
-                /// PRICE + TRACK
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -308,7 +272,6 @@ class _OrderHistoryCard extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        if (order.orderId == null) return;
                         Get.to(
                           () => OrderTrackingScreen(orderId: order.orderId!),
                         );
