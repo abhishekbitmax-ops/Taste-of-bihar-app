@@ -201,7 +201,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
                       const SizedBox(width: 10),
 
-                      // 🔔 NOTIFICATION ICON
                       // 🔔 NOTIFICATION ICON WITH COUNT
                       InkWell(
                         onTap: () => Get.to(() => NotificationScreen()),
@@ -586,12 +585,17 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         ),
                       ),
                       const Spacer(),
-                      Text(
-                        "See All",
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange.shade800,
+                      InkWell(
+                        onTap: () => Get.offAll(
+                          () => const BottomNavBar(initialIndex: 2),
+                        ),
+                        child: Text(
+                          "See All",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange.shade800,
+                          ),
                         ),
                       ),
                       const Icon(

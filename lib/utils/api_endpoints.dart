@@ -1,9 +1,9 @@
 class ApiEndpoint {
   //  Base API URL (for all API requests)
-  static const String baseUrl = "http://192.168.1.108:5004/api/v1/user";
+  static const String baseUrl = "https://sog.bitmaxtest.com/api/v1/user";
 
   // Patient App Endpoints
- static const String baseUrl2 = "http://192.168.1.108:5004/api/v1";
+  static const String baseUrl2 = "https://sog.bitmaxtest.com/api/v1";
   //  AUTHENTICATION ENDPOINTS
 
   static const String login = "/mobile-send-otp";
@@ -26,14 +26,14 @@ class ApiEndpoint {
   static const String GetCoupancode = "/coupons/active";
   static const String Getnotifaction = "/notifications";
   static const String Ratingreview = "/rating/submit";
+  static const String SelectAddress = "/cart/select-address";
 
   //  Helper — automatically combines base URL + endpoint
   static String getUrl(String endpoint) {
     return "$baseUrl$endpoint";
   }
 
-   static String getUrl2(String endpoint) {
+  static String getUrl2(String endpoint) {
     return "$baseUrl2$endpoint";
   }
 }
-  

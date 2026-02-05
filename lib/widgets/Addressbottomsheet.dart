@@ -121,13 +121,11 @@ class AddressSelector extends StatelessWidget {
                       elevation: 1,
                       child: ListTile(
                         onTap: () async {
-                          cartCtrl.selectedAddress.value =
-                              "${adr.street}, ${adr.area}, ${adr.city}";
+                          final id = adr.id ?? "";
+                          if (id.isEmpty) return;
 
-                          cartCtrl.selectedAddressId.value = adr.id ?? "";
-                          await SharedPre.saveSelectedAddressId(adr.id ?? "");
-
-                          Get.back();
+                          // 🔥 OPEN UPDATEADDRSSS
+                          Get.to(() => Updateaddrsss(addressId: id));
                         },
 
                         leading: Icon(
@@ -179,7 +177,11 @@ class AddressSelector extends StatelessWidget {
                             InkWell(
                               onTap: () {
                                 if (adr.id == null) return;
-                                Get.to(() => Updateaddrsss(addressId: adr.id!));
+                                Get.to(
+                                  () => DeliveryLocationScreen(
+                                    editAddressId: adr.id!,
+                                  ),
+                                );
                               },
                               child: const Icon(
                                 Icons.edit,

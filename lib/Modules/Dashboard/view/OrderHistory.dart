@@ -52,26 +52,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           return _emptyOrderView();
         }
 
-        /// 🔥 SORT ALL ORDERS (LATEST FIRST)
+        /// 🔥 SORT ALL ORDERS (LATEST FIRST - BY CREATED DATE)
         final sortedOrders = [...ctrl.orders];
         sortedOrders.sort((a, b) {
           final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
           final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
-          return db.compareTo(da);
+          return db.compareTo(da); // Latest first
         });
 
-        /// 🔥 FIND LATEST ORDER
-        OrderData? latestOrder;
-
-        final activeOrder = sortedOrders.firstWhereOrNull(
-          (o) => activeStatuses.contains((o.status ?? "").toUpperCase()),
-        );
-
-        if (activeOrder != null) {
-          latestOrder = activeOrder;
-        } else {
-          latestOrder = sortedOrders.isNotEmpty ? sortedOrders.first : null;
-        }
+        /// 🔥 FIND LATEST ORDER (MOST RECENT BY DATE, REGARDLESS OF STATUS)
+        final latestOrder = sortedOrders.isNotEmpty ? sortedOrders.first : null;
 
         return RefreshIndicator(
           color: const Color(0xFF8B0000),

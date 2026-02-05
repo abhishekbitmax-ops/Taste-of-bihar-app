@@ -8,9 +8,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Dashboard/view/AddAddress.dart';
+import 'package:restro_app/Modules/Dashboard/view/UpdateAddrsss.dart';
 
 class DeliveryLocationScreen extends StatefulWidget {
-  const DeliveryLocationScreen({super.key});
+  final String? editAddressId;
+
+  const DeliveryLocationScreen({super.key, this.editAddressId});
 
   @override
   State<DeliveryLocationScreen> createState() => _DeliveryLocationScreenState();
@@ -305,7 +308,17 @@ class _DeliveryLocationScreenState extends State<DeliveryLocationScreen> {
                         latitude: selectedLocation.latitude,
                         longitude: selectedLocation.longitude,
                       );
-                      Get.to(const AddAddressScreen());
+
+                      // If this screen was opened for editing an existing address,
+                      // navigate to Updateaddrsss, otherwise go to AddAddress.
+                      if (widget.editAddressId != null &&
+                          widget.editAddressId!.isNotEmpty) {
+                        Get.to(
+                          () => Updateaddrsss(addressId: widget.editAddressId!),
+                        );
+                      } else {
+                        Get.to(const AddAddressScreen());
+                      }
                     },
                     child: const Text(
                       "Select Location",

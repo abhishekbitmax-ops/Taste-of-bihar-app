@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -384,12 +385,39 @@ class CartScreen extends StatelessWidget {
                           "Tax",
                           "₹${s.tax?.toStringAsFixed(2) ?? "0.00"}",
                         ),
-                        _buildBillRow(
-                          "Delivery",
-                          s.deliveryCharge == 0
-                              ? "Free"
-                              : "₹${s.deliveryCharge}",
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Delivery",
+                              style: GoogleFonts.poppins(fontSize: 13),
+                            ),
+                            Row(
+                              children: [
+                                if (s.deliveryCharge == 0)
+                                  const Icon(
+                                    Icons.local_fire_department,
+                                    color: Colors.green,
+                                    size: 18,
+                                  ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  s.deliveryCharge == 0
+                                      ? "FREE 🎉"
+                                      : "₹${s.deliveryCharge}",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: s.deliveryCharge == 0
+                                        ? Colors.green
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
+
                         _buildBillRow(
                           "Discount",
                           "-₹${s.discount?.toStringAsFixed(2) ?? "0.00"}",
@@ -645,6 +673,23 @@ class CartScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 40),
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: cartCtrl.freeDeliveryConfetti,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  emissionFrequency: 0.05,
+                  numberOfParticles: 30,
+                  gravity: 0.25,
+                  colors: const [
+                    Colors.red,
+                    Colors.green,
+                    Colors.orange,
+                    Colors.yellow,
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -736,20 +781,22 @@ class _CartItemTile extends StatelessWidget {
                     // NAME
                     Row(
                       children: [
-                        Text(
-                          item["name"] ?? "Item",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                        Expanded(
+                          child: Text(
+                            item["name"] ?? "Item",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           item["price"] ?? "Item",
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             fontSize: 15,
@@ -851,46 +898,49 @@ class _CartItemTile extends StatelessWidget {
             ),
 
             // PRICE + DELETE
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Obx(() {
-                    final isRemoving = cartCtrl.removingIndex.value == index;
+            SizedBox(
+              width: 70,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Obx(() {
+                      final isRemoving = cartCtrl.removingIndex.value == index;
 
-                    return isRemoving
-                        ? const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF8B0000),
+                      return isRemoving
+                          ? const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF8B0000),
+                                ),
                               ),
-                            ),
-                          )
-                        : IconButton(
-                            onPressed: () => cartCtrl.removeItemApi(index),
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                            ),
-                          );
-                  }),
+                            )
+                          : IconButton(
+                              onPressed: () => cartCtrl.removeItemApi(index),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                              ),
+                            );
+                    }),
 
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 6),
 
-                  Text(
-                    "₹${item["itemTotal"]}",
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8B0000),
+                    Text(
+                      "₹${item["itemTotal"]}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF8B0000),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

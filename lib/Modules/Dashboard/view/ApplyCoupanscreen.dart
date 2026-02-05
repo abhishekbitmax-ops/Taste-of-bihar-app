@@ -59,7 +59,9 @@ class ApplyCouponScreen extends StatelessWidget {
                   ),
                   Obx(
                     () => TextButton(
-                      onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
+                      onPressed:
+                          cartCtrl.applyingCouponCode.value.isNotEmpty ||
+                              cartCtrl.cartItems.isEmpty
                           ? null
                           : () async {
                               final code = couponCtrl.text.trim();
@@ -197,7 +199,9 @@ class _CouponTile extends StatelessWidget {
           ),
           Obx(
             () => TextButton(
-              onPressed: cartCtrl.applyingCouponCode.value.isNotEmpty
+              onPressed:
+                  cartCtrl.applyingCouponCode.value.isNotEmpty ||
+                      cartCtrl.cartItems.isEmpty
                   ? null
                   : () async {
                       final success = await cartCtrl.applyCouponApi(code);

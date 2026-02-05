@@ -284,13 +284,33 @@ class SummaryModel {
     return SummaryModel(
       itemCount: json["itemCount"],
       subtotal: json["subtotal"],
-      tax: (json["tax"] as num?)?.toDouble(), // ✅ FIX
+      tax: (json["tax"] as num?)?.toDouble(),
       deliveryCharge: json["deliveryCharge"],
       discount: json["discount"],
-      grandTotal: (json["grandTotal"] as num?)?.toDouble(), // ✅ FIX
+      grandTotal: (json["grandTotal"] as num?)?.toDouble(),
+    );
+  }
+
+  /// 🔥 ADD THIS
+  SummaryModel copyWith({
+    int? itemCount,
+    int? subtotal,
+    double? tax,
+    int? deliveryCharge,
+    int? discount,
+    double? grandTotal,
+  }) {
+    return SummaryModel(
+      itemCount: itemCount ?? this.itemCount,
+      subtotal: subtotal ?? this.subtotal,
+      tax: tax ?? this.tax,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
+      discount: discount ?? this.discount,
+      grandTotal: grandTotal ?? this.grandTotal,
     );
   }
 }
+
 
 class CouponModel {
   String? code;

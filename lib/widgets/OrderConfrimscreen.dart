@@ -53,15 +53,29 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   @override
   Widget build(BuildContext context) {
     final orderId = order["orderId"]?.toString() ?? "N/A";
-
     final price = (order["price"]?["grandTotal"] ?? 0).toString();
 
-    final rawMethod = order["payment"]?["method"] ?? "-";
-    final paymentMethod = rawMethod == "COD"
+    /// 🔥 PAYMENT METHOD (ROBUST)
+    final rawType = (order["payment"]?["type"] ?? "").toString().toUpperCase();
+    final rawMethod = (order["payment"]?["method"] ?? "")
+        .toString()
+        .toUpperCase();
+
+    final paymentMethod =
+        (rawType == "COD" || rawMethod == "COD" || rawMethod == "CASH")
         ? "Cash on Delivery"
         : "UPI Payment";
 
-    final paymentStatus = order["payment"]?["status"] ?? "Pending";
+    /// 🔥 PAYMENT STATUS
+    final rawStatus = (order["payment"]?["status"] ?? "PENDING")
+        .toString()
+        .toUpperCase();
+
+    final paymentStatus = rawStatus == "PAID"
+        ? "Paid"
+        : rawType == "COD"
+        ? "Pay on Delivery"
+        : "Pending";
 
     final address = order["deliveryAddress"];
 
@@ -167,7 +181,6 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
                     Get.to(() => OrderTrackingScreen(orderId: oid.toString()));
                   },
-
                   child: const Text(
                     "Track Order",
                     style: TextStyle(
@@ -181,12 +194,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
               const SizedBox(height: 12),
 
+              // 🏠 BACK TO HOME
               TextButton(
                 onPressed: () {
                   final cartCtrl = Get.find<CartController>();
-
-                  cartCtrl.clearCartAfterOrder(); //  IMPORTANT
-
+                  cartCtrl.clearCartAfterOrder(); // ✅ IMPORTANT
                   Get.offAll(() => BottomNavBar(initialIndex: 0));
                 },
                 child: const Text("Back to Home"),

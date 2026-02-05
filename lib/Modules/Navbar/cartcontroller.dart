@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:confetti/confetti.dart';
 import 'package:get/get.dart';
 import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
 import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
@@ -42,6 +43,7 @@ class CartController extends GetxController {
   String? lastDeliveryPersonId; // already present
 
   final _pendingSocketEvents = <Map<String, dynamic>>[];
+  late ConfettiController freeDeliveryConfetti;
 
   // 🔥 Duration in minutes
 
@@ -184,12 +186,27 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
+    // 🛒 CART & USER DATA
     fetchCartApi();
     fetchNotifications();
     fetchOrderHistory();
     restoreSelectedAddress();
     fetchAvailableCoupons(); // 👈 AUTO RESTORE CART ON APP START
-    initOrderSocket(); // 🔥 START SOCKET LISTENER FOR LIVE TRACKING
+
+    // 🔥 SOCKET (LIVE TRACKING / STATUS)
+    initOrderSocket();
+
+    // 💣 FREE DELIVERY CONFETTI INIT
+    freeDeliveryConfetti = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  @override
+  void onClose() {
+    freeDeliveryConfetti.dispose();
+    super.onClose();
   }
 
   Future<void> restoreSelectedAddress() async {
@@ -207,6 +224,11 @@ class CartController extends GetxController {
     final adr = authCtrl.getAddressById(savedId);
     if (adr != null) {
       selectedAddress.value = "${adr.street}, ${adr.area}, ${adr.city}";
+    }
+
+    // 🔥 ALSO RESTORE DELIVERY CHARGE
+    if (cartResponse != null) {
+      await selectAddressAndUpdateBill(savedId);
     }
   }
 
@@ -284,7 +306,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "http://192.168.1.108:5004/api/v1/user/cart/$cartItemId/remove";
+          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -332,7 +354,7 @@ class CartController extends GetxController {
     try {
       isLoading.value = true;
 
-      String accessToken = await SharedPre.getAccessToken();
+      final accessToken = await SharedPre.getAccessToken();
       if (accessToken.isEmpty) {
         clearCartAndReset();
         return;
@@ -355,30 +377,25 @@ class CartController extends GetxController {
       }
 
       final decoded = jsonDecode(response.body);
-
       cartResponse = CartResponse.fromJson(decoded);
 
       final cart = cartResponse?.data?.cart;
 
-      // ✅ VERY IMPORTANT NULL CHECK
+      // ❌ EMPTY CART
       if (cart == null || cart.items == null || cart.items!.isEmpty) {
         clearCartAndReset();
         return;
       }
 
-      // ================= CACHE IDS FOR RATING =================
-
-      // ✅ RESTAURANT ID
+      // ================= CACHE IDS =================
       lastRestaurantId = cart.restaurant?.id;
-
-      // ✅ FIRST FOOD ITEM ID
       lastFoodItemId = cart.items!.first.menuItemId;
 
       debugPrint("🍽️ Cached restaurantId => $lastRestaurantId");
       debugPrint("🍔 Cached foodItemId => $lastFoodItemId");
+      // ============================================
 
-      // ========================================================
-
+      // ================= CART ITEMS =================
       cartItems.clear();
 
       for (var item in cart.items!) {
@@ -396,12 +413,28 @@ class CartController extends GetxController {
         });
       }
 
-      grandTotal.value = cart.summary?.grandTotal ?? 0.0;
       cartItems.refresh();
+
+      // ================= GRAND TOTAL (TEMP) =================
+      grandTotal.value = cart.summary?.grandTotal ?? 0.0;
+
+      // ================= 🔥 RE-APPLY SAVED ADDRESS =================
+      final savedAddressId = await SharedPre.getSelectedAddressId();
+
+      if (savedAddressId.isNotEmpty) {
+        debugPrint("♻️ Re-applying addressId => $savedAddressId");
+
+        /// 🚨 IMPORTANT SAFETY:
+        /// - isLoading false kar ke call
+        /// - warna API block ho jayegi
+        isLoading.value = false;
+
+        await selectAddressAndUpdateBill(savedAddressId);
+      }
     } catch (e, s) {
-      debugPrint("FETCH CART ERROR: $e");
-      debugPrint("STACKTRACE: $s");
-      clearCartAndReset(); // ✅ NEVER crash UI
+      debugPrint("❌ FETCH CART ERROR => $e");
+      debugPrint("📋 STACKTRACE => $s");
+      clearCartAndReset();
     } finally {
       isLoading.value = false;
     }
@@ -661,7 +694,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "http://192.168.1.108:5004/api/v1/user/order/$orderId/track";
+      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -1108,7 +1141,7 @@ class CartController extends GetxController {
       final token = await SharedPre.getAccessToken();
 
       final url = Uri.parse(
-        "http://192.168.1.108:5004/api/v1/user/order/$orderId/cancel",
+        "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/cancel",
       );
 
       /// 🔥 BUILD PAYMENT OBJECT AS BACKEND EXPECTS
@@ -1212,7 +1245,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url =
-          "http://192.168.1.108:5004/api/v1/user/payment/refund/$orderId";
+          "https://sog.bitmaxtest.com/api/v1/user/payment/refund/$orderId";
 
       final res = await http.get(
         Uri.parse(url),
@@ -1288,7 +1321,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url = Uri.parse(
-        "http://192.168.1.108:5004/api/v1/user/notifications/$notificationId/read",
+        "https://sog.bitmaxtest.com/api/v1/user/notifications/$notificationId/read",
       );
 
       final response = await http.patch(
@@ -1310,6 +1343,75 @@ class CartController extends GetxController {
       }
     } catch (e) {
       debugPrint("❌ MARK READ ERROR => $e");
+    }
+  }
+
+  // --- Address selection for cart ---
+
+  Future<bool> selectAddressAndUpdateBill(String addressId) async {
+    try {
+      isLoading.value = true;
+
+      final token = await SharedPre.getAccessToken();
+      if (token.isEmpty) return false;
+
+      final url = ApiEndpoint.getUrl(ApiEndpoint.SelectAddress);
+
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"addressId": addressId}),
+      );
+
+      final decoded = jsonDecode(res.body);
+      debugPrint("📍 SELECT ADDRESS RES => $decoded");
+
+      // ❌ DELIVERY NOT AVAILABLE
+      if (decoded["success"] != true) {
+        Get.snackbar(
+          "Delivery Unavailable",
+          decoded["message"] ??
+              "Delivery is not available for the selected address",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      // ✅ SUCCESS CASE
+      final data = decoded["data"];
+      final summary = cartResponse?.data?.cart?.summary;
+
+      if (summary != null) {
+        cartResponse!.data!.cart!.summary = summary.copyWith(
+          subtotal: data["subtotal"],
+          tax: (data["tax"] as num).toDouble(),
+          deliveryCharge: data["deliveryCharge"],
+          grandTotal: (data["grandTotal"] as num).toDouble(),
+        );
+      }
+
+      grandTotal.value = (data["grandTotal"] as num).toDouble();
+      if (data["deliveryCharge"] == 0) {
+        freeDeliveryConfetti.play(); // 💣 BOOM
+      }
+
+      cartItems.refresh();
+
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Something went wrong while checking delivery",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 }

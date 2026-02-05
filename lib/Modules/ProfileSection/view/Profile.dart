@@ -361,9 +361,67 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                         padding: EdgeInsets.symmetric(horizontal: 6.w),
                         child: _gradientButton(
                           "Log Out",
-                          onTap: () async {
-                            await SharedPre.clearAll();
-                            Get.offAll(() => const LoginScreen());
+                          onTap: () {
+                            Get.defaultDialog(
+                              title: "Confirm Logout",
+                              middleText: "Are you sure you want to log out?",
+                              backgroundColor: Colors.white,
+                              radius: 12,
+                              titleStyle: const TextStyle(
+                                color: Color(0xFFB71C1C),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                              middleTextStyle: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
+                              // custom colored buttons
+                              confirm: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFB71C1C),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  Get.back();
+                                  await SharedPre.clearAll();
+                                  Get.offAll(() => const LoginScreen());
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Text(
+                                    "Logout",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              cancel: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: Color(0xFFB71C1C),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () => Get.back(),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Text(
+                                    "Cancel",
+                                    style: TextStyle(color: Color(0xFFB71C1C)),
+                                  ),
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ),

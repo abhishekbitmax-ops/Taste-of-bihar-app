@@ -34,6 +34,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // ===== TOP HANDLE =====
+                        
                         Center(
                           child: Container(
                             width: 40,
