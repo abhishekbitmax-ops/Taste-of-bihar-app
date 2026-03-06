@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -118,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                               indicatorSize: TabBarIndicatorSize.tab,
                               indicatorPadding: const EdgeInsets.all(4),
                               indicator: BoxDecoration(
-                                color: const Color(0xFF8B0000),
+                                color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               labelColor: Colors.white,
@@ -209,7 +211,7 @@ class _UserLoginTab extends StatelessWidget {
                       },
 
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B0000),
+                  backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

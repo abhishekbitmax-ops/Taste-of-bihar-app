@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/view/Demoscreen/Demotwo.dart';
-import 'package:restro_app/Modules/Auth/view/Login.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/Demoscreen/Demotwo.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/Login.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -24,9 +24,7 @@ class OnboardingScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const LoginScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
               },
               child: Text(

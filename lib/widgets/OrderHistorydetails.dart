@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
 
 // ✅ correct model import
 
@@ -16,18 +17,18 @@ class OrderDetailScreen extends StatelessWidget {
     final price = order.price;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF8B0000)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Get.back(),
         ),
         title: Text(
           "Order Details",
           style: GoogleFonts.poppins(
-            color: const Color(0xFF8B0000),
+            color: AppColors.primary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -75,7 +76,7 @@ class OrderDetailScreen extends StatelessWidget {
                   const Icon(
                     Icons.location_on,
                     size: 18,
-                    color: Color(0xFF8B0000),
+                    color: AppColors.primary,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -170,7 +171,7 @@ class OrderDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF8B0000).withOpacity(0.12)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +182,7 @@ class OrderDetailScreen extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF8B0000),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8),
@@ -215,7 +216,7 @@ class OrderDetailScreen extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-              color: isBold ? const Color(0xFF8B0000) : Colors.black87,
+              color: isBold ? AppColors.primary : Colors.black87,
             ),
           ),
         ],
@@ -224,7 +225,7 @@ class OrderDetailScreen extends StatelessWidget {
   }
 
   Widget _statusChip(String? status) {
-    Color color = const Color(0xFF8B0000);
+    Color color = AppColors.primary;
 
     if (status == "READY") color = Colors.green;
     if (status == "REJECTED") color = Colors.red;
@@ -247,3 +248,4 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 }
+

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/widgets/OrderTackingScreen.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/widgets/OrderTackingScreen.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {
   const OrderConfirmationScreen({super.key});

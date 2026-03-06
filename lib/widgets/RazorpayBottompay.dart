@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 
 const String razorpayKey = "rzp_test_RqyfR6ogB6XV65";
 
@@ -113,7 +114,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.payment, size: 36, color: Color(0xFF8B0000)),
+            const Icon(Icons.payment, size: 36, color: AppColors.primary),
             const SizedBox(height: 16),
             const Text(
               "Confirm Payment",
@@ -125,7 +126,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF8B0000),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 24),
@@ -137,7 +138,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               child: ElevatedButton(
                 onPressed: isPaying ? null : openCheckout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B0000),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:flutter/services.dart';
-import 'package:restro_app/Modules/Dashboard/view/tablecard.dart';
-import 'package:restro_app/widgets/Viewcartbar.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/tablecard.dart';
+import 'package:taste_of_bihar/widgets/Viewcartbar.dart';
 
 class Dineinscreen extends StatelessWidget {
   const Dineinscreen({super.key});
@@ -52,7 +53,7 @@ class Dineinscreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF8B0000),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -70,7 +71,7 @@ class Dineinscreen extends StatelessWidget {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFB71C1C),
+        statusBarColor: AppColors.primary,
         statusBarIconBrightness: Brightness.light,
       ),
     );
@@ -79,7 +80,7 @@ class Dineinscreen extends StatelessWidget {
       builder: (context, orientation, screenType) {
         return Scaffold(
           bottomNavigationBar: ZomatoCartBar(),
-          backgroundColor: Colors.grey.shade50,
+          backgroundColor: Colors.transparent,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: _onRefresh,
@@ -107,14 +108,14 @@ class Dineinscreen extends StatelessWidget {
                           const Icon(
                             Icons.menu,
                             size: 26,
-                            color: Color(0xFF8B0000),
+                            color: AppColors.primary,
                           ),
                           Text(
-                            "Swaad of Grandmaa",
+                            "Taste of Bihar",
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF8B0000),
+                              color: AppColors.primary,
                             ),
                           ),
                           const CircleAvatar(
@@ -153,7 +154,7 @@ class Dineinscreen extends StatelessWidget {
                             const Icon(
                               Icons.location_on,
                               size: 18,
-                              color: Color(0xFF8B0000),
+                              color: AppColors.primary,
                             ),
                             const SizedBox(width: 6),
                             Expanded(
@@ -375,9 +376,7 @@ class _BannerSliderState extends State<BannerSlider> {
               width: _current == i ? 22 : 6,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: _current == i
-                    ? const Color(0xFF8B0000)
-                    : Colors.grey.shade400,
+                color: _current == i ? AppColors.primary : Colors.grey.shade400,
               ),
             ),
           ),
@@ -485,3 +484,4 @@ Widget _recommendedItem(
     ),
   );
 }
+

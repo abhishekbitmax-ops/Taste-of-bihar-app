@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -10,7 +11,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B0000),
+        backgroundColor: AppColors.primary,
         elevation: 0,
         title: Text(
           "Privacy Policy",
@@ -36,9 +37,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
 
             _section("1. Information We Collect"),
-            _bullet("Personal details such as name, phone number, and address."),
-            _bullet("Order details including items ordered and delivery location."),
-            _bullet("Payment-related information (we do not store card details)."),
+            _bullet(
+              "Personal details such as name, phone number, and address.",
+            ),
+            _bullet(
+              "Order details including items ordered and delivery location.",
+            ),
+            _bullet(
+              "Payment-related information (we do not store card details).",
+            ),
             _bullet("Device and usage information for app performance."),
 
             _section("2. How We Use Your Information"),
@@ -103,7 +110,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF8B0000),
+          color: AppColors.primary,
         ),
       ),
     );

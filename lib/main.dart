@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
-import 'package:restro_app/Modules/Navbar/Splashscreen.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/widgets/Globalnotifation.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/Socket_service.dart';
+import 'package:taste_of_bihar/Modules/Navbar/Splashscreen.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/widgets/Globalnotifation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +28,7 @@ void main() async {
       OrderSocketService.connect(
         onStatusUpdate: cartCtrl.handleSocketStatusUpdate,
         onTrackingInfo: cartCtrl.handleSocketTrackingInfo,
-        
+
         onDeliveryAssigned: (data) {
           GlobalNotificationService.show(
             title: "Delivery Assigned",

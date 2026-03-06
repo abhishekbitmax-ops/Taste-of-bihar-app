@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/get_instance.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/view/CurrentMapfetch.dart';
-import 'package:restro_app/Modules/Dashboard/view/UpdateAddrsss.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/CurrentMapfetch.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/UpdateAddrsss.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 
 class AddressSelector extends StatelessWidget {
-  final double heightFactor; // 0.5 = half sheet, 1 = full screen
+  final double heightFactor;
+  final bool selectionOnly;
 
-  const AddressSelector({super.key, this.heightFactor = 1});
+  const AddressSelector({
+    super.key,
+    this.heightFactor = 1,
+    this.selectionOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final CartController cartCtrl = Get.find<CartController>();
     final Authcontroller addressCtrl = Get.find<Authcontroller>();
 
-    // 🔥 Bottom sheet open होते ही fresh data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       addressCtrl.fetchAddresses();
     });
 
     return Container(
-      height: 100.h * heightFactor, // responsive sizer height
+      height: 100.h * heightFactor,
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -54,13 +56,13 @@ class AddressSelector extends StatelessWidget {
           const SizedBox(height: 14),
           ListTile(
             onTap: () => Get.to(() => DeliveryLocationScreen()),
-            leading: const Icon(Icons.add, size: 26, color: Color(0xFF8B0000)),
+            leading: const Icon(Icons.add, size: 26, color: AppColors.primary),
             title: Text(
               "Add New Address",
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF8B0000),
+                color: AppColors.primary,
               ),
             ),
             trailing: const Icon(
@@ -91,9 +93,7 @@ class AddressSelector extends StatelessWidget {
 
               if (addressCtrl.addressList.isEmpty) {
                 return RefreshIndicator(
-                  onRefresh: () async {
-                    await addressCtrl.fetchAddresses();
-                  },
+                  onRefresh: () async => addressCtrl.fetchAddresses(),
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: const [
@@ -105,9 +105,7 @@ class AddressSelector extends StatelessWidget {
               }
 
               return RefreshIndicator(
-                onRefresh: () async {
-                  await addressCtrl.fetchAddresses();
-                },
+                onRefresh: () async => addressCtrl.fetchAddresses(),
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: addressCtrl.addressList.length,
@@ -124,10 +122,23 @@ class AddressSelector extends StatelessWidget {
                           final id = adr.id ?? "";
                           if (id.isEmpty) return;
 
-                          // 🔥 OPEN UPDATEADDRSSS
-                          Get.to(() => Updateaddrsss(addressId: id));
-                        },
+                          if (selectionOnly) {
+                            final fullAddress =
+                                "${adr.street}, ${adr.landmark}, ${adr.area}, ${adr.city}, ${adr.state}, ${adr.zipCode}";
 
+                            cartCtrl.selectedAddressId.value = id;
+                            cartCtrl.selectedAddress.value = fullAddress;
+                            await SharedPre.saveSelectedAddressId(id);
+
+                            final success = await cartCtrl
+                                .selectAddressAndUpdateBill(id);
+                            if (success) {
+                              Get.back();
+                            }
+                          } else {
+                            Get.to(() => Updateaddrsss(addressId: id));
+                          }
+                        },
                         leading: Icon(
                           adr.label == "Home"
                               ? Icons.home_outlined
@@ -137,7 +148,6 @@ class AddressSelector extends StatelessWidget {
                           size: 26,
                           color: const Color(0xFF555555),
                         ),
-
                         title: Row(
                           children: [
                             Text(
@@ -148,8 +158,8 @@ class AddressSelector extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            if (cartCtrl.selectedAddress.value ==
-                                "${adr.street}, ${adr.area}, ${adr.city}")
+                            if (cartCtrl.selectedAddressId.value ==
+                                (adr.id ?? ""))
                               const Text(
                                 "Selected",
                                 style: TextStyle(
@@ -160,7 +170,6 @@ class AddressSelector extends StatelessWidget {
                               ),
                           ],
                         ),
-
                         subtitle: Text(
                           "${adr.street}, ${adr.landmark}, ${adr.area}, ${adr.city}, ${adr.state}, ${adr.zipCode}",
                           style: GoogleFonts.poppins(
@@ -168,12 +177,9 @@ class AddressSelector extends StatelessWidget {
                             color: Colors.black54,
                           ),
                         ),
-
-                        // 🔥 EDIT + DELETE ICONS BACK
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ✏️ EDIT
                             InkWell(
                               onTap: () {
                                 if (adr.id == null) return;
@@ -189,10 +195,7 @@ class AddressSelector extends StatelessWidget {
                                 color: Colors.blueGrey,
                               ),
                             ),
-
                             const SizedBox(width: 12),
-
-                            // 🗑 DELETE
                             InkWell(
                               onTap: () {
                                 Get.defaultDialog(
@@ -205,8 +208,7 @@ class AddressSelector extends StatelessWidget {
                                   onConfirm: () async {
                                     Get.back();
                                     await addressCtrl.deleteAddress(adr.id!);
-                                    await addressCtrl
-                                        .fetchAddresses(); // 🔄 refresh
+                                    await addressCtrl.fetchAddresses();
                                   },
                                 );
                               },
@@ -218,7 +220,6 @@ class AddressSelector extends StatelessWidget {
                             ),
                           ],
                         ),
-
                         dense: true,
                       ),
                     );

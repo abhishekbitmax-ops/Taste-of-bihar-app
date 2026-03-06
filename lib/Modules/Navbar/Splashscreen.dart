@@ -2,9 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/view/Demoscreen/Demo_one.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/Demoscreen/Demo_one.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,14 +16,15 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _controller;
 
-  late Animation<double> _logoScale;
-  late Animation<double> _logoFade;
-  late Animation<double> _logoRotate;
-  late Animation<Offset> _textSlide;
-  late Animation<double> _textFade;
-  late Animation<double> _loaderFade;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoFade;
+  late final Animation<Offset> _textSlide;
+  late final Animation<double> _textFade;
+  late final Animation<double> _loaderFade;
+  late final Animation<double> _backgroundPulse;
+  late final Animation<double> _orbFade;
 
   @override
   void initState() {
@@ -30,10 +32,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2800),
     );
 
-    _logoScale = Tween(begin: 0.6, end: 1.0).animate(
+    _logoScale = Tween(begin: 0.72, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
@@ -47,24 +49,17 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _logoRotate = Tween(begin: -0.15, end: 0.0).animate(
+    _textSlide = Tween(begin: const Offset(0, 0.35), end: Offset.zero).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
-      ),
-    );
-
-    _textSlide = Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.35, 0.7, curve: Curves.easeOut),
+        curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
       ),
     );
 
     _textFade = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.4, 0.75, curve: Curves.easeIn),
+        curve: const Interval(0.35, 0.75, curve: Curves.easeIn),
       ),
     );
 
@@ -75,10 +70,25 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _controller.forward();
+    _backgroundPulse = Tween(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+      ),
+    );
+
+    _orbFade = Tween(begin: 0.25, end: 0.6).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.15, 0.95, curve: Curves.easeInOut),
+      ),
+    );
+
+    _controller.repeat(reverse: true);
 
     Timer(const Duration(seconds: 3), () async {
       final token = await SharedPre.getAccessToken();
+      if (!mounted) return;
 
       if (token.isNotEmpty) {
         Get.offAll(() => BottomNavBar());
@@ -97,106 +107,164 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF7A0000), Color(0xFFB00000)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // LOGO
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (_, __) {
-                return Transform.rotate(
-                  angle: _logoRotate.value,
-                  child: ScaleTransition(
-                    scale: _logoScale,
-                    child: FadeTransition(
-                      opacity: _logoFade,
-                      child: Container(
-                        height: 150,
-                        width: 150,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 28,
-                              offset: const Offset(0, 12),
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (_, __) {
+          return Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFB84E00),
+                  AppColors.primary,
+                  Color(0xFFFFA84D),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -90,
+                  right: -70,
+                  child: Opacity(
+                    opacity: _orbFade.value,
+                    child: Transform.scale(
+                      scale: _backgroundPulse.value,
+                      child: _buildGlowOrb(230, Colors.white.withOpacity(0.14)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -110,
+                  left: -70,
+                  child: Opacity(
+                    opacity: _orbFade.value * 0.85,
+                    child: Transform.scale(
+                      scale: 2 - _backgroundPulse.value,
+                      child: _buildGlowOrb(260, Colors.black.withOpacity(0.08)),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ScaleTransition(
+                            scale: _logoScale,
+                            child: FadeTransition(
+                              opacity: _logoFade,
+                              child: Container(
+                                height: 180,
+                                width: 180,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.12),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.32),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 35,
+                                      offset: const Offset(0, 16),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(14),
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/tob_logo.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: ClipOval(
-                          child: Image.asset(
-                            "assets/images/applogo.png",
-                            fit: BoxFit.cover,
                           ),
-                        ),
+                          const SizedBox(height: 34),
+                          SlideTransition(
+                            position: _textSlide,
+                            child: FadeTransition(
+                              opacity: _textFade,
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Taste of Bihar',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 31,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Bihar ka asli swaad',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white.withOpacity(0.9),
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 46),
+                          FadeTransition(
+                            opacity: _loaderFade,
+                            child: Container(
+                              height: 38,
+                              width: 38,
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.16),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.24),
+                                ),
+                              ),
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 34),
-
-            // TITLE & TAGLINE
-            SlideTransition(
-              position: _textSlide,
-              child: FadeTransition(
-                opacity: _textFade,
-                child: Column(
-                  children: [
-                    Text(
-                      "Swaad of Grandmaa",
-                      style: GoogleFonts.poppins(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Ghar jaisa swaad",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white70,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
                 ),
-              ),
+              ],
             ),
-
-            const SizedBox(height: 42),
-
-            // LOADER
-            FadeTransition(
-              opacity: _loaderFade,
-              child: const SizedBox(
-                height: 26,
-                width: 26,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildGlowOrb(double size, Color color) {
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }

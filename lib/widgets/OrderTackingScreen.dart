@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/widgets/Googlemapbottomsheet.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/widgets/Googlemapbottomsheet.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -122,26 +122,44 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return SizedBox(
       width: double.infinity,
       height: 48,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          Get.bottomSheet(
-            LiveTrackingBottomSheet(),
-            isScrollControlled: true,
-            backgroundColor: Colors.white,
-          );
-        },
-        icon: const Icon(Icons.location_on, color: Colors.white),
-        label: Text(
-          "Track Order Live",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primary, Color(0xFFC7640B)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF8B0000),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Get.bottomSheet(
+              LiveTrackingBottomSheet(),
+              isScrollControlled: true,
+              backgroundColor: Colors.white,
+            );
+          },
+          icon: const Icon(Icons.location_on, color: Colors.white),
+          label: Text(
+            "Track Order Live",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         ),
       ),
@@ -151,23 +169,24 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF4EFE6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         automaticallyImplyLeading: false, // 🔥 removes back button
+        toolbarHeight: 68,
         title: Text(
           "Track Order",
           style: GoogleFonts.poppins(
-            color: const Color(0xFF8B0000),
-            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
           ),
         ),
         actions: [
           IconButton(
             icon: const Icon(
               Icons.home_outlined,
-              color: Color(0xFF8B0000),
+              color: Colors.white,
               size: 26,
             ),
             onPressed: () {
@@ -179,124 +198,133 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ],
       ),
 
-      body: RefreshIndicator(
-        color: const Color(0xFF8B0000),
-        onRefresh: () async {
-          await ctrl.fetchOrderTracking(widget.orderId);
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFFFFCF8), Color(0xFFF4EFE6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            await ctrl.fetchOrderTracking(widget.orderId);
 
-          // 🔥 IF ORDER IS CANCELLED → FETCH REFUND AGAIN
-          if (ctrl.order.value?.status == "CANCELLED") {
-            await ctrl.fetchRefund(widget.orderId);
-          }
-        },
-        child: Obx(() {
-          if (ctrl.isLoading.value) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8B0000)),
-            );
-          }
+            // 🔥 IF ORDER IS CANCELLED → FETCH REFUND AGAIN
+            if (ctrl.order.value?.status == "CANCELLED") {
+              await ctrl.fetchRefund(widget.orderId);
+            }
+          },
+          child: Obx(() {
+            if (ctrl.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
 
-          final order = ctrl.order.value;
-          if (order == null) {
-            return const Center(
-              child: Text(
-                "Fetching order details...",
-                style: TextStyle(color: Colors.black54),
-              ),
-            );
-          }
+            final order = ctrl.order.value;
+            if (order == null) {
+              return Center(
+                child: Text(
+                  "Fetching order details...",
+                  style: GoogleFonts.poppins(color: Colors.black54),
+                ),
+              );
+            }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              /// 🔴 CANCELLED BANNER
-              if (order.status == "CANCELLED") ...[
-                if (_isOnlinePayment(order)) ...[
-                  /// ✅ ONLINE → SHOW REFUND DETAILS
-                  Obx(() {
-                    final refund = ctrl.refund.value;
-                    if (refund == null) return const SizedBox();
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                /// 🔴 CANCELLED BANNER
+                if (order.status == "CANCELLED") ...[
+                  if (_isOnlinePayment(order)) ...[
+                    /// ✅ ONLINE → SHOW REFUND DETAILS
+                    Obx(() {
+                      final refund = ctrl.refund.value;
+                      if (refund == null) return const SizedBox();
 
-                    return _card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Refund Details",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                              color: Colors.green.shade700,
+                      return _card(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Refund Details",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Colors.green.shade700,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          _refundRow("Refund ID", getRefundIdText()),
-                          _refundRow("Refund Status", refund.refundStatus),
-                          _refundRow(
-                            "Amount Refunded",
-                            "₹${refund.totalRefunded ?? 0}",
-                          ),
-                          _refundRow(
-                            "Refund Request",
-                            refund.refundRequest?.status,
+                            const SizedBox(height: 10),
+                            _refundRow("Refund ID", getRefundIdText()),
+                            _refundRow("Refund Status", refund.refundStatus),
+                            _refundRow(
+                              "Amount Refunded",
+                              "₹${refund.totalRefunded ?? 0}",
+                            ),
+                            _refundRow(
+                              "Refund Request",
+                              refund.refundRequest?.status,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ] else ...[
+                    /// ✅ COD → SHOW SIMPLE MESSAGE ONLY
+                    _card(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.orange),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "This was a Cash on Delivery order.\nNo online refund is applicable.",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    );
-                  }),
-                ] else ...[
-                  /// ✅ COD → SHOW SIMPLE MESSAGE ONLY
-                  _card(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.orange),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            "This was a Cash on Delivery order.\nNo online refund is applicable.",
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+                  ],
+                  const SizedBox(height: 16),
                 ],
+
+                if (_canCancel(order.status)) ...[
+                  _cancelOrderButton(order),
+                  const SizedBox(height: 16),
+                ],
+
+                _orderSummary(order),
                 const SizedBox(height: 16),
+
+                if (order.effectiveOtp?.isNotEmpty == true) ...[
+                  _otpCard(order),
+                  const SizedBox(height: 16),
+                  _trackOrderButton(order),
+                  const SizedBox(height: 16),
+                ],
+
+                if (order.delivery?.partner != null) ...[
+                  _deliveryPartner(order),
+                  const SizedBox(height: 16),
+                ],
+
+                _estimatedDelivery(order),
+                const SizedBox(height: 20),
+
+                _timeline(order.status),
+                const SizedBox(height: 16),
+
+                _lastUpdated(order.createdAt),
               ],
-
-              if (_canCancel(order.status)) ...[
-                _cancelOrderButton(order),
-                const SizedBox(height: 16),
-              ],
-
-              _orderSummary(order),
-              const SizedBox(height: 16),
-
-              if (order.effectiveOtp?.isNotEmpty == true) ...[
-                _otpCard(order),
-                const SizedBox(height: 16),
-                _trackOrderButton(order),
-                const SizedBox(height: 16),
-              ],
-
-              if (order.delivery?.partner != null) ...[
-                _deliveryPartner(order),
-                const SizedBox(height: 16),
-              ],
-
-              _estimatedDelivery(order),
-              const SizedBox(height: 20),
-
-              _timeline(order.status),
-              const SizedBox(height: 16),
-
-              _lastUpdated(order.createdAt),
-            ],
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -307,9 +335,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.08), // 🔥 soft red
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.red.withOpacity(0.35), width: 1.2),
+          gradient: LinearGradient(
+            colors: [Colors.red.shade50, Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withOpacity(0.3), width: 1.1),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
@@ -455,7 +487,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF8B0000),
+                  color: AppColors.primary,
                 ),
               ),
               _statusChip(order.status),
@@ -481,7 +513,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         children: [
           const CircleAvatar(
             radius: 22,
-            backgroundColor: Color(0xFF8B0000),
+            backgroundColor: AppColors.primary,
             child: Icon(Icons.delivery_dining, color: Colors.white),
           ),
           const SizedBox(width: 12),
@@ -602,14 +634,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF8B0000).withOpacity(0.12),
+          gradient: LinearGradient(
+            colors: [AppColors.primary.withOpacity(0.12), Colors.white],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
           borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
         child: Text(
           status ?? "",
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF8B0000),
+            color: AppColors.primary,
           ),
         ),
       ),
@@ -726,7 +763,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             "Order Timeline",
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF8B0000),
+              color: AppColors.primary,
               fontSize: 14,
             ),
           ),
@@ -750,8 +787,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     Column(
                       children: [
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: isActive ? 11 : 9,
+                          height: isActive ? 11 : 9,
                           decoration: BoxDecoration(
                             color: dotColor,
                             shape: BoxShape.circle,
@@ -828,11 +865,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
           ),
         ],
       ),

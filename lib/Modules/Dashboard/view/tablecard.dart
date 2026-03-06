@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Dashboard/view/tablecarddetalis.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/tablecarddetalis.dart';
 
 class PreBookMenuScreen extends StatelessWidget {
   const PreBookMenuScreen({super.key});
@@ -10,9 +11,9 @@ class PreBookMenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B0000),
+        backgroundColor: AppColors.primary,
         title: Text(
           "Pre-Book Table",
           style: GoogleFonts.poppins(
@@ -31,7 +32,7 @@ class PreBookMenuScreen extends StatelessWidget {
               image: "assets/images/delas.png", // Replace with your asset
               tag: "PRE-BOOK TABLE",
               offer: "Flat 25% OFF + 3 more",
-              name: "Swaad of Grandma",
+              name: "Taste of Bihar",
               location: "Sector 43, Noida",
               distance: "9.8 km",
               cuisine: "Chinese • Thai",
@@ -226,3 +227,4 @@ class PreBookMenuScreen extends StatelessWidget {
     );
   }
 }
+

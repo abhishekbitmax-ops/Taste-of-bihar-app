@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:restro_app/Modules/Dashboard/view/Reviewbookingtable.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/Reviewbookingtable.dart';
 
 class TableBookingFormScreen extends StatefulWidget {
   const TableBookingFormScreen({super.key});
@@ -43,7 +44,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -65,7 +66,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                             backgroundColor: Colors.white,
                             child: Icon(
                               Icons.arrow_back,
-                              color: Color(0xFF8B0000),
+                              color: AppColors.primary,
                               size: 22,
                             ),
                           ),
@@ -80,14 +81,14 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF8B0000),
+                                color: AppColors.primary,
                               ),
                             ),
                             Text(
-                              "Swaad of Grandma, Sector 43, Noida",
+                              "Taste of Bihar, Sector 43, Noida",
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
-                                color: Color(0xFF8B0000),
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -151,7 +152,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                         "Select date",
                         style: GoogleFonts.poppins(
                           fontSize: 15,
-                          color: Color(0xFF8B0000),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -236,7 +237,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF8B0000),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),
@@ -251,7 +252,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                         "Select time of day",
                         style: GoogleFonts.poppins(
                           fontSize: 15,
-                          color: Color(0xFF8B0000),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -340,7 +341,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B0000),
+                  backgroundColor: AppColors.primary,
                   padding: EdgeInsets.symmetric(vertical: 2.h),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
@@ -395,3 +396,4 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
     );
   }
 }
+

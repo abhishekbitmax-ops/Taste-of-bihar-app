@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/widgets/Addtocartbottom.dart';
-import 'package:restro_app/widgets/Viewcartbar.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/CartScreen.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
+import 'package:taste_of_bihar/widgets/Addtocartbottom.dart';
+import 'package:taste_of_bihar/widgets/Viewcartbar.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -14,7 +16,7 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  String foodFilter = "all"; // all, veg, nonveg
+  String foodFilter = "all";
   String selectedCategory = "";
   String selectedCategoryId = "";
 
@@ -36,15 +38,19 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: ZomatoCartBar(),
-
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B0000),
-        title: const Text("Our Menu", style: TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.primary,
+        title: Text(
+          "Our Menu",
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
-          // 🛒 CART ICON
           InkWell(
             onTap: () {
-              Get.to(() => CartScreen()); // 🔥 OPEN CART
+              Get.to(() => CartScreen());
             },
             child: Stack(
               children: [
@@ -56,15 +62,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     size: 24,
                   ),
                 ),
-
-                // 🔴 CART COUNT BADGE
                 Positioned(
                   right: 2,
                   top: 2,
                   child: Obx(() {
                     final cartCtrl = Get.find<CartController>();
                     final count = cartCtrl.cartItems.length;
-
                     if (count == 0) return const SizedBox();
 
                     return CircleAvatar(
@@ -84,49 +87,41 @@ class _MenuScreenState extends State<MenuScreen> {
               ],
             ),
           ),
-
           const SizedBox(width: 14),
-
-          // 🔍 SEARCH ICON
           const Icon(Icons.search, color: Colors.white),
-
           const SizedBox(width: 12),
         ],
       ),
-
       body: SafeArea(
         child: Row(
           children: [
-            // LEFT CATEGORY MENU
             Container(
-              width: 110,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFFFEBEE), // very light red (top)
-                    Color(0xFFFFFFFF), // white (bottom)
-                  ],
-                ),
+              width: 112,
+              margin: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Obx(() {
                 return ListView.builder(
-                  itemCount: authCtrl
-                      .categories
-                      .length, // ✔ all categories show (even duplicate names)
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: authCtrl.categories.length,
                   itemBuilder: (context, index) {
                     final cat = authCtrl.categories[index];
-                    bool isSelected =
-                        selectedCategoryId ==
-                        cat.id; // ✔ only 1 selected at a time
+                    final bool isSelected = selectedCategoryId == cat.id;
 
                     return InkWell(
                       onTap: () {
                         setState(() {
                           selectedCategory = cat.name ?? "";
-                          selectedCategoryId =
-                              cat.id ?? ""; // ✔ unique ID store
+                          selectedCategoryId = cat.id ?? "";
                         });
                         authCtrl.fetchCategoryItems(selectedCategoryId);
                       },
@@ -137,25 +132,22 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-
+                          borderRadius: BorderRadius.circular(14),
                           gradient: isSelected
                               ? const LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    Color(0xFFC7640B),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFFD32F2F), // red
-                                    Color(0xFFFF7043), // orange
-                                  ],
                                 )
                               : null,
-
-                          color: isSelected ? null : Colors.white,
-
+                          color: isSelected ? null : const Color(0xFFFAF7F2),
                           border: Border.all(
                             color: isSelected
                                 ? Colors.transparent
-                                : Colors.grey.shade300,
+                                : const Color(0xFFE7DDCF),
                             width: 1,
                           ),
                         ),
@@ -185,7 +177,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: GoogleFonts.poppins(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected
@@ -201,15 +193,23 @@ class _MenuScreenState extends State<MenuScreen> {
                 );
               }),
             ),
-
-            // RIGHT PRODUCT LIST + FILTER BUTTONS
             Expanded(
               child: Container(
+                margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                 padding: const EdgeInsets.all(10),
-                color: Colors.white,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
-                    // FILTER BUTTONS
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Row(
@@ -220,8 +220,6 @@ class _MenuScreenState extends State<MenuScreen> {
                         ],
                       ),
                     ),
-
-                    // PRODUCT LIST FROM API
                     Expanded(
                       child: Obx(() {
                         if (authCtrl.isLoading.value) {
@@ -243,11 +241,12 @@ class _MenuScreenState extends State<MenuScreen> {
                               .toList()
                               .obs;
                         }
+
                         if (itemList.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
                               "No item available",
-                              style: TextStyle(
+                              style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.black54,
@@ -260,49 +259,92 @@ class _MenuScreenState extends State<MenuScreen> {
                           itemCount: itemList.length,
                           itemBuilder: (_, index) {
                             final item = itemList[index];
-
                             final String imageUrl =
                                 (item.image != null && item.image!.isNotEmpty)
                                 ? item.image!
                                 : "";
 
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 16),
+                              margin: const EdgeInsets.only(bottom: 14),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
                                 color: Colors.white,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
+                                    color: Colors.black.withOpacity(0.08),
                                     blurRadius: 12,
                                     offset: const Offset(0, 6),
                                   ),
                                 ],
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(
+                                  color: const Color(0xFFE7DCCB),
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  /// IMAGE
-                                  ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(20),
-                                    ),
-                                    child: imageUrl.isNotEmpty
-                                        ? Image.network(
-                                            imageUrl,
-                                            height: 150,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Image.asset(
-                                            "assets/images/popular.png",
-                                            height: 150,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
+                                  Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(20),
+                                            ),
+                                        child: imageUrl.isNotEmpty
+                                            ? Image.network(
+                                                imageUrl,
+                                                height: 150,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Image.asset(
+                                                "assets/images/popular.png",
+                                                height: 150,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              ),
+                                      ),
+                                      Positioned(
+                                        top: 10,
+                                        left: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
                                           ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(
+                                              0.95,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.circle,
+                                                size: 9,
+                                                color: item.isVeg == true
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                item.isVeg == true
+                                                    ? "Veg"
+                                                    : "Non-Veg",
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-
                                   Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
@@ -313,34 +355,30 @@ class _MenuScreenState extends State<MenuScreen> {
                                           item.name ?? "",
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 15,
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
-
                                         const SizedBox(height: 4),
-
                                         Text(
                                           item.description ?? "",
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 12,
                                             color: Colors.black54,
                                           ),
                                         ),
-
                                         const SizedBox(height: 10),
-
                                         Row(
                                           children: [
                                             Text(
-                                              "₹${item.basePrice ?? 0}",
-                                              style: const TextStyle(
+                                              "\u20B9${item.basePrice ?? 0}",
+                                              style: GoogleFonts.poppins(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
-                                                color: Color(0xFF8B0000),
+                                                color: AppColors.primary,
                                               ),
                                             ),
                                             const Spacer(),
@@ -374,14 +412,14 @@ class _MenuScreenState extends State<MenuScreen> {
                                                   gradient:
                                                       const LinearGradient(
                                                         colors: [
-                                                          Color(0xFF8B0000),
-                                                          Color(0xFFB71C1C),
+                                                          AppColors.primary,
+                                                          Color(0xFFC7640B),
                                                         ],
                                                       ),
                                                 ),
-                                                child: const Text(
+                                                child: Text(
                                                   "ADD +",
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.poppins(
                                                     color: Colors.white,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 13,
@@ -412,7 +450,7 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _filterButton(String label, String value) {
-    bool isActive = foodFilter == value;
+    final bool isActive = foodFilter == value;
 
     return Expanded(
       child: InkWell(
@@ -423,7 +461,7 @@ class _MenuScreenState extends State<MenuScreen> {
             borderRadius: BorderRadius.circular(30),
             gradient: isActive
                 ? const LinearGradient(
-                    colors: [Color(0xFF8B0000), Color(0xFFB71C1C)],
+                    colors: [AppColors.primary, Color(0xFFC7640B)],
                   )
                 : null,
             color: isActive ? null : Colors.grey.shade200,
@@ -439,7 +477,7 @@ class _MenuScreenState extends State<MenuScreen> {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: isActive ? Colors.white : Colors.black87,

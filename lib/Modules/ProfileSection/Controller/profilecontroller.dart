@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
-import 'package:restro_app/utils/api_endpoints.dart';
+
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/Modules/ProfileSection/view/profilemodel.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/utils/api_endpoints.dart';
 
 class ProfileController extends GetxController {
   var isLoading = false.obs;

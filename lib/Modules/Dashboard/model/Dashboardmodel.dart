@@ -415,8 +415,7 @@ class AddressData {
   }
 }
 
-
-//order history 
+//order history
 
 class OrderHistoryResponse {
   final bool? success;
@@ -646,22 +645,14 @@ class Timeline {
   }
 }
 
-
-
-
 // Banner section ----------model ------
-
 
 class BannerResponse {
   final bool? success;
   final String? message;
   final List<BannerItem>? data;
 
-  BannerResponse({
-    this.success,
-    this.message,
-    this.data,
-  });
+  BannerResponse({this.success, this.message, this.data});
 
   factory BannerResponse.fromJson(Map<String, dynamic> json) {
     return BannerResponse(

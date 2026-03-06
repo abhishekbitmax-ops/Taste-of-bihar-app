@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:restro_app/Modules/Dashboard/view/Booktableschedul.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/Booktableschedul.dart';
 
 class RestaurantDetailScreen extends StatelessWidget {
   const RestaurantDetailScreen({super.key});
@@ -40,16 +41,16 @@ class RestaurantDetailScreen extends StatelessWidget {
           alignment: Alignment.center,
           padding: EdgeInsets.symmetric(vertical: 1.4.h),
           decoration: BoxDecoration(
-            color: filled ? Color(0xFF8B0000) : Colors.white,
+            color: filled ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFF8B0000), width: 1.5),
+            border: Border.all(color: AppColors.primary, width: 1.5),
           ),
           child: Text(
             text,
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: filled ? Colors.white : Color(0xFF8B0000),
+              color: filled ? Colors.white : AppColors.primary,
             ),
           ),
         ),
@@ -61,7 +62,7 @@ class RestaurantDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveSizer(
       builder: (_, __, ___) => Scaffold(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: Colors.transparent,
         body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +145,7 @@ class RestaurantDetailScreen extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
                 child: Text(
-                  "Swaad of Grandma's",
+                  "Taste of Bihar",
                   style: GoogleFonts.poppins(
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
@@ -248,7 +249,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                                       InkWell(
                                         onTap: () => Get.back(),
                                         child: const CircleAvatar(
-                                          backgroundColor: Color(0xFF8B0000),
+                                          backgroundColor: AppColors.primary,
                                           child: Icon(
                                             Icons.close,
                                             color: Colors.white,
@@ -315,9 +316,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                                     height: 55,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(
-                                          0xFF8B0000,
-                                        ),
+                                        backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
                                       ),
                                       onPressed: () {
@@ -421,3 +420,4 @@ class RestaurantDetailScreen extends StatelessWidget {
     );
   }
 }
+

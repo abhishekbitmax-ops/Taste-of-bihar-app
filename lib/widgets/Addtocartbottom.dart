@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 
 void openProductBottomSheet(BuildContext context, Map<String, String> product) {
   int qty = 1;
@@ -34,7 +35,6 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // ===== TOP HANDLE =====
-                        
                         Center(
                           child: Container(
                             width: 40,
@@ -122,7 +122,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF8B0000),
+                            color: AppColors.primary,
                           ),
                         ),
 
@@ -151,7 +151,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                   child: const Icon(
                                     Icons.remove_circle_outline,
                                     size: 26,
-                                    color: Color(0xFF8B0000),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -168,7 +168,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                   child: const Icon(
                                     Icons.add_circle_outline,
                                     size: 26,
-                                    color: Color(0xFF8B0000),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ],
@@ -207,7 +207,7 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                       Navigator.pop(context);
                                     },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8B0000),
+                                backgroundColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),

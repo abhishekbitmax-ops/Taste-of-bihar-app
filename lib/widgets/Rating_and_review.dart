@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 
 class RatingDialog extends StatefulWidget {
   const RatingDialog({

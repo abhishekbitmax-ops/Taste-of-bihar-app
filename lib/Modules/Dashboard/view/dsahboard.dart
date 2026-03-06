@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
-import 'package:restro_app/Modules/Dashboard/view/Notification.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/widgets/Addtocartbottom.dart';
-import 'package:restro_app/widgets/Viewcartbar.dart';
+
 import 'package:shimmer/shimmer.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/CartScreen.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/Notification.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
+import 'package:taste_of_bihar/widgets/Addtocartbottom.dart';
+import 'package:taste_of_bihar/widgets/Viewcartbar.dart';
 
 class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
@@ -27,7 +30,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   RxString address = "Fetching location...".obs;
 
   final List<List<Color>> categoryGradients = [
-    [Color(0xFF8B0000), Color(0xFF1E88E5)], // Maroon → Blue
+    [AppColors.primary, Color(0xFF1E88E5)], // Maroon → Blue
     [Color(0xFF2E7D32), Color(0xFF66BB6A)], // Green
     [Color(0xFFF57C00), Color(0xFFFFB74D)], // Orange
     [Color(0xFF6A1B9A), Color(0xFFAB47BC)], // Purple
@@ -120,10 +123,19 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    );
+
     return Scaffold(
       bottomNavigationBar: ZomatoCartBar(),
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
+        top: false,
         child: RefreshIndicator(
           onRefresh: authCtrl.refreshHome,
           child: SingleChildScrollView(
@@ -131,94 +143,79 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // APP BAR WITH CURRENT LOCATION
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                // HEADER
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    MediaQuery.of(context).padding.top + 14,
+                    24,
+                    24,
+                  ),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xFF1D2237), AppColors.primary],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(36),
+                      bottomRight: Radius.circular(36),
+                    ),
                   ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.location_on, color: Color(0xFF8B0000)),
-                      const SizedBox(width: 6),
-
                       Expanded(
-                        child: Obx(
-                          () => Text(
-                            address.value,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: true,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                          ),
-                        ),
-                      ),
-
-                      // 🛒 CART ICON (NEW)
-                      InkWell(
-                        onTap: () {
-                          Get.to(() => CartScreen()); //  OPEN CART
-                        },
-                        child: Stack(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.shopping_cart_outlined,
-                                size: 26,
-                                color: Color(0xFF8B0000),
+                            Text(
+                              "Taste of Bihar",
+                              style: GoogleFonts.poppins(
+                                fontSize: 29,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-
-                            // 🔴 CART COUNT BADGE
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Obx(() {
-                                final cartCtrl = Get.find<CartController>();
-                                final count = cartCtrl.cartItems.length;
-
-                                if (count == 0) return const SizedBox();
-
-                                return CircleAvatar(
-                                  radius: 8,
-                                  backgroundColor: Colors.red,
-                                  child: Text(
-                                    "$count",
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                );
-                              }),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Fresh food made with love",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.5,
+                                color: Colors.white.withOpacity(0.88),
+                              ),
                             ),
                           ],
                         ),
                       ),
-
                       const SizedBox(width: 10),
-
-                      // 🔔 NOTIFICATION ICON WITH COUNT
                       InkWell(
                         onTap: () => Get.to(() => NotificationScreen()),
+                        borderRadius: BorderRadius.circular(18),
                         child: Obx(() {
                           final count = popularCtrl.unreadCount;
-
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              const Icon(Icons.notifications_none, size: 26),
-
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.notifications_none,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
                               if (count > 0)
                                 Positioned(
-                                  right: -4,
-                                  top: -4,
+                                  right: -5,
+                                  top: -5,
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
+                                    decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,
                                     ),
@@ -232,6 +229,58 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        }),
+                      ),
+                      const SizedBox(width: 10),
+                      InkWell(
+                        onTap: () => Get.to(() => CartScreen()),
+                        borderRadius: BorderRadius.circular(18),
+                        child: Obx(() {
+                          final cartCtrl = Get.find<CartController>();
+                          final count = cartCtrl.cartItems.length;
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.shopping_cart_outlined,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              if (count > 0)
+                                Positioned(
+                                  right: -5,
+                                  top: -5,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "$count",
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -999,7 +1048,9 @@ Widget popularDishFullCard({
                       ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF8B0000), Color(0xFFB11212)],
+                          colors: [AppColors.primary, Color(0xFFC7640B)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -1047,7 +1098,7 @@ Widget popularDishFullCard({
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF8B0000),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],

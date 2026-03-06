@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/widgets/OrderTackingScreen.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
+import 'package:taste_of_bihar/widgets/OrderTackingScreen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -28,83 +29,115 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: AppColors.bgEnd,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         title: Text(
           "My Orders",
           style: GoogleFonts.poppins(
-            color: const Color(0xFF8B0000),
+            color: AppColors.softLight,
             fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF8B0000)),
+        iconTheme: const IconThemeData(color: AppColors.softLight),
       ),
-      body: Obx(() {
-        if (ctrl.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF8B0000)),
-          );
-        }
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.bgStart, AppColors.bgMid, AppColors.bgEnd],
+          ),
+        ),
+        child: Obx(() {
+          if (ctrl.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            );
+          }
 
-        if (ctrl.orders.isEmpty) {
-          return _emptyOrderView();
-        }
+          if (ctrl.orders.isEmpty) {
+            return _emptyOrderView();
+          }
 
-        /// 🔥 SORT ALL ORDERS (LATEST FIRST - BY CREATED DATE)
-        final sortedOrders = [...ctrl.orders];
-        sortedOrders.sort((a, b) {
-          final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
-          final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
-          return db.compareTo(da); // Latest first
-        });
+          final sortedOrders = [...ctrl.orders];
+          sortedOrders.sort((a, b) {
+            final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
+            final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
+            return db.compareTo(da);
+          });
 
-        /// 🔥 FIND LATEST ORDER (MOST RECENT BY DATE, REGARDLESS OF STATUS)
-        final latestOrder = sortedOrders.isNotEmpty ? sortedOrders.first : null;
+          final latestOrder = sortedOrders.isNotEmpty
+              ? sortedOrders.first
+              : null;
+          final historyOrders = sortedOrders
+              .where((o) => o.orderId != latestOrder?.orderId)
+              .toList();
 
-        return RefreshIndicator(
-          color: const Color(0xFF8B0000),
-          onRefresh: () async {
-            await ctrl.fetchOrderHistory();
-          },
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              /// 🔥 LATEST ORDER
-              if (latestOrder != null) ...[
-                Text(
-                  "Latest Order",
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF8B0000),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                InkWell(
-                  onTap: () {
-                    Get.to(
-                      () => OrderTrackingScreen(orderId: latestOrder!.orderId!),
-                    );
-                  },
-                  child: _OrderHistoryCard(
-                    latestOrder!,
-                    isLatest: activeStatuses.contains(
-                      (latestOrder!.status ?? "").toUpperCase(),
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              await ctrl.fetchOrderHistory();
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (latestOrder != null) ...[
+                  Text(
+                    "Latest Order",
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.gold,
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 24),
-              ],
-
-              /// 🔥 ORDER HISTORY
-              ...sortedOrders
-                  .where((o) => o.orderId != latestOrder?.orderId)
-                  .map(
-                    (order) => InkWell(
+                  const SizedBox(height: 12),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Get.to(
+                        () =>
+                            OrderTrackingScreen(orderId: latestOrder.orderId!),
+                      );
+                    },
+                    child: _OrderHistoryCard(
+                      latestOrder,
+                      isLatest: activeStatuses.contains(
+                        (latestOrder.status ?? "").toUpperCase(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Order History",
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.gold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                ...List.generate(historyOrders.length, (index) {
+                  final order = historyOrders[index];
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.95, end: 1),
+                    duration: Duration(milliseconds: 280 + (index * 60)),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, (1 - value) * 24),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
                       onTap: () {
                         Get.to(
                           () => OrderTrackingScreen(orderId: order.orderId!),
@@ -112,18 +145,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       },
                       child: _OrderHistoryCard(order),
                     ),
-                  ),
-            ],
-          ),
-        );
-      }),
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-/// ─────────────────────────────────────────────
-/// ORDER CARD
-/// ─────────────────────────────────────────────
 class _OrderHistoryCard extends StatelessWidget {
   final OrderData order;
   final bool isLatest;
@@ -132,34 +164,43 @@ class _OrderHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final address = order.deliveryAddress;
     final status = (order.status ?? "").toUpperCase();
+    final restaurantName = order.restaurant?.name ?? "Taste of Bihar";
+    final orderItems =
+        order.items?.map((e) => "${e.name} x${e.quantity}").join(", ") ?? "";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF5F5), Color(0xFFFFFFFF)],
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [
+            AppColors.cardDark.withOpacity(0.95),
+            AppColors.bgStart.withOpacity(0.95),
+          ],
         ),
-        border: Border.all(color: const Color(0xFF8B0000).withOpacity(0.18)),
+        border: Border.all(color: AppColors.gold.withOpacity(0.35)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.22),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         children: [
           Container(
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFF8B0000),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            height: 5,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.gold, AppColors.primary],
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
             ),
           ),
           Padding(
@@ -167,21 +208,21 @@ class _OrderHistoryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// RESTAURANT + STATUS
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
-                        order.restaurant?.name ?? "",
+                        restaurantName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          color: AppColors.softLight,
                         ),
                       ),
                     ),
-
                     if (isLatest && status != "DELIVERED") ...[
                       const SizedBox(width: 6),
                       Container(
@@ -190,7 +231,7 @@ class _OrderHistoryCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.15),
+                          color: Colors.green.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -198,83 +239,97 @@ class _OrderHistoryCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                            color: Colors.greenAccent.shade100,
                           ),
                         ),
                       ),
                     ],
-
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: 10,
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B0000).withOpacity(0.12),
+                        color: AppColors.primary.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         order.status ?? "",
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8B0000),
+                          color: AppColors.softLight,
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 6),
-                Text(
-                  "Order ID: ${order.orderId ?? ""}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-
                 const SizedBox(height: 8),
                 Text(
-                  order.items
-                          ?.map((e) => "${e.name} x${e.quantity}")
-                          .join(", ") ??
-                      "",
+                  "Order ID: ${order.orderId ?? "-"}",
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppColors.softLight.withOpacity(0.72),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  orderItems,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: AppColors.softLight.withOpacity(0.9),
+                  ),
                 ),
-
-                const SizedBox(height: 10),
-                Divider(color: Colors.grey.shade300),
-
+                const SizedBox(height: 12),
+                Divider(color: AppColors.gold.withOpacity(0.22), height: 1),
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "₹${order.price?.grandTotal ?? 0}",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8B0000),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Get.to(
-                          () => OrderTrackingScreen(orderId: order.orderId!),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B0000),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
+                    Expanded(
+                      child: Text(
+                        "Rs ${order.price?.grandTotal ?? 0}",
+                        style: GoogleFonts.poppins(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.gold,
                         ),
                       ),
-                      child: const Text(
-                        "Track Order",
-                        style: TextStyle(color: Colors.white),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFB65508), AppColors.primary],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.to(
+                            () => OrderTrackingScreen(orderId: order.orderId!),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: Text(
+                          "Track Order",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -288,30 +343,52 @@ class _OrderHistoryCard extends StatelessWidget {
   }
 }
 
-/// ─────────────────────────────────────────────
-/// EMPTY STATE
-/// ─────────────────────────────────────────────
 Widget _emptyOrderView() {
   return Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.receipt_long, size: 90, color: Color(0xFF8B0000)),
-        const SizedBox(height: 16),
-        Text(
-          "No orders yet",
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF8B0000),
-          ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+        decoration: BoxDecoration(
+          color: AppColors.cardDark.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.gold.withOpacity(0.28)),
         ),
-        const SizedBox(height: 6),
-        Text(
-          "Your past orders will appear here",
-          style: GoogleFonts.poppins(color: Colors.black54),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.receipt_long,
+                size: 48,
+                color: AppColors.gold,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              "No orders yet",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.softLight,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Your past orders will appear here",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: AppColors.softLight.withOpacity(0.72),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }

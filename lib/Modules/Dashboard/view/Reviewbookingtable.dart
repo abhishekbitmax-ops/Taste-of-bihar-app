@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -74,10 +75,10 @@ class ReviewBookingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveSizer(
       builder: (_, __, ___) => Scaffold(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           // ✅ AppBar added
-          backgroundColor: const Color(0xFF8B0000),
+          backgroundColor: AppColors.primary,
           leading: IconButton(
             // ✅ Top-left back button
             icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -109,7 +110,7 @@ class ReviewBookingScreen extends StatelessWidget {
                           width: 92.w,
                           padding: EdgeInsets.all(3.w),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B0000),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -352,7 +353,7 @@ class ReviewBookingScreen extends StatelessWidget {
                 width: 100.w,
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF8B0000),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
                 ),
                 child: Row(
@@ -430,3 +431,4 @@ class ReviewBookingScreen extends StatelessWidget {
     );
   }
 }
+

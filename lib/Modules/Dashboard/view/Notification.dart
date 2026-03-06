@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart'; // 👈 your bottom nav
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart'; // 👈 your bottom nav
 
 class NotificationScreen extends StatelessWidget {
   NotificationScreen({super.key});

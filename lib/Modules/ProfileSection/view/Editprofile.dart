@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/ProfileSection/Controller/profilecontroller.dart';
+import 'package:taste_of_bihar/Modules/ProfileSection/Controller/profilecontroller.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -18,7 +19,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B0000),
+        backgroundColor: AppColors.primary,
         title: Text(
           "Edit Profile",
           style: GoogleFonts.poppins(
@@ -49,7 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ? const Icon(
                             Icons.camera_alt,
                             size: 30,
-                            color: Color(0xFF8B0000),
+                            color: AppColors.primary,
                           )
                         : null,
                   ),
@@ -133,7 +134,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           const Icon(
                             Icons.calendar_today,
                             size: 18,
-                            color: Color(0xFF8B0000),
+                            color: AppColors.primary,
                           ),
                         ],
                       ),
@@ -167,7 +168,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ? null
                       : () => ctrl.updateProfileApi(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B0000),
+                    backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 45),
                   ),
                   child: ctrl.isLoading.value

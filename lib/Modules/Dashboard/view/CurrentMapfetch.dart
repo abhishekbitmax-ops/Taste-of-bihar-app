@@ -6,9 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/view/AddAddress.dart';
-import 'package:restro_app/Modules/Dashboard/view/UpdateAddrsss.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/AddAddress.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/UpdateAddrsss.dart';
 
 class DeliveryLocationScreen extends StatefulWidget {
   final String? editAddressId;

@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
 
 class UserBasicDetails extends StatefulWidget {
   const UserBasicDetails({super.key});
@@ -101,7 +101,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
           style: GoogleFonts.playfairDisplay(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF8B0000),
+            color: AppColors.primary,
           ),
         ),
       ),
@@ -324,7 +324,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                                       )
                                     : const Icon(
                                         Icons.my_location,
-                                        color: Color(0xFF8B0000),
+                                        color: AppColors.primary,
                                       ),
                               ),
                             ),
@@ -366,7 +366,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                                 );
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B0000),
+                          backgroundColor: AppColors.primary,
                           minimumSize: const Size(double.infinity, 56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),

@@ -4,18 +4,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
-import 'package:restro_app/Modules/Dashboard/view/Socket_service.dart';
-import 'package:restro_app/Modules/ProfileSection/view/profilemodel.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
-import 'package:restro_app/utils/api_endpoints.dart';
+
 import 'package:http/http.dart' as http;
-import 'package:restro_app/widgets/Globalnotifation.dart';
-import 'package:restro_app/widgets/OrderConfrimscreen.dart';
-import 'package:restro_app/widgets/Rating_and_review.dart';
-import 'package:restro_app/widgets/RazorpayBottompay.dart';
+
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/Socket_service.dart';
+import 'package:taste_of_bihar/Modules/ProfileSection/view/profilemodel.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/utils/api_endpoints.dart';
+import 'package:taste_of_bihar/widgets/Globalnotifation.dart';
+import 'package:taste_of_bihar/widgets/OrderConfrimscreen.dart';
+import 'package:taste_of_bihar/widgets/Rating_and_review.dart';
+import 'package:taste_of_bihar/widgets/RazorpayBottompay.dart';
 
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
@@ -306,7 +308,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-          "https://sog.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
+        "https://resto-grandma.onrender.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -694,7 +696,7 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/track";
+      final url = "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/track";
 
       final response = await http.get(
         Uri.parse(url),
@@ -1141,7 +1143,7 @@ class CartController extends GetxController {
       final token = await SharedPre.getAccessToken();
 
       final url = Uri.parse(
-        "https://sog.bitmaxtest.com/api/v1/user/order/$orderId/cancel",
+        "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/cancel",
       );
 
       /// 🔥 BUILD PAYMENT OBJECT AS BACKEND EXPECTS
@@ -1245,7 +1247,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url =
-          "https://sog.bitmaxtest.com/api/v1/user/payment/refund/$orderId";
+          "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/refund";
 
       final res = await http.get(
         Uri.parse(url),
@@ -1321,7 +1323,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url = Uri.parse(
-        "https://sog.bitmaxtest.com/api/v1/user/notifications/$notificationId/read",
+       "https://resto-grandma.onrender.com/api/v1/user/notifications/$notificationId/read"
       );
 
       final response = await http.patch(

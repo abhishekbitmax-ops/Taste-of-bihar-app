@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
 
 class Updateaddrsss extends StatefulWidget {
   final String addressId;
@@ -180,7 +181,7 @@ class _UpdateaddrsssState extends State<Updateaddrsss> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B0000),
+                    backgroundColor: AppColors.primary,
                   ),
                   child: ctrl.isLoading.value
                       ? const CircularProgressIndicator(color: Colors.white)
@@ -201,7 +202,7 @@ class _UpdateaddrsssState extends State<Updateaddrsss> {
     TextEditingController controller,
     String label, {
     TextInputType keyboard = TextInputType.text,
-  }) {
+   } ) {
     bool isPrefilled = controller.text.isNotEmpty;
 
     return Padding(

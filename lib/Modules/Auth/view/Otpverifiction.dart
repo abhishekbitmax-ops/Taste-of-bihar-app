@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/controller/AuthController.dart';
-import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -89,7 +87,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 const Spacer(),
 
                 Text(
-                  "Swaad of Grandmaa",
+                  "Taste of Bihar",
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -141,7 +139,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
                       focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Color(0xFF8B0000),
+                          color: AppColors.primary,
                           width: 1.6,
                         ),
                       ),
@@ -164,7 +162,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               await otpCtrl.verifyOtp(mobile: mobile, otp: otp);
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B0000),
+                        backgroundColor: AppColors.primary,
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

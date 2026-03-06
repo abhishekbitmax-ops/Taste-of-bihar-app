@@ -311,7 +311,6 @@ class SummaryModel {
   }
 }
 
-
 class CouponModel {
   String? code;
   int? discountAmount;

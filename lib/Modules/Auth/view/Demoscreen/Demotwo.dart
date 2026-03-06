@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Auth/view/Login.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/Login.dart';
 
 class OnboardingtwoScreen extends StatelessWidget {
   const OnboardingtwoScreen({super.key});

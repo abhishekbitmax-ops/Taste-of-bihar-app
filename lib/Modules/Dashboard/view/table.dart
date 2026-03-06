@@ -34,7 +34,7 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -80,11 +80,17 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                       SizedBox(height: 1.h),
 
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 3.w,
+                          vertical: 1.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300, width: 1.2),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.2,
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -103,7 +109,8 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                                   child: Text("${i + 1}"),
                                 ),
                               ),
-                              onChanged: (v) => setState(() => selectedGuests = v!),
+                              onChanged: (v) =>
+                                  setState(() => selectedGuests = v!),
                             ),
                           ],
                         ),
@@ -129,16 +136,21 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                           itemBuilder: (_, i) {
                             bool selected = selectedDateIndex == i;
                             return InkWell(
-                              onTap: () => setState(() => selectedDateIndex = i),
+                              onTap: () =>
+                                  setState(() => selectedDateIndex = i),
                               child: Container(
                                 width: 28.w,
                                 margin: EdgeInsets.only(right: 3.w),
                                 padding: EdgeInsets.all(2.w),
                                 decoration: BoxDecoration(
-                                  color: selected ? Colors.green.shade50 : Colors.white,
+                                  color: selected
+                                      ? Colors.green.shade50
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: selected ? Colors.green.shade700 : Colors.grey.shade300,
+                                    color: selected
+                                        ? Colors.green.shade700
+                                        : Colors.grey.shade300,
                                     width: 2,
                                   ),
                                 ),
@@ -173,14 +185,21 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                       // OFFER BANNER
                       Container(
                         width: double.infinity,
-                        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 3.w,
+                          vertical: 1.2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.local_offer, size: 18, color: Colors.orange),
+                            const Icon(
+                              Icons.local_offer,
+                              size: 18,
+                              color: Colors.orange,
+                            ),
                             SizedBox(width: 2.w),
                             Expanded(
                               child: Text(
@@ -211,9 +230,17 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                       // Lunch / Dinner Toggle
                       Row(
                         children: [
-                          _toggleChip("Lunch", selectedTimeIndex == 0, () => setState(() => selectedTimeIndex = 0)),
+                          _toggleChip(
+                            "Lunch",
+                            selectedTimeIndex == 0,
+                            () => setState(() => selectedTimeIndex = 0),
+                          ),
                           SizedBox(width: 4.w),
-                          _toggleChip("Dinner", selectedTimeIndex == 1, () => setState(() => selectedTimeIndex = 1)),
+                          _toggleChip(
+                            "Dinner",
+                            selectedTimeIndex == 1,
+                            () => setState(() => selectedTimeIndex = 1),
+                          ),
                         ],
                       ),
 
@@ -240,7 +267,9 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: selected ? Colors.green.shade700 : Colors.grey.shade300,
+                                  color: selected
+                                      ? Colors.green.shade700
+                                      : Colors.grey.shade300,
                                   width: 2,
                                 ),
                               ),
@@ -326,3 +355,4 @@ class _TableBookingFormScreenState extends State<TableBookingFormScreen> {
     );
   }
 }
+

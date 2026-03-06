@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restro_app/Modules/Dashboard/view/dsahboard.dart';
-import 'package:restro_app/Modules/Dashboard/view/menuscreen.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/ProfileSection/view/Profile.dart';
-import 'package:restro_app/widgets/Comingsoon.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/dsahboard.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/menuscreen.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/ProfileSection/view/Profile.dart';
+import 'package:taste_of_bihar/widgets/Comingsoon.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int initialIndex; // ✔ initial index support
@@ -19,7 +20,6 @@ class BottomNavBar extends StatefulWidget {
 
 class _BottomNavBarState extends State<BottomNavBar> {
   late int selectedIndex;
-  
 
   final List<Widget> screens = [
     const FoodHomeScreen(),
@@ -68,7 +68,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   onPressed: () => Navigator.of(context).pop(true),
                   child: Text(
                     "Yes",
-                    style: GoogleFonts.poppins(color: const Color(0xFF8B0000)),
+                    style: GoogleFonts.poppins(color: AppColors.primary),
                   ),
                 ),
               ],
@@ -79,15 +79,18 @@ class _BottomNavBarState extends State<BottomNavBar> {
       child: Scaffold(
         body: screens[selectedIndex],
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.cardDark.withOpacity(0.92),
             boxShadow: [
               BoxShadow(
                 blurRadius: 10,
                 offset: Offset(0, -2),
-                color: Colors.black12,
+                color: Colors.black45,
               ),
             ],
+            border: const Border(
+              top: BorderSide(color: AppColors.gold, width: 0.8),
+            ),
           ),
           child: BottomNavigationBar(
             currentIndex: selectedIndex,
@@ -97,9 +100,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
               });
             },
             type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: const Color(0xFF8B0000),
-            unselectedItemColor: Colors.black54,
+            backgroundColor: Colors.transparent,
+            selectedItemColor: AppColors.gold,
+            unselectedItemColor: Colors.white70,
             selectedLabelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
               fontSize: 12,

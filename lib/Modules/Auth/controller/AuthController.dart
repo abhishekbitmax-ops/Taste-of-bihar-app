@@ -3,19 +3,20 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:restro_app/Modules/Auth/view/Otpverifiction.dart';
+
 import 'package:http/http.dart' as http;
-import 'package:restro_app/Modules/Auth/view/basicdetails.dart';
-import 'package:restro_app/Modules/Dashboard/model/Dashboardmodel.dart';
-import 'package:restro_app/Modules/Dashboard/view/CartScreen.dart';
-import 'package:restro_app/Modules/Navbar/cartcontroller.dart';
-import 'package:restro_app/Modules/Navbar/navbar.dart';
-import 'package:restro_app/utils/Sharedpre.dart';
+
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
-
-import 'package:restro_app/utils/api_endpoints.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/Otpverifiction.dart';
+import 'package:taste_of_bihar/Modules/Auth/view/basicdetails.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/CartScreen.dart';
+import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+import 'package:taste_of_bihar/utils/api_endpoints.dart';
 
 class Authcontroller extends GetxController {
   final mobileCtrl = TextEditingController();
@@ -297,7 +298,7 @@ class Authcontroller extends GetxController {
 
       var response = await http.get(
         Uri.parse(
-          "https://sog.bitmaxtest.com/api/v1/user/categories/$categoryId/items",
+          "https://resto-grandma.onrender.com/api/v1/user/categories/$categoryId/items",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -513,7 +514,9 @@ class Authcontroller extends GetxController {
       };
 
       final response = await http.put(
-        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
+        Uri.parse(
+          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
+        ),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -546,7 +549,9 @@ class Authcontroller extends GetxController {
       String token = await SharedPre.getAccessToken();
 
       final response = await http.delete(
-        Uri.parse("https://sog.bitmaxtest.com/api/v1/user/address/$addressId"),
+        Uri.parse(
+          "https://resto-grandma.onrender.com/api/v1/user/address/$addressId",
+        ),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
