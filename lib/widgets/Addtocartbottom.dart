@@ -9,236 +9,364 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
   int qty = 1;
   final Authcontroller apiCtrl = Get.find<Authcontroller>();
   final CartController cartCtrl = Get.find<CartController>();
+  final String unitPriceText = product["price"] ?? "";
+  final int unitPrice =
+      int.tryParse(unitPriceText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    isDismissible: true,
+    enableDrag: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.45),
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setModalState) {
-          return DraggableScrollableSheet(
-            initialChildSize: 0.65,
-            maxChildSize: 0.85,
-            minChildSize: 0.55,
-            builder: (_, controller) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          final int totalPrice = unitPrice * qty;
+          return TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 340),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: 0, end: 1),
+            builder: (_, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 28 * (1 - value)),
+                  child: child,
                 ),
-                child: SingleChildScrollView(
-                  controller: controller,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ===== TOP HANDLE =====
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-
-                        // ===== IMAGE =====
-                        Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
-                              child:
-                                  product["image"] == null ||
-                                      product["image"]!.isEmpty
-                                  ? Image.asset(
-                                      "assets/images/popular.png",
-                                      height: 190,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.network(
-                                      product["image"]!,
-                                      height: 190,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
-                                        "assets/images/popular.png",
-                                        height: 190,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                            ),
-
-                            // Gradient overlay
-                            Container(
-                              height: 190,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(18),
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    Colors.black.withOpacity(0.45),
-                                    Colors.transparent,
-                                  ],
+              );
+            },
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.74,
+              maxChildSize: 0.9,
+              minChildSize: 0.58,
+              builder: (_, controller) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              Center(
+                                child: Container(
+                                  width: 44,
+                                  height: 5,
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade300,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // ===== NAME =====
-                        Text(
-                          product["name"] ?? "",
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                              Positioned(
+                                right: 0,
+                                top: -6,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () => Navigator.pop(context),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 20,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // ===== DESCRIPTION =====
-                        Text(
-                          product["desc"] ?? "",
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // ===== PRICE =====
-                        Text(
-                          product["price"] ?? "",
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ===== QUANTITY SELECTOR =====
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Stack(
                               children: [
-                                InkWell(
-                                  onTap: () {
-                                    if (qty > 1) {
-                                      setModalState(() => qty--);
-                                    }
-                                  },
-                                  child: const Icon(
-                                    Icons.remove_circle_outline,
-                                    size: 26,
-                                    color: AppColors.primary,
+                                SizedBox(
+                                  height: 210,
+                                  width: double.infinity,
+                                  child:
+                                      product["image"] == null ||
+                                          product["image"]!.isEmpty
+                                      ? Image.asset(
+                                          "assets/images/popular.png",
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.network(
+                                          product["image"]!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Image.asset(
+                                                "assets/images/popular.png",
+                                                fit: BoxFit.cover,
+                                              ),
+                                        ),
+                                ),
+                                Positioned.fill(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black.withOpacity(0.45),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Text(
-                                  qty.toString(),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                InkWell(
-                                  onTap: () => setModalState(() => qty++),
-                                  child: const Icon(
-                                    Icons.add_circle_outline,
-                                    size: 26,
-                                    color: AppColors.primary,
+                                Positioned(
+                                  left: 12,
+                                  bottom: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.92),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      unitPriceText,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        // ===== ADD TO CART BUTTON =====
-                        Obx(() {
-                          bool loading = apiCtrl.isApiLoading.value;
-
-                          return SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: loading
-                                  ? null
-                                  : () async {
-                                      final menuId = product["id"] ?? "";
-                                      if (menuId.isEmpty) {
-                                        Get.snackbar(
-                                          "Error",
-                                          "Menu item ID not found",
-                                        );
-                                        return;
-                                      }
-
-                                      await apiCtrl.addToCartApi(
-                                        menuId,
-                                        qty,
-                                        "",
-                                      );
-                                      await cartCtrl.fetchCartApi();
-                                      Navigator.pop(context);
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                elevation: 4,
-                              ),
-                              child: loading
-                                  ? const SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(
-                                      "Add to Cart",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                          const SizedBox(height: 18),
+                          Text(
+                            product["name"] ?? "",
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
-                          );
-                        }),
-                      ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            product["desc"] ?? "",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              height: 1.45,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F8FA),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Quantity",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(20),
+                                        onTap: () {
+                                          if (qty > 1) {
+                                            setModalState(() => qty--);
+                                          }
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4),
+                                          child: Icon(
+                                            Icons.remove,
+                                            size: 20,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      AnimatedSwitcher(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        transitionBuilder: (child, animation) =>
+                                            ScaleTransition(
+                                              scale: animation,
+                                              child: child,
+                                            ),
+                                        child: Padding(
+                                          key: ValueKey(qty),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                          child: Text(
+                                            qty.toString(),
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(20),
+                                        onTap: () => setModalState(() => qty++),
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4),
+                                          child: Icon(
+                                            Icons.add,
+                                            size: 20,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF6EC),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Total",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 220),
+                                  child: Text(
+                                    key: ValueKey(totalPrice),
+                                    unitPrice == 0
+                                        ? unitPriceText
+                                        : "Rs. $totalPrice",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Obx(() {
+                            final bool loading = apiCtrl.isApiLoading.value;
+
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: loading
+                                    ? null
+                                    : () async {
+                                        final menuId = product["id"] ?? "";
+                                        if (menuId.isEmpty) {
+                                          Get.snackbar(
+                                            "Error",
+                                            "Menu item ID not found",
+                                          );
+                                          return;
+                                        }
+
+                                        await apiCtrl.addToCartApi(
+                                          menuId,
+                                          qty,
+                                          "",
+                                        );
+                                        await cartCtrl.fetchCartApi();
+                                        Navigator.pop(context);
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  disabledBackgroundColor: AppColors.primary
+                                      .withOpacity(0.55),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: loading
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        "Add to Cart",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
       );

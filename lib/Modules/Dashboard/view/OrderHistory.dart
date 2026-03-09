@@ -29,129 +29,117 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgEnd,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: Colors.white,
         title: Text(
           "My Orders",
           style: GoogleFonts.poppins(
-            color: AppColors.softLight,
-            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F1F1F),
+            fontWeight: FontWeight.w700,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.softLight),
+        iconTheme: const IconThemeData(color: Color(0xFF1F1F1F)),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.bgStart, AppColors.bgMid, AppColors.bgEnd],
-          ),
-        ),
-        child: Obx(() {
-          if (ctrl.isLoading.value) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            );
-          }
+      body: Obx(() {
+        if (ctrl.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
 
-          if (ctrl.orders.isEmpty) {
-            return _emptyOrderView();
-          }
+        if (ctrl.orders.isEmpty) {
+          return _emptyOrderView();
+        }
 
-          final sortedOrders = [...ctrl.orders];
-          sortedOrders.sort((a, b) {
-            final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
-            final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
-            return db.compareTo(da);
-          });
+        final sortedOrders = [...ctrl.orders];
+        sortedOrders.sort((a, b) {
+          final da = DateTime.tryParse(a.createdAt ?? "") ?? DateTime(0);
+          final db = DateTime.tryParse(b.createdAt ?? "") ?? DateTime(0);
+          return db.compareTo(da);
+        });
 
-          final latestOrder = sortedOrders.isNotEmpty
-              ? sortedOrders.first
-              : null;
-          final historyOrders = sortedOrders
-              .where((o) => o.orderId != latestOrder?.orderId)
-              .toList();
+        final latestOrder = sortedOrders.isNotEmpty ? sortedOrders.first : null;
+        final historyOrders = sortedOrders
+            .where((o) => o.orderId != latestOrder?.orderId)
+            .toList();
 
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              await ctrl.fetchOrderHistory();
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (latestOrder != null) ...[
-                  Text(
-                    "Latest Order",
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.gold,
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            await ctrl.fetchOrderHistory();
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (latestOrder != null) ...[
+                Text(
+                  "Latest Order",
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF202020),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    Get.to(
+                      () => OrderTrackingScreen(orderId: latestOrder.orderId!),
+                    );
+                  },
+                  child: _OrderHistoryCard(
+                    latestOrder,
+                    isLatest: activeStatuses.contains(
+                      (latestOrder.status ?? "").toUpperCase(),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  InkWell(
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Order History",
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF202020),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              ...List.generate(historyOrders.length, (index) {
+                final order = historyOrders[index];
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.95, end: 1),
+                  duration: Duration(milliseconds: 280 + (index * 60)),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - value) * 24),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(18),
                     onTap: () {
                       Get.to(
-                        () =>
-                            OrderTrackingScreen(orderId: latestOrder.orderId!),
+                        () => OrderTrackingScreen(orderId: order.orderId!),
                       );
                     },
-                    child: _OrderHistoryCard(
-                      latestOrder,
-                      isLatest: activeStatuses.contains(
-                        (latestOrder.status ?? "").toUpperCase(),
-                      ),
-                    ),
+                    child: _OrderHistoryCard(order),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Order History",
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.gold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                ...List.generate(historyOrders.length, (index) {
-                  final order = historyOrders[index];
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.95, end: 1),
-                    duration: Duration(milliseconds: 280 + (index * 60)),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, (1 - value) * 24),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        Get.to(
-                          () => OrderTrackingScreen(orderId: order.orderId!),
-                        );
-                      },
-                      child: _OrderHistoryCard(order),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          );
-        }),
-      ),
+                );
+              }),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -173,20 +161,13 @@ class _OrderHistoryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.cardDark.withOpacity(0.95),
-            AppColors.bgStart.withOpacity(0.95),
-          ],
-        ),
-        border: Border.all(color: AppColors.gold.withOpacity(0.35)),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFEFEFEF)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.22),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -196,7 +177,7 @@ class _OrderHistoryCard extends StatelessWidget {
             height: 5,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.gold, AppColors.primary],
+                colors: [AppColors.primary, Color(0xFFC7640B)],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(18),
@@ -219,7 +200,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.softLight,
+                          color: const Color(0xFF1F1F1F),
                         ),
                       ),
                     ),
@@ -231,7 +212,7 @@ class _OrderHistoryCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.18),
+                          color: const Color(0xFFEAF8ED),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -239,7 +220,7 @@ class _OrderHistoryCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.greenAccent.shade100,
+                            color: const Color(0xFF1F8A35),
                           ),
                         ),
                       ),
@@ -251,7 +232,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: const Color(0xFFFFEAD6),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -259,7 +240,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.softLight,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -270,7 +251,7 @@ class _OrderHistoryCard extends StatelessWidget {
                   "Order ID: ${order.orderId ?? "-"}",
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: AppColors.softLight.withOpacity(0.72),
+                    color: const Color(0xFF7A7A7A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -280,11 +261,11 @@ class _OrderHistoryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: AppColors.softLight.withOpacity(0.9),
+                    color: const Color(0xFF444444),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Divider(color: AppColors.gold.withOpacity(0.22), height: 1),
+                Divider(color: Colors.grey.shade200, height: 1),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -294,7 +275,7 @@ class _OrderHistoryCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.gold,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -350,9 +331,16 @@ Widget _emptyOrderView() {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
         decoration: BoxDecoration(
-          color: AppColors.cardDark.withOpacity(0.7),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.gold.withOpacity(0.28)),
+          border: Border.all(color: const Color(0xFFECECEC)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -360,13 +348,13 @@ Widget _emptyOrderView() {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.gold.withOpacity(0.15),
+                color: const Color(0xFFFFF2E7),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.receipt_long,
                 size: 48,
-                color: AppColors.gold,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 14),
@@ -375,16 +363,14 @@ Widget _emptyOrderView() {
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.softLight,
+                color: const Color(0xFF1F1F1F),
               ),
             ),
             const SizedBox(height: 6),
             Text(
               "Your past orders will appear here",
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                color: AppColors.softLight.withOpacity(0.72),
-              ),
+              style: GoogleFonts.poppins(color: const Color(0xFF757575)),
             ),
           ],
         ),

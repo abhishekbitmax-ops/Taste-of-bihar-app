@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
             /// 🔥 BACKGROUND IMAGE
             Positioned.fill(
               child: Image.asset(
-                "assets/images/loginbackr.png",
+                "assets/images/loginbackk.png",
                 fit: BoxFit.cover,
               ),
             ),
@@ -91,10 +91,10 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                             backgroundColor: Colors.white24,
                             child: ClipOval(
                               child: Image.asset(
-                                "assets/images/applogo.png",
+                                "assets/images/logo_tob.png",
                                 fit: BoxFit.cover,
-                                width: 130,
-                                height: 130,
+                                width: 110,
+                                height: 110,
                               ),
                             ),
                           ),

@@ -185,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   padding: const EdgeInsets.all(14),
                                   child: ClipOval(
                                     child: Image.asset(
-                                      'assets/images/tob_logo.png',
+                                      'assets/images/logo_tob.png',
                                       fit: BoxFit.cover,
                                     ),
                                   ),

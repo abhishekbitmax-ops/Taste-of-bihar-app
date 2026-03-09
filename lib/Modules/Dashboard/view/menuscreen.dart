@@ -38,6 +38,7 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: ZomatoCartBar(),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         title: Text(
@@ -137,17 +138,14 @@ class _MenuScreenState extends State<MenuScreen> {
                               ? const LinearGradient(
                                   colors: [
                                     AppColors.primary,
-                                    Color(0xFFC7640B),
+                                    AppColors.background,
                                   ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
                                 )
                               : null,
-                          color: isSelected ? null : const Color(0xFFFAF7F2),
                           border: Border.all(
                             color: isSelected
                                 ? Colors.transparent
-                                : const Color(0xFFE7DDCF),
+                                : Colors.grey.shade300,
                             width: 1,
                           ),
                         ),
@@ -155,7 +153,9 @@ class _MenuScreenState extends State<MenuScreen> {
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor: Colors.white,
+                              backgroundColor: isSelected
+                                  ? Colors.white.withOpacity(0.95)
+                                  : Colors.white,
                               child: ClipOval(
                                 child: Image.network(
                                   cat.image ?? "",
@@ -193,8 +193,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 );
               }),
             ),
-            Expanded(
-              child: Container(
+                Expanded(
+                  child: Container(
                 margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -264,80 +264,198 @@ class _MenuScreenState extends State<MenuScreen> {
                                 ? item.image!
                                 : "";
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 14),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: const Color(0xFFE7DCCB),
-                                ),
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: Duration(
+                                milliseconds: 350 + (index * 90),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Stack(
+                              curve: Curves.easeOutCubic,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 14),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                              top: Radius.circular(20),
-                                            ),
-                                        child: imageUrl.isNotEmpty
-                                            ? Image.network(
-                                                imageUrl,
-                                                height: 150,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              )
-                                            : Image.asset(
-                                                "assets/images/popular.png",
-                                                height: 150,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                      ),
-                                      Positioned(
-                                        top: 10,
-                                        left: 10,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 5,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.95,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.circle,
-                                                size: 9,
-                                                color: item.isVeg == true
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                              ),
-                                              const SizedBox(width: 5),
-                                              Text(
-                                                item.isVeg == true
-                                                    ? "Veg"
-                                                    : "Non-Veg",
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
+                                      Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                  top: Radius.circular(20),
                                                 ),
+                                            child: imageUrl.isNotEmpty
+                                                ? Image.network(
+                                                    imageUrl,
+                                                    height: 150,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Image.asset(
+                                                    "assets/images/popular.png",
+                                                    height: 150,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                          ),
+                                          Positioned(
+                                            top: 10,
+                                            left: 10,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.95,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.circle,
+                                                    size: 9,
+                                                    color: item.isVeg == true
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                                  ),
+                                                  const SizedBox(width: 5),
+                                                  Text(
+                                                    item.isVeg == true
+                                                        ? "Veg"
+                                                        : "Non-Veg",
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Container(
+                                        width: double.infinity,
+                                        color: Colors.white,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item.name ?? "",
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                item.description ?? "",
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    "\u20B9${item.basePrice ?? 0}",
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: AppColors.primary,
+                                                    ),
+                                                  ),
+                                                  const Spacer(),
+                                                  InkWell(
+                                                    onTap: () =>
+                                                        openProductBottomSheet(
+                                                          context,
+                                                          {
+                                                            "id": item.id ?? "",
+                                                            "name":
+                                                                item.name ?? "",
+                                                            "desc":
+                                                                item.description ??
+                                                                "",
+                                                            "price": item
+                                                                .basePrice
+                                                                .toString(),
+                                                            "image": imageUrl,
+                                                            "type":
+                                                                item.isVeg ==
+                                                                    true
+                                                                ? "veg"
+                                                                : "nonveg",
+                                                          },
+                                                        ),
+                                                    child: AnimatedContainer(
+                                                      duration: const Duration(
+                                                        milliseconds: 250,
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 18,
+                                                            vertical: 8,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              30,
+                                                            ),
+                                                        gradient:
+                                                            const LinearGradient(
+                                                              colors: [
+                                                                AppColors.primary,
+                                                                AppColors
+                                                                    .background,
+                                                              ],
+                                                            ),
+                                                      ),
+                                                      child: Text(
+                                                        "ADD +",
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 13,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -345,95 +463,17 @@ class _MenuScreenState extends State<MenuScreen> {
                                       ),
                                     ],
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.name ?? "",
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          item.description ?? "",
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "\u20B9${item.basePrice ?? 0}",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.primary,
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            InkWell(
-                                              onTap: () =>
-                                                  openProductBottomSheet(
-                                                    context,
-                                                    {
-                                                      "id": item.id ?? "",
-                                                      "name": item.name ?? "",
-                                                      "desc":
-                                                          item.description ??
-                                                          "",
-                                                      "price": item.basePrice
-                                                          .toString(),
-                                                      "image": imageUrl,
-                                                      "type": item.isVeg == true
-                                                          ? "veg"
-                                                          : "nonveg",
-                                                    },
-                                                  ),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 18,
-                                                      vertical: 8,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
-                                                  gradient:
-                                                      const LinearGradient(
-                                                        colors: [
-                                                          AppColors.primary,
-                                                          Color(0xFFC7640B),
-                                                        ],
-                                                      ),
-                                                ),
-                                                child: Text(
-                                                  "ADD +",
-                                                  style: GoogleFonts.poppins(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
+                              builder: (context, value, child) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1 - value) * 20),
+                                    child: child,
+                                  ),
+                                );
+                              },
                             );
                           },
                         );
@@ -461,7 +501,7 @@ class _MenuScreenState extends State<MenuScreen> {
             borderRadius: BorderRadius.circular(30),
             gradient: isActive
                 ? const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFFC7640B)],
+                    colors: [AppColors.primary, AppColors.background],
                   )
                 : null,
             color: isActive ? null : Colors.grey.shade200,

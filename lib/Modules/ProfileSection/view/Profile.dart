@@ -131,7 +131,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.shade300, width: 1.2),
         ),
@@ -184,7 +184,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.background,
+            color: Colors.white,
           ),
         ),
       ),
@@ -212,7 +212,10 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
             elevation: 0,
             title: const Text(
               'Profile',
-              style: TextStyle(color: AppColors.background),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           bottomNavigationBar: ZomatoCartBar(),
@@ -248,7 +251,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                               final bottomColor =
                                   Color.lerp(
                                     AppColors.primary,
-                                    AppColors.background,
+                                    AppColors.badgecolor,
                                     0.30 + (0.20 * t),
                                   ) ??
                                   AppColors.primary;
@@ -360,7 +363,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                                                     vertical: 5,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: AppColors.background
+                                                color: AppColors.badgecolor
                                                     .withOpacity(0.18),
                                                 borderRadius:
                                                     BorderRadius.circular(30),
@@ -466,7 +469,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                               Get.defaultDialog(
                                 title: 'Confirm Logout',
                                 middleText: 'Are you sure you want to log out?',
-                                backgroundColor: AppColors.background,
+                                backgroundColor: Colors.white,
                                 radius: 12,
                                 titleStyle: const TextStyle(
                                   color: Colors.red,
@@ -496,9 +499,7 @@ class _ProfileHomeScreenState extends State<ProfileHomeScreen>
                                     ),
                                     child: Text(
                                       'Logout',
-                                      style: TextStyle(
-                                        color: AppColors.background,
-                                      ),
+                                      style: TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),

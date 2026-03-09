@@ -13,7 +13,10 @@ class OnboardingScreen extends StatelessWidget {
         children: [
           // Full screen background image
           Positioned.fill(
-            child: Image.asset("assets/images/demoone.png", fit: BoxFit.cover),
+            child: Image.asset(
+              "assets/images/demo_onne.png",
+              fit: BoxFit.cover,
+            ),
           ),
 
           // Skip Button (Top Right)

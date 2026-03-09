@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:taste_of_bihar/Modules/Dashboard/view/dsahboard.dart';
-import 'package:taste_of_bihar/Modules/Dashboard/view/menuscreen.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/MenuEntryScreen.dart';
 import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 import 'package:taste_of_bihar/Modules/ProfileSection/view/Profile.dart';
 import 'package:taste_of_bihar/widgets/Comingsoon.dart';
@@ -23,8 +23,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> screens = [
     const FoodHomeScreen(),
-    const ComingSoonScreen(),
-    MenuScreen(),
+    // const ComingSoonScreen(),
+    const MenuEntryScreen(),
     ProfileHomeScreen(),
   ];
 
@@ -89,7 +89,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
               ),
             ],
             border: const Border(
-              top: BorderSide(color: AppColors.gold, width: 0.8),
+              top: BorderSide(color: AppColors.background, width: 0.8),
             ),
           ),
           child: BottomNavigationBar(
@@ -101,7 +101,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.transparent,
-            selectedItemColor: AppColors.gold,
+            selectedItemColor: AppColors.background,
             unselectedItemColor: Colors.white70,
             selectedLabelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
@@ -116,10 +116,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 icon: Icon(Icons.home, size: 26),
                 label: "Home",
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.local_offer, size: 26),
-                label: "Dine -In",
-              ),
+              // BottomNavigationBarItem(
+              //   icon: Icon(Icons.local_offer, size: 26),
+              //   label: "Dine -In",
+              // ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.shopping_cart, size: 26),
                 label: "Menu",

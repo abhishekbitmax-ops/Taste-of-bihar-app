@@ -104,7 +104,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     child: Transform.scale(
                       scale: 1.2,
                       child: Image.asset(
-                        "assets/images/applogo.png",
+                        "assets/images/logo_tob.png",
                         width: 140,
                         height: 140,
                         fit: BoxFit.cover,

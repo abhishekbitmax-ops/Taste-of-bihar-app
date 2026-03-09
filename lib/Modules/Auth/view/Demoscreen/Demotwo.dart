@@ -14,7 +14,7 @@ class OnboardingtwoScreen extends StatelessWidget {
           Positioned.fill(
             child: Image.asset(
               scale: 0.80,
-              "assets/images/demotwoo.png",
+              "assets/images/demo_twoo.png",
               fit: BoxFit.cover, // 👈 100% full screen
             ),
           ),

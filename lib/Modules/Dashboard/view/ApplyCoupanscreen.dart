@@ -57,7 +57,7 @@ class ApplyCouponScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.cardDark.withOpacity(0.72),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.gold.withOpacity(0.45)),
+                  border: Border.all(color: AppColors.background.withOpacity(0.45)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.25),
@@ -70,7 +70,7 @@ class ApplyCouponScreen extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.local_offer_outlined,
-                      color: AppColors.gold,
+                      color: AppColors.background,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -172,7 +172,7 @@ class ApplyCouponScreen extends StatelessWidget {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
                       child: Center(
-                        child: CircularProgressIndicator(color: AppColors.gold),
+                        child: CircularProgressIndicator(color: AppColors.background),
                       ),
                     );
                   }
@@ -184,7 +184,7 @@ class ApplyCouponScreen extends StatelessWidget {
                         color: AppColors.cardDark.withOpacity(0.65),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.gold.withOpacity(0.28),
+                          color: AppColors.background.withOpacity(0.28),
                         ),
                       ),
                       child: Text(
@@ -250,7 +250,7 @@ class _CouponTile extends StatelessWidget {
             ],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.gold.withOpacity(0.32)),
+          border: Border.all(color: AppColors.background.withOpacity(0.32)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.22),
@@ -265,10 +265,10 @@ class _CouponTile extends StatelessWidget {
               height: 38,
               width: 38,
               decoration: BoxDecoration(
-                color: AppColors.gold.withOpacity(0.12),
+                color: AppColors.background.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.local_offer, color: AppColors.gold),
+              child: const Icon(Icons.local_offer, color: AppColors.background),
             ),
             const SizedBox(width: 12),
             Expanded(

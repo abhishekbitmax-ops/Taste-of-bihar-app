@@ -13,7 +13,7 @@ class AppTheme {
           brightness: Brightness.dark,
         ).copyWith(
           primary: AppColors.primary,
-          secondary: AppColors.gold,
+          secondary: AppColors.background,
           surface: AppColors.cardDark,
           onSurface: AppColors.softLight,
           onPrimary: Colors.white,
@@ -43,11 +43,11 @@ class AppTheme {
       hintStyle: GoogleFonts.poppins(color: Colors.white70),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.gold, width: 1),
+        borderSide: const BorderSide(color: AppColors.background, width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.gold, width: 1.3),
+        borderSide: const BorderSide(color: AppColors.background, width: 1.3),
       ),
     ),
 
@@ -64,7 +64,7 @@ class AppTheme {
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Colors.transparent,
-      selectedItemColor: AppColors.gold,
+      selectedItemColor: AppColors.background,
       unselectedItemColor: Colors.white70,
       type: BottomNavigationBarType.fixed,
     ),
