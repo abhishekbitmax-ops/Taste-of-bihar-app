@@ -308,7 +308,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-        "https://resto-grandma.onrender.com/api/v1/user/cart/$cartItemId/remove";
+        "https://bihar-taste.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),

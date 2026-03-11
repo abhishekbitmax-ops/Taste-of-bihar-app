@@ -193,8 +193,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 );
               }),
             ),
-                Expanded(
-                  child: Container(
+            Expanded(
+              child: Container(
                 margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -435,7 +435,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                                         gradient:
                                                             const LinearGradient(
                                                               colors: [
-                                                                AppColors.primary,
+                                                                AppColors
+                                                                    .primary,
                                                                 AppColors
                                                                     .background,
                                                               ],

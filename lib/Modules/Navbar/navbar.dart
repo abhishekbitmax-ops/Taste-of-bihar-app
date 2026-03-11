@@ -23,8 +23,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> screens = [
     const FoodHomeScreen(),
-    // const ComingSoonScreen(),
     const MenuEntryScreen(),
+    const ComingSoonScreen(),
     ProfileHomeScreen(),
   ];
 
@@ -116,13 +116,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 icon: Icon(Icons.home, size: 26),
                 label: "Home",
               ),
-              // BottomNavigationBarItem(
-              //   icon: Icon(Icons.local_offer, size: 26),
-              //   label: "Dine -In",
-              // ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.shopping_cart, size: 26),
                 label: "Menu",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.local_offer, size: 26),
+                label: "Party",
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person, size: 26),

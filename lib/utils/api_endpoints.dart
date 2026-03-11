@@ -1,9 +1,10 @@
 class ApiEndpoint {
   //  Base API URL (for all API requests)
-  static const String baseUrl = "https://resto-grandma.onrender.com/api/v1/user";
+  static const String baseUrl =
+      "https://bihar-taste.bitmaxtest.com/api/v1/user";
 
   // Patient App Endpoints
-  static const String baseUrl2 = "https://resto-grandma.onrender.com/api/v1";
+  static const String baseUrl2 = "https://bihar-taste.bitmaxtest.com/api/v1";
   //  AUTHENTICATION ENDPOINTS
 
   static const String login = "/mobile-send-otp";
