@@ -501,6 +501,7 @@ class CartController extends GetxController {
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
       );
 
@@ -696,13 +697,14 @@ class CartController extends GetxController {
         return;
       }
 
-      final url = "https://resto-grandma.onrender.com/api/v1/user/order/$orderId/track";
+      final url = ApiEndpoint.getOrderTrackingUrl(orderId);
 
       final response = await http.get(
         Uri.parse(url),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
       );
 
@@ -712,13 +714,19 @@ class CartController extends GetxController {
         debugPrint("📡 FETCH ORDER TRACKING RESPONSE => $decoded");
 
         /// ✅ DIRECT PARSE (API HAS NO success/data WRAPPER)
-        final trackingData = OrderTrackingData.fromJson(decoded);
+        final trackingResponse = OrderTrackingResponse.fromJson(decoded);
+        final trackingData = trackingResponse.data;
 
         // 🔥 SET THE ORDER WITH ALL DATA
-        order.value = trackingData;
-        order.refresh(); // Force UI update
+        if (trackingData != null) {
+          order.value = trackingData;
+          order.refresh();
+        } else {
+          Get.snackbar("Error", "Order tracking data not found");
+        }
       } else {
         debugPrint("❌ API Error: ${response.statusCode}");
+        debugPrint("❌ ORDER TRACKING BODY: ${response.body}");
         Get.snackbar("Error", "Failed to fetch order tracking");
       }
     } catch (e, stackTrace) {

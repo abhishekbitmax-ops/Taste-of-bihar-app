@@ -24,9 +24,10 @@ class Authcontroller extends GetxController {
   var isDataBound = false.obs;
   var isBannerLoading = true.obs;
   var isCategoryLoading = true.obs;
+  var isSubCategoryLoading = false.obs;
   var isHomeRefreshing = false.obs;
 
-  String getCategoryId(CategoryData cat) => cat.id ?? "";
+  String getCategoryId(CategoryData cat) => cat.sId ?? "";
 
   @override
   void onInit() {
@@ -258,6 +259,8 @@ class Authcontroller extends GetxController {
   CategoryResponse? categoryResponse;
   var categories = <CategoryData>[].obs; //  dynamic list
   int get length => categories.length;
+  SubCategoryResponse? subCategoryResponse;
+  var subCategories = <SubCategoryData>[].obs;
 
   Future<void> fetchCategories() async {
     try {
@@ -284,22 +287,57 @@ class Authcontroller extends GetxController {
     }
   }
 
-  // categories item show api
+  Future<void> fetchSubCategories(String categoryId) async {
+    try {
+      isSubCategoryLoading(true);
+      subCategories.clear();
 
-  var items = <ItemModel>[].obs;
-  var category = CategoryModel().obs;
+      String token = await SharedPre.getAccessToken();
+      final uri = Uri.parse(
+        ApiEndpoint.getUrl(ApiEndpoint.subCategories),
+      ).replace(queryParameters: {"category": categoryId, "force": "true"});
 
-  Future<void> fetchCategoryItems(String categoryId) async {
+      final res = await http.get(
+        uri,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        subCategoryResponse = SubCategoryResponse.fromJson(
+          jsonDecode(res.body),
+        );
+        subCategories.value = subCategoryResponse?.data ?? [];
+        debugPrint("Subcategory API Error: ${res.statusCode} ${res.body}");
+      } else {
+        debugPrint("Subcategory API Error: ${res.statusCode} ${res.body}");
+      }
+    } catch (e) {
+      debugPrint("Subcategory API Error: $e");
+    } finally {
+      isSubCategoryLoading(false);
+    }
+  }
+
+  // menu items show api
+
+  var items = <MenuItem>[].obs;
+  var selectedMenuSubCategory = Category().obs;
+
+  Future<void> fetchCategoryItems(String subCategoryId) async {
     try {
       isLoading.value = true;
       items.clear();
 
       String token = await SharedPre.getAccessToken();
+      final uri = Uri.parse(
+        ApiEndpoint.getUrl(ApiEndpoint.menu),
+      ).replace(queryParameters: {"subCategory": subCategoryId});
 
-      var response = await http.get(
-        Uri.parse(
-          "https://resto-grandma.onrender.com/api/v1/user/categories/$categoryId/items",
-        ),
+      final response = await http.get(
+        uri,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -307,12 +345,18 @@ class Authcontroller extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        var jsonData = jsonDecode(response.body);
-        var data = CategoryItemsResponse.fromJson(jsonData);
+        final jsonData = jsonDecode(response.body);
+        debugPrint("Menu API Response: $jsonData");
+        final data = MenuResponse.fromJson(jsonData);
 
         if (data.success == true) {
-          category.value = data.data?.category ?? CategoryModel();
-          items.value = data.data?.items ?? [];
+          if (data.data?.data != null && data.data!.data!.isNotEmpty) {
+            selectedMenuSubCategory.value =
+                data.data!.data!.first.subCategory ?? Category();
+          } else {
+            selectedMenuSubCategory.value = Category();
+          }
+          items.value = data.data?.data ?? [];
         }
       } else {
         Get.snackbar("Error", "Failed to load items");

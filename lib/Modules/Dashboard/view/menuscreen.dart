@@ -19,8 +19,28 @@ class _MenuScreenState extends State<MenuScreen> {
   String foodFilter = "all";
   String selectedCategory = "";
   String selectedCategoryId = "";
+  String selectedSubCategory = "";
 
   final Authcontroller authCtrl = Get.find<Authcontroller>();
+
+  Future<void> _loadInitialSubCategoryItems() async {
+    authCtrl.items.clear();
+    selectedSubCategory = "";
+
+    await authCtrl.fetchSubCategories(selectedCategoryId);
+
+    if (authCtrl.subCategories.isNotEmpty) {
+      final firstSubCategory = authCtrl.subCategories.first;
+      selectedSubCategory = firstSubCategory.name ?? "";
+      await authCtrl.fetchCategoryItems(firstSubCategory.sId ?? "");
+    } else {
+      authCtrl.items.clear();
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
@@ -30,7 +50,7 @@ class _MenuScreenState extends State<MenuScreen> {
     if (args != null && args is Map) {
       selectedCategory = args["categoryName"] ?? "";
       selectedCategoryId = args["categoryId"] ?? "";
-      authCtrl.fetchCategoryItems(selectedCategoryId);
+      _loadInitialSubCategoryItems();
     }
   }
 
@@ -41,8 +61,12 @@ class _MenuScreenState extends State<MenuScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
-          "Our Menu",
+          selectedCategory.isNotEmpty ? selectedCategory : "Our Menu",
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -111,20 +135,43 @@ class _MenuScreenState extends State<MenuScreen> {
                 ],
               ),
               child: Obx(() {
+                if (authCtrl.isSubCategoryLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (authCtrl.subCategories.isEmpty) {
+                  authCtrl.items.clear();
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        "No\nSubcategories",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: authCtrl.categories.length,
+                  itemCount: authCtrl.subCategories.length,
                   itemBuilder: (context, index) {
-                    final cat = authCtrl.categories[index];
-                    final bool isSelected = selectedCategoryId == cat.id;
+                    final subCategory = authCtrl.subCategories[index];
+                    final bool isSelected =
+                        selectedSubCategory == (subCategory.name ?? "");
 
                     return InkWell(
                       onTap: () {
+                        final subCategoryId = subCategory.sId ?? "";
                         setState(() {
-                          selectedCategory = cat.name ?? "";
-                          selectedCategoryId = cat.id ?? "";
+                          selectedSubCategory = subCategory.name ?? "";
                         });
-                        authCtrl.fetchCategoryItems(selectedCategoryId);
+                        authCtrl.fetchCategoryItems(subCategoryId);
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(
@@ -158,7 +205,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   : Colors.white,
                               child: ClipOval(
                                 child: Image.network(
-                                  cat.image ?? "",
+                                  subCategory.subCategoryImage ?? "",
                                   height: 40,
                                   width: 40,
                                   fit: BoxFit.cover,
@@ -173,16 +220,14 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              cat.name ?? "",
+                              subCategory.name ?? "",
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.black87,
+                                color: isSelected ? Colors.white : Colors.black87,
                               ),
                             ),
                           ],
@@ -210,6 +255,31 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
                 child: Column(
                   children: [
+                    if (selectedCategory.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.background],
+                          ),
+                        ),
+                        child: Text(
+                          selectedSubCategory.isNotEmpty
+                              ? "$selectedCategory | $selectedSubCategory"
+                              : selectedCategory,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Row(
@@ -225,6 +295,19 @@ class _MenuScreenState extends State<MenuScreen> {
                         if (authCtrl.isLoading.value) {
                           return const Center(
                             child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (authCtrl.subCategories.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "Subcategories not available",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black54,
+                              ),
+                            ),
                           );
                         }
 
@@ -260,8 +343,9 @@ class _MenuScreenState extends State<MenuScreen> {
                           itemBuilder: (_, index) {
                             final item = itemList[index];
                             final String imageUrl =
-                                (item.image != null && item.image!.isNotEmpty)
-                                ? item.image!
+                                (item.menuImage != null &&
+                                        item.menuImage!.isNotEmpty)
+                                ? item.menuImage!
                                 : "";
 
                             return TweenAnimationBuilder<double>(
@@ -401,7 +485,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                         openProductBottomSheet(
                                                           context,
                                                           {
-                                                            "id": item.id ?? "",
+                                                            "id": item.sId ?? "",
                                                             "name":
                                                                 item.name ?? "",
                                                             "desc":

@@ -13,6 +13,8 @@ class ApiEndpoint {
   static const String profile = "/profile";
   static const String updateProfile = "/profile-update";
   static const String categories = "/categories";
+  static const String subCategories = "/subcategories";
+  static const String menu = "/menu";
   static const String Addtocart = "/cart/items";
   static const String getCart = "/cart";
   static const String addAddress = "/address";
@@ -21,6 +23,7 @@ class ApiEndpoint {
   static const String ApplyCoupan = "/cart/coupon";
   static const String Orderhistorycard = "/order/history";
   static const String Orderplace = "/order/place";
+  static const String OrderTracking = "/order";
   static const String PaymentVerify = "/payment/verify";
   static const String GetBanners = "/banners/active";
   static const String PopluarDishs = "/order/popular";
@@ -36,5 +39,9 @@ class ApiEndpoint {
 
   static String getUrl2(String endpoint) {
     return "$baseUrl2$endpoint";
+  }
+
+  static String getOrderTrackingUrl(String orderId) {
+    return "$baseUrl$OrderTracking/$orderId/track";
   }
 }

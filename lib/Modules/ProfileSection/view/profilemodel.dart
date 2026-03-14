@@ -386,12 +386,17 @@ class OrderTrackingResponse {
   OrderTrackingResponse({this.success, this.message, this.data});
 
   factory OrderTrackingResponse.fromJson(Map<String, dynamic> json) {
+    final bool hasWrapper =
+        json.containsKey('data') ||
+        json.containsKey('success') ||
+        json.containsKey('message');
+
     return OrderTrackingResponse(
-      success: json['success'],
-      message: json['message'],
-      data: json['data'] != null
-          ? OrderTrackingData.fromJson(json['data'])
-          : null,
+      success: hasWrapper ? json['success'] ?? true : true,
+      message: hasWrapper ? json['message'] : null,
+      data: hasWrapper
+          ? (json['data'] != null ? OrderTrackingData.fromJson(json['data']) : null)
+          : OrderTrackingData.fromJson(json),
     );
   }
 }
@@ -632,10 +637,12 @@ class OrderItem {
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      itemId: json['itemId'] != null ? ItemRef.fromJson(json['itemId']) : null,
+      itemId: json['itemId'] is Map<String, dynamic>
+          ? ItemRef.fromJson(json['itemId'])
+          : null,
       name: json['name'],
       quantity: json['quantity'],
-      basePrice: json['basePrice'],
+      basePrice: json['basePrice'] ?? json['price'],
       addons: json['addons'],
       finalItemPrice: json['finalItemPrice'] ?? json['price'], // 🔥 FIX
     );

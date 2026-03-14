@@ -28,20 +28,17 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   final CartController popularCtrl = Get.find<CartController>();
 
   RxString address = "Fetching location...".obs;
+  final List<Map<String, String>> dummySnackDrinkCategories = const [
+    {"name": "Snacks", "image": "assets/images/Dine.jpg"},
+    {"name": "Cold Drinks", "image": "assets/images/demo_onne.png"},
+    {"name": "Tea & Coffee", "image": "assets/images/demo_twoo.png"},
+    {"name": "Fresh Juice", "image": "assets/images/dinein.png"},
+  ];
 
   final List<Color> _surfaceGradient = const [
     Color(0xFFFFFBF6),
     Color(0xFFFDF3E6),
     Color(0xFFF8E9D8),
-  ];
-
-  final List<List<Color>> categoryGradients = [
-    [Color(0xFFB55D1E), Color(0xFFE29140)],
-    [Color(0xFF8D4F29), Color(0xFFC6804A)],
-    [Color(0xFFA4652A), Color(0xFFE2A15A)],
-    [Color(0xFF7A3C1D), Color(0xFFB16537)],
-    [Color(0xFF935A2D), Color(0xFFD39A5B)],
-    [Color(0xFF6D3A1E), Color(0xFFAA6A3C)],
   ];
 
   @override
@@ -52,21 +49,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       authCtrl.fetchBanners(); // ✅ ONLY ONCE
-      await authCtrl.fetchCategories();
 
       // ✅ FETCH POPULAR DISHES HERE
       await popularCtrl.fetchPopularDishes();
-
-      if (authCtrl.categories.isNotEmpty) {
-        selectedCategory.value = authCtrl.categories.first.name ?? "";
-        selectedCategoryId.value = authCtrl.categories.first.id ?? "";
-        authCtrl.fetchCategoryItems(selectedCategoryId.value);
-      }
     });
   }
-
-  RxString selectedCategory = "".obs;
-  RxString selectedCategoryId = "".obs;
 
   Widget _animatedEntry({
     required Widget child,
@@ -562,7 +549,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         child: Row(
                           children: [
                             Text(
-                              "Explore by Category",
+                              "Snacks & Drinks",
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -600,67 +587,29 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         padding: const EdgeInsets.only(left: 20),
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
-                          child: Obx(() {
-                            if (authCtrl.isCategoryLoading.value) {
-                              return categoryShimmer();
-                            }
+                          child: Row(
+                            children: dummySnackDrinkCategories
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                                  final index = entry.key;
+                                  final item = entry.value;
+                                  final gradientColors = [
+                                    const Color(0xFFB55D1E),
+                                    const Color(0xFFE29140),
+                                  ];
 
-                            if (authCtrl.categories.isEmpty) {
-                              return const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 10),
-                                child: Text(
-                                  "No categories found",
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              );
-                            }
-
-                            return Row(
-                              children: authCtrl.categories.asMap().entries.map((
-                                entry,
-                              ) {
-                                final index = entry.key;
-                                final cat = entry.value;
-                                final bool hasImage =
-                                    cat.image != null && cat.image!.isNotEmpty;
-
-                                final gradientColors =
-                                    categoryGradients[index %
-                                        categoryGradients.length];
-
-                                return TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0, end: 1),
-                                  duration: Duration(
-                                    milliseconds: 500 + (index * 80),
-                                  ),
-                                  curve: Curves.easeOutCubic,
-                                  builder: (_, value, __) {
-                                    return Transform.translate(
-                                      offset: Offset(0, 12 * (1 - value)),
-                                      child: Opacity(
-                                        opacity: value.clamp(0, 1),
-                                        child: InkWell(
-                                          onTap: () {
-                                            selectedCategory.value =
-                                                cat.name ?? "";
-                                            selectedCategoryId.value =
-                                                cat.id ?? "";
-
-                                            WidgetsBinding.instance
-                                                .addPostFrameCallback((_) {
-                                                  Get.offAll(
-                                                    () => const BottomNavBar(
-                                                      initialIndex: 2,
-                                                    ),
-                                                    arguments: {
-                                                      "categoryId":
-                                                          cat.id ?? "",
-                                                      "categoryName":
-                                                          cat.name ?? "",
-                                                    },
-                                                  );
-                                                });
-                                          },
+                                  return TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 0, end: 1),
+                                    duration: Duration(
+                                      milliseconds: 500 + (index * 80),
+                                    ),
+                                    curve: Curves.easeOutCubic,
+                                    builder: (_, value, __) {
+                                      return Transform.translate(
+                                        offset: Offset(0, 12 * (1 - value)),
+                                        child: Opacity(
+                                          opacity: value.clamp(0, 1),
                                           child: Container(
                                             width: 94,
                                             margin: const EdgeInsets.only(
@@ -705,34 +654,17 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                                             color: Colors.white,
                                                           ),
                                                       child: ClipOval(
-                                                        child: hasImage
-                                                            ? Image.network(
-                                                                cat.image!,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                                errorBuilder:
-                                                                    (
-                                                                      _,
-                                                                      __,
-                                                                      ___,
-                                                                    ) => Image.asset(
-                                                                      "assets/images/Dine.jpg",
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                    ),
-                                                              )
-                                                            : Image.asset(
-                                                                "assets/images/Dine.jpg",
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              ),
+                                                        child: Image.asset(
+                                                          item["image"]!,
+                                                          fit: BoxFit.cover,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Text(
-                                                  cat.name ?? "Unknown",
+                                                  item["name"]!,
                                                   textAlign: TextAlign.center,
                                                   maxLines: 2,
                                                   overflow:
@@ -749,13 +681,12 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }).toList(),
-                            );
-                          }),
+                                      );
+                                    },
+                                  );
+                                })
+                                .toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -978,38 +909,6 @@ Widget popularDishShimmer() {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      );
-    }),
-  );
-}
-
-Widget categoryShimmer() {
-  return Row(
-    children: List.generate(6, (index) {
-      return Padding(
-        padding: const EdgeInsets.only(right: 14),
-        child: Column(
-          children: [
-            Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: Container(
-                width: 74,
-                height: 74,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: Container(width: 50, height: 10, color: Colors.white),
             ),
           ],
         ),
