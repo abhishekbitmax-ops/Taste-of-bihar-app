@@ -44,6 +44,10 @@ class CategoryData {
   String? updatedAt;
   int? iV;
   int? count;
+  String? orderStartTime;
+  String? orderEndTime;
+  String? deliveryStartTime;
+  String? deliveryEndTime;
 
   CategoryData({
     this.sId,
@@ -59,6 +63,10 @@ class CategoryData {
     this.updatedAt,
     this.iV,
     this.count,
+    this.orderStartTime,
+    this.orderEndTime,
+    this.deliveryStartTime,
+    this.deliveryEndTime,
   });
 
   CategoryData.fromJson(Map<String, dynamic> json) {
@@ -75,6 +83,10 @@ class CategoryData {
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     count = json['count'];
+    orderStartTime = json['orderStartTime'];
+    orderEndTime = json['orderEndTime'];
+    deliveryStartTime = json['deliveryStartTime'];
+    deliveryEndTime = json['deliveryEndTime'];
   }
 
   Map<String, dynamic> toJson() {
@@ -92,6 +104,10 @@ class CategoryData {
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
     data['count'] = count;
+    data['orderStartTime'] = orderStartTime;
+    data['orderEndTime'] = orderEndTime;
+    data['deliveryStartTime'] = deliveryStartTime;
+    data['deliveryEndTime'] = deliveryEndTime;
     return data;
   }
 }
@@ -848,3 +864,7 @@ class BannerItem {
     );
   }
 }
+
+
+// snaks and drinks model
+

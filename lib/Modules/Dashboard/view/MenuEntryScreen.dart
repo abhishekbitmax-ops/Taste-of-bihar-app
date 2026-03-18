@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
 import 'package:taste_of_bihar/Modules/Dashboard/view/menuscreen.dart';
-import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
 import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:taste_of_bihar/widgets/Viewcartbar.dart';
 
@@ -16,6 +15,41 @@ class MenuEntryScreen extends StatefulWidget {
 
 class _MenuEntryScreenState extends State<MenuEntryScreen> {
   final Authcontroller authCtrl = Get.find<Authcontroller>();
+
+  bool _isSnackOrDrinkCategory(String name) {
+    final normalized = name.trim().toLowerCase();
+    return normalized.contains("snack") ||
+        normalized.contains("drink") ||
+        normalized.contains("beverage");
+  }
+
+  bool _isEventCategory(String name) {
+    final normalized = name.trim().toLowerCase();
+    return normalized == "event" || normalized == "events";
+  }
+
+  String _formatTime(String? value) {
+    if ((value ?? "").isEmpty) return "";
+
+    final parts = value!.split(":");
+    if (parts.length != 2) return value;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return value;
+
+    final suffix = hour >= 12 ? "PM" : "AM";
+    final normalizedHour = hour % 12 == 0 ? 12 : hour % 12;
+    final normalizedMinute = minute.toString().padLeft(2, '0');
+    return "$normalizedHour:$normalizedMinute $suffix";
+  }
+
+  String _timeRange(String? start, String? end) {
+    if ((start ?? "").isEmpty || (end ?? "").isEmpty) {
+      return "Not available";
+    }
+    return "${_formatTime(start)} - ${_formatTime(end)}";
+  }
 
   @override
   void initState() {
@@ -42,7 +76,13 @@ class _MenuEntryScreenState extends State<MenuEntryScreen> {
       ),
       body: SafeArea(
         child: Obx(() {
-          final categories = authCtrl.categories;
+          final categories = authCtrl.categories
+              .where(
+                (category) =>
+                    !_isSnackOrDrinkCategory(category.name ?? "") &&
+                    !_isEventCategory(category.name ?? ""),
+              )
+              .toList();
           final isLoading = authCtrl.isCategoryLoading.value;
 
           return RefreshIndicator(
@@ -103,7 +143,7 @@ class _MenuEntryScreenState extends State<MenuEntryScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Browse available dishes by category',
+                                'Food available 7 AM - 10 PM',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -146,50 +186,49 @@ class _MenuEntryScreenState extends State<MenuEntryScreen> {
                       ),
                     )
                   else
-                    GridView.builder(
+                    ListView.separated(
                       itemCount: categories.length,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: 0.95,
-                          ),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, index) {
                         final category = categories[index];
+                        final isEventCard = _isEventCategory(
+                          category.name ?? "",
+                        );
 
                         return InkWell(
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(24),
                           onTap: () {
-                            final categoryName =
-                                (category.name ?? "").trim().toLowerCase();
-
-                            if (categoryName == "events" ||
-                                categoryName == "event") {
-                              Get.offAll(
-                                () => const BottomNavBar(initialIndex: 2),
-                              );
-                              return;
-                            }
-
                             Get.to(
                               () => const MenuScreen(),
                               arguments: {
                                 "categoryName": category.name ?? "",
                                 "categoryId": category.sId ?? "",
+                                "orderStartTime": category.orderStartTime ?? "",
+                                "orderEndTime": category.orderEndTime ?? "",
+                                "deliveryStartTime":
+                                    category.deliveryStartTime ?? "",
+                                "deliveryEndTime":
+                                    category.deliveryEndTime ?? "",
                               },
                             );
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(24),
                               gradient: LinearGradient(
                                 colors: index.isEven
-                                    ? const [Color(0xFFFFA726), Color(0xFFFF7043)]
-                                    : const [Color(0xFF26A69A), Color(0xFF42A5F5)],
+                                    ? const [
+                                        Color(0xFFFFA726),
+                                        Color(0xFFFF7043),
+                                      ]
+                                    : const [
+                                        Color(0xFF26A69A),
+                                        Color(0xFF42A5F5),
+                                      ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -201,53 +240,115 @@ class _MenuEntryScreenState extends State<MenuEntryScreen> {
                                 ),
                               ],
                             ),
-                            child: Column(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(18),
-                                    child: Image.network(
-                                      category.categoryImage ?? "",
-                                      width: double.infinity,
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Image.network(
+                                    category.categoryImage ?? "",
+                                    width: 108,
+                                    height: 108,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Image.asset(
+                                      "assets/images/popular.png",
+                                      width: 108,
+                                      height: 108,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
-                                        "assets/images/popular.png",
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  category.name ?? "",
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'View Menu',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white.withOpacity(0.95),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        category.name ?? "",
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 15,
-                                      color: Colors.white,
-                                    ),
-                                  ],
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        category.description?.isNotEmpty == true
+                                            ? category.description!
+                                            : "Browse available dishes by category",
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.92),
+                                          height: 1.45,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      if (!isEventCard) ...[
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(
+                                              0.16,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Order Time: ${_timeRange(category.orderStartTime, category.orderEndTime)}",
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "Delivery Time: ${_timeRange(category.deliveryStartTime, category.deliveryEndTime)}",
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                      ],
+                                      Row(
+                                        children: [
+                                          Text(
+                                            isEventCard
+                                                ? 'View Events'
+                                                : 'View Menu',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  Colors.white.withOpacity(0.96),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          const Icon(
+                                            Icons.arrow_forward_ios_rounded,
+                                            size: 15,
+                                            color: Colors.white,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

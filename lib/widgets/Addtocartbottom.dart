@@ -4,6 +4,45 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
 import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
+import 'package:taste_of_bihar/utils/Sharedpre.dart';
+
+bool _hasTimingWindow(Map<String, String> product) {
+  return (product["orderStartTime"] ?? "").trim().isNotEmpty ||
+      (product["orderEndTime"] ?? "").trim().isNotEmpty ||
+      (product["deliveryStartTime"] ?? "").trim().isNotEmpty ||
+      (product["deliveryEndTime"] ?? "").trim().isNotEmpty;
+}
+
+Future<bool> _canAddProductToCart(
+  CartController cartCtrl,
+  Map<String, String> product,
+) async {
+  if (cartCtrl.cartItems.isEmpty) return true;
+
+  final savedTiming = await SharedPre.getCartTiming();
+  final cartHasTiming =
+      (savedTiming["orderStartTime"] ?? "").trim().isNotEmpty ||
+      (savedTiming["orderEndTime"] ?? "").trim().isNotEmpty ||
+      (savedTiming["deliveryStartTime"] ?? "").trim().isNotEmpty ||
+      (savedTiming["deliveryEndTime"] ?? "").trim().isNotEmpty;
+  final incomingHasTiming = _hasTimingWindow(product);
+
+  if (cartHasTiming != incomingHasTiming) {
+    Get.snackbar(
+      "Cart Restriction",
+      cartHasTiming
+          ? "Timed menu items are already in your cart. Please complete or clear that cart before adding snacks, drinks, or events."
+          : "Snacks, drinks, or event items are already in your cart. Please complete or clear that cart before adding breakfast, lunch, or dinner items.",
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(12),
+    );
+    return false;
+  }
+
+  return true;
+}
 
 void openProductBottomSheet(BuildContext context, Map<String, String> product) {
   int qty = 1;
@@ -323,11 +362,41 @@ void openProductBottomSheet(BuildContext context, Map<String, String> product) {
                                           return;
                                         }
 
-                                        await apiCtrl.addToCartApi(
+                                        final canAdd = await _canAddProductToCart(
+                                          cartCtrl,
+                                          product,
+                                        );
+                                        if (!canAdd) {
+                                          return;
+                                        }
+
+                                        final result = await apiCtrl.addToCartApi(
                                           menuId,
                                           qty,
                                           "",
                                         );
+                                        if (result["success"] != true) {
+                                          Get.snackbar(
+                                            "Error",
+                                            result["message"] ??
+                                                "Failed to add item",
+                                          );
+                                          return;
+                                        }
+
+                                        await SharedPre.saveCartTiming(
+                                          categoryName:
+                                              product["categoryName"] ?? "",
+                                          orderStartTime:
+                                              product["orderStartTime"] ?? "",
+                                          orderEndTime:
+                                              product["orderEndTime"] ?? "",
+                                          deliveryStartTime:
+                                              product["deliveryStartTime"] ?? "",
+                                          deliveryEndTime:
+                                              product["deliveryEndTime"] ?? "",
+                                        );
+
                                         await cartCtrl.fetchCartApi();
                                         Navigator.pop(context);
                                       },

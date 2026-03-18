@@ -135,7 +135,7 @@ class NotificationScreen extends StatelessWidget {
                     final palette = _paletteByType(n.type ?? payload?.type);
 
                     return InkWell(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(22),
                       onTap: () {
                         if (n.isRead != true && n.id != null) {
                           ctrl.markNotificationAsRead(n.id!);
@@ -146,70 +146,72 @@ class NotificationScreen extends StatelessWidget {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(11),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              palette.light,
-                              palette.light.withOpacity(0.6),
-                            ],
-                          ),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(22),
                           border: Border.all(
                             color: n.isRead == true
-                                ? Colors.white
-                                : palette.main.withOpacity(0.28),
-                            width: 1.2,
+                                ? Colors.grey.shade200
+                                : palette.main.withOpacity(0.32),
+                            width: 1.1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: palette.main.withOpacity(0.12),
-                              blurRadius: 14,
-                              offset: const Offset(0, 6),
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.light,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _iconByType(n.type ?? payload?.type),
+                                    size: 14,
+                                    color: palette.dark,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _typeLabel(n.type ?? payload?.type),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: palette.dark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: palette.main.withOpacity(0.18),
-                                      ),
-                                      child: Icon(
-                                        _iconByType(n.type ?? payload?.type),
-                                        size: 18,
-                                        color: palette.dark,
-                                      ),
-                                    ),
-                                    if (n.isRead != true)
-                                      Positioned(
-                                        right: -1,
-                                        top: -1,
-                                        child: Container(
-                                          height: 10,
-                                          width: 10,
-                                          decoration: BoxDecoration(
-                                            color: palette.dark,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    color: palette.light,
+                                  ),
+                                  child: Icon(
+                                    _iconByType(n.type ?? payload?.type),
+                                    size: 22,
+                                    color: palette.dark,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -222,7 +224,7 @@ class NotificationScreen extends StatelessWidget {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.poppins(
-                                          fontSize: 13,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.w700,
                                           color: Colors.black87,
                                         ),
@@ -239,41 +241,61 @@ class NotificationScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
+                                if (n.isRead != true)
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    margin: const EdgeInsets.only(top: 6),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: palette.main,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: palette.main.withOpacity(0.3),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
                             if ((n.message ?? '').trim().isNotEmpty) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Text(
                                 n.message!,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 11.5,
-                                  height: 1.4,
-                                  color: Colors.black87,
+                                  fontSize: 12,
+                                  height: 1.5,
+                                  color: Colors.black.withOpacity(0.72),
                                 ),
                               ),
                             ],
                             if (payload?.type == 'DAILY_MENU') ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.72),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: palette.light.withOpacity(0.55),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: palette.main.withOpacity(0.12),
+                                  ),
                                 ),
                                 child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(14),
                                       child: (payload?.image ?? '').isNotEmpty
                                           ? Image.network(
                                               payload!.image!,
-                                              width: 52,
-                                              height: 52,
+                                              width: 72,
+                                              height: 72,
                                               fit: BoxFit.cover,
                                               errorBuilder: (_, __, ___) =>
                                                   Container(
-                                                    width: 52,
-                                                    height: 52,
+                                                    width: 72,
+                                                    height: 72,
                                                     color: Colors.grey.shade200,
                                                     child: const Icon(
                                                       Icons.restaurant_menu,
@@ -281,8 +303,8 @@ class NotificationScreen extends StatelessWidget {
                                                   ),
                                             )
                                           : Container(
-                                              width: 52,
-                                              height: 52,
+                                              width: 72,
+                                              height: 72,
                                               color: Colors.grey.shade200,
                                               child: const Icon(
                                                 Icons.restaurant_menu,
@@ -293,26 +315,64 @@ class NotificationScreen extends StatelessWidget {
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             payload?.name ?? "Today's special",
-                                            maxLines: 1,
+                                            maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.poppins(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.black87,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Rs. ${payload?.price ?? '-'}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.green.shade700,
-                                            ),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: [
+                                              _buildInfoChip(
+                                                label: _formatPrice(
+                                                  payload?.price,
+                                                ),
+                                                textColor: Colors.green.shade800,
+                                                backgroundColor: Colors.white,
+                                                borderColor:
+                                                    Colors.green.shade100,
+                                                icon: Icons.currency_rupee,
+                                              ),
+                                              if ((payload?.foodType ?? '')
+                                                  .trim()
+                                                  .isNotEmpty)
+                                                _buildInfoChip(
+                                                  label:
+                                                      payload!.foodType!.toUpperCase(),
+                                                  textColor: palette.dark,
+                                                  backgroundColor:
+                                                      Colors.white,
+                                                  borderColor:
+                                                      palette.main.withOpacity(
+                                                    0.14,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
+                                          if ((payload?.description ?? '')
+                                              .trim()
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              payload!.description!,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 11,
+                                                height: 1.45,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -326,27 +386,60 @@ class NotificationScreen extends StatelessWidget {
                               ),
                             ],
                             if ((payload?.otp ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 5,
+                                  horizontal: 10,
+                                  vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(24),
+                                  color: palette.light,
+                                  borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: palette.main.withOpacity(0.25),
+                                    color: palette.main.withOpacity(0.18),
                                   ),
                                 ),
-                                child: Text(
-                                  'Delivery OTP: ${payload!.otp}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: palette.dark,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.pin_outlined,
+                                      size: 16,
+                                      color: palette.dark,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Delivery OTP: ${payload!.otp}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: palette.dark,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                            ],
+                            if ((payload?.type != 'DAILY_MENU') &&
+                                (payload?.otp ?? '').isEmpty) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.touch_app_outlined,
+                                    size: 14,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Tap to view details',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ],
@@ -413,9 +506,64 @@ class NotificationScreen extends StatelessWidget {
     if (difference.inMinutes < 1) return 'Just now';
     if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
     if (difference.inHours < 24) return '${difference.inHours} hr ago';
-    if (difference.inDays < 7) return '${difference.inDays} day ago';
+    if (difference.inDays < 7) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    }
 
     return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+  }
+
+  String _typeLabel(String? type) {
+    switch (type) {
+      case 'DELIVERY_OTP':
+        return 'Delivery Update';
+      case 'ORDER_CONFIRMATION':
+        return 'Order Update';
+      case 'DAILY_MENU':
+        return 'New Item';
+      default:
+        return 'Alert';
+    }
+  }
+
+  String _formatPrice(num? price) {
+    if (price == null) return 'Price not available';
+    final isWhole = price % 1 == 0;
+    return isWhole ? '₹${price.toInt()}' : '₹${price.toStringAsFixed(2)}';
+  }
+
+  Widget _buildInfoChip({
+    required String label,
+    required Color textColor,
+    required Color backgroundColor,
+    required Color borderColor,
+    IconData? icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: textColor),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

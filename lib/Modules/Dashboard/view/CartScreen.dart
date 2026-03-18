@@ -691,6 +691,16 @@ class CartScreen extends StatelessWidget {
                                     final selected =
                                         cartCtrl.selectedPaymentMethod.value;
 
+                                    if (!cartCtrl.canPlaceOrderNow) {
+                                      Get.snackbar(
+                                        "Order Not Available",
+                                        cartCtrl.placeOrderTimingMessage,
+                                        backgroundColor: Colors.red.shade100,
+                                        colorText: Colors.black87,
+                                      );
+                                      return;
+                                    }
+
                                     if (selected == "COD") {
                                       await cartCtrl.placeOrder(
                                         addressId: savedAddressId,

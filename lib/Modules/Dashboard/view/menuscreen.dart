@@ -20,8 +20,28 @@ class _MenuScreenState extends State<MenuScreen> {
   String selectedCategory = "";
   String selectedCategoryId = "";
   String selectedSubCategory = "";
+  String orderStartTime = "";
+  String orderEndTime = "";
+  String deliveryStartTime = "";
+  String deliveryEndTime = "";
 
   final Authcontroller authCtrl = Get.find<Authcontroller>();
+
+  String get _categoryLabel {
+    return selectedCategory.isNotEmpty ? selectedCategory : "Menu";
+  }
+
+  String get _emptySubCategoryMessage {
+    final label = _categoryLabel;
+    return "$label is getting ready. Please wait a little while.";
+  }
+
+  String get _emptyItemsMessage {
+    final label = selectedSubCategory.isNotEmpty
+        ? selectedSubCategory
+        : _categoryLabel;
+    return "$label items are not ready yet. Please check back soon.";
+  }
 
   Future<void> _loadInitialSubCategoryItems() async {
     authCtrl.items.clear();
@@ -50,6 +70,10 @@ class _MenuScreenState extends State<MenuScreen> {
     if (args != null && args is Map) {
       selectedCategory = args["categoryName"] ?? "";
       selectedCategoryId = args["categoryId"] ?? "";
+      orderStartTime = args["orderStartTime"] ?? "";
+      orderEndTime = args["orderEndTime"] ?? "";
+      deliveryStartTime = args["deliveryStartTime"] ?? "";
+      deliveryEndTime = args["deliveryEndTime"] ?? "";
       _loadInitialSubCategoryItems();
     }
   }
@@ -145,7 +169,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        "No\nSubcategories",
+                        _emptySubCategoryMessage,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
@@ -301,7 +325,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         if (authCtrl.subCategories.isEmpty) {
                           return Center(
                             child: Text(
-                              "Subcategories not available",
+                              _emptySubCategoryMessage,
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -328,7 +352,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         if (itemList.isEmpty) {
                           return Center(
                             child: Text(
-                              "No item available",
+                              _emptyItemsMessage,
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -495,6 +519,16 @@ class _MenuScreenState extends State<MenuScreen> {
                                                                 .basePrice
                                                                 .toString(),
                                                             "image": imageUrl,
+                                                            "categoryName":
+                                                                selectedCategory,
+                                                            "orderStartTime":
+                                                                orderStartTime,
+                                                            "orderEndTime":
+                                                                orderEndTime,
+                                                            "deliveryStartTime":
+                                                                deliveryStartTime,
+                                                            "deliveryEndTime":
+                                                                deliveryEndTime,
                                                             "type":
                                                                 item.isVeg ==
                                                                     true

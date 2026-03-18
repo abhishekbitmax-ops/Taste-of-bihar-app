@@ -1160,6 +1160,18 @@ class NotificationPayload {
   });
 
   factory NotificationPayload.fromJson(Map<String, dynamic> json) {
+    final dynamic nestedItem = json['item'] ?? json['menuItem'];
+    final Map<String, dynamic>? itemMap = nestedItem is Map<String, dynamic>
+        ? nestedItem
+        : null;
+    final dynamic rawPrice =
+        json['price'] ??
+        json['basePrice'] ??
+        json['offerPrice'] ??
+        itemMap?['price'] ??
+        itemMap?['basePrice'] ??
+        itemMap?['offerPrice'];
+
     return NotificationPayload(
       otp: json['otp']?.toString(),
       orderId: json['orderId'] as String?,
@@ -1167,12 +1179,14 @@ class NotificationPayload {
       type: json['type'] as String?,
 
       // 🍽️ MENU ITEM
-      itemId: json['itemId'] as String?,
-      name: json['name'] as String?,
-      price: json['price'],
-      foodType: json['foodType'] as String?,
-      image: json['image'] as String?,
-      description: json['description'] as String?,
+      itemId: (json['itemId'] ?? itemMap?['_id'])?.toString(),
+      name: (json['name'] ?? itemMap?['name'])?.toString(),
+      price: rawPrice is num
+          ? rawPrice
+          : num.tryParse(rawPrice?.toString() ?? ''),
+      foodType: (json['foodType'] ?? itemMap?['foodType']) as String?,
+      image: (json['image'] ?? itemMap?['image']) as String?,
+      description: (json['description'] ?? itemMap?['description']) as String?,
     );
   }
 

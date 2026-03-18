@@ -1,14 +1,20 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:lottie/lottie.dart';
 
 import 'package:shimmer/shimmer.dart';
 import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Snaksmodel.dart'
+    as quick_model;
 import 'package:taste_of_bihar/Modules/Dashboard/view/CartScreen.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/MenuEntryScreen.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/view/menuscreen.dart';
 import 'package:taste_of_bihar/Modules/Dashboard/view/Notification.dart';
 import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
@@ -23,36 +29,56 @@ class FoodHomeScreen extends StatefulWidget {
   State<FoodHomeScreen> createState() => _FoodHomeScreenState();
 }
 
-class _FoodHomeScreenState extends State<FoodHomeScreen> {
+class _FoodHomeScreenState extends State<FoodHomeScreen>
+    with SingleTickerProviderStateMixin {
   final Authcontroller authCtrl = Get.find<Authcontroller>();
   final CartController popularCtrl = Get.find<CartController>();
+  late final AnimationController _partyBombController;
 
   RxString address = "Fetching location...".obs;
-  final List<Map<String, String>> dummySnackDrinkCategories = const [
-    {"name": "Snacks", "image": "assets/images/Dine.jpg"},
-    {"name": "Cold Drinks", "image": "assets/images/demo_onne.png"},
-    {"name": "Tea & Coffee", "image": "assets/images/demo_twoo.png"},
-    {"name": "Fresh Juice", "image": "assets/images/dinein.png"},
-  ];
 
   final List<Color> _surfaceGradient = const [
-    Color(0xFFFFFBF6),
-    Color(0xFFFDF3E6),
-    Color(0xFFF8E9D8),
+    Color(0x99FFFBF6),
+    Color(0x99FDF3E6),
+    Color(0x99F8E9D8),
   ];
+
+  void _openCategoryMenu(quick_model.CategoryData category) {
+    Get.to(
+      () => const MenuScreen(),
+      arguments: {
+        "categoryName": category.name ?? "",
+        "categoryId": category.id ?? "",
+      },
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    _partyBombController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
 
     _getCurrentLocation();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       authCtrl.fetchBanners(); // ✅ ONLY ONCE
+      if (authCtrl.quickCategories.isEmpty) {
+        await authCtrl.fetchQuickCategories();
+      }
+      await authCtrl.fetchQuickCategoryItems();
 
-      // ✅ FETCH POPULAR DISHES HERE
+      // ✅ keep other home data ready
       await popularCtrl.fetchPopularDishes();
     });
+  }
+
+  @override
+  void dispose() {
+    _partyBombController.dispose();
+    super.dispose();
   }
 
   Widget _animatedEntry({
@@ -71,6 +97,99 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           child: Opacity(opacity: value.clamp(0, 1), child: child),
         );
       },
+    );
+  }
+
+  Widget _buildPartyButton() {
+    return AnimatedBuilder(
+      animation: _partyBombController,
+      builder: (context, child) {
+        final pulse =
+            1 + (math.sin(_partyBombController.value * math.pi * 2) * 0.035);
+
+        return Transform.scale(scale: pulse, child: child);
+      },
+      child: InkWell(
+        onTap: () => Get.offAll(() => const BottomNavBar(initialIndex: 2)),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFF7A18), Color(0xFFFFB347), Color(0xFFFF4D6D)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF7A18).withOpacity(0.34),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.22),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.celebration_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Party Mode",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Tap to open party offers",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withOpacity(0.92),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -151,12 +270,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         child: Stack(
           children: [
             Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: _surfaceGradient,
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: _surfaceGradient,
+                    ),
                   ),
                 ),
               ),
@@ -182,6 +303,19 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFFFE6B8).withOpacity(0.30),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.72,
+                  child: Lottie.asset(
+                    'assets/lottie/partybomb.json',
+                    controller: _partyBombController,
+                    fit: BoxFit.cover,
+                    repeat: false,
+                  ),
                 ),
               ),
             ),
@@ -211,181 +345,147 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                           bottomRight: Radius.circular(36),
                         ),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Taste of Bihar",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 29,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Fresh food made with love",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13.5,
-                                    color: Colors.white.withOpacity(0.88),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          InkWell(
-                            onTap: () => Get.to(() => NotificationScreen()),
-                            borderRadius: BorderRadius.circular(18),
-                            child: Obx(() {
-                              final count = popularCtrl.unreadCount;
-                              return Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.18),
-                                      borderRadius: BorderRadius.circular(16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Taste of Bihar",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 29,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.notifications_none,
-                                      color: Colors.white,
-                                      size: 24,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "Fresh food made with love",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13.5,
+                                        color: Colors.white.withOpacity(0.88),
+                                      ),
                                     ),
-                                  ),
-                                  if (count > 0)
-                                    Positioned(
-                                      right: -5,
-                                      top: -5,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              InkWell(
+                                onTap: () => Get.to(() => NotificationScreen()),
+                                borderRadius: BorderRadius.circular(18),
+                                child: Obx(() {
+                                  final count = popularCtrl.unreadCount;
+                                  return Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.18),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 18,
-                                          minHeight: 18,
+                                        child: const Icon(
+                                          Icons.notifications_none,
+                                          color: Colors.white,
+                                          size: 24,
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            count > 9 ? "9+" : count.toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
+                                      ),
+                                      if (count > 0)
+                                        Positioned(
+                                          right: -5,
+                                          top: -5,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 18,
+                                              minHeight: 18,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                count > 9
+                                                    ? "9+"
+                                                    : count.toString(),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
+                                    ],
+                                  );
+                                }),
+                              ),
+                              const SizedBox(width: 10),
+                              InkWell(
+                                onTap: () => Get.to(() => CartScreen()),
+                                borderRadius: BorderRadius.circular(18),
+                                child: Obx(() {
+                                  final cartCtrl = Get.find<CartController>();
+                                  final count = cartCtrl.cartItems.length;
+                                  return Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.18),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.shopping_cart_outlined,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
                                       ),
-                                    ),
-                                ],
-                              );
-                            }),
-                          ),
-                          const SizedBox(width: 10),
-                          InkWell(
-                            onTap: () => Get.to(() => CartScreen()),
-                            borderRadius: BorderRadius.circular(18),
-                            child: Obx(() {
-                              final cartCtrl = Get.find<CartController>();
-                              final count = cartCtrl.cartItems.length;
-                              return Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.18),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Icon(
-                                      Icons.shopping_cart_outlined,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  if (count > 0)
-                                    Positioned(
-                                      right: -5,
-                                      top: -5,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 18,
-                                          minHeight: 18,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "$count",
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
+                                      if (count > 0)
+                                        Positioned(
+                                          right: -5,
+                                          top: -5,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 18,
+                                              minHeight: 18,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                "$count",
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                ],
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    _animatedEntry(
-                      delayMs: 100,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFF9F2), Color(0xFFFFFFFF)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFFDFAF7D,
-                                ).withOpacity(0.22),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
+                                    ],
+                                  );
+                                }),
                               ),
                             ],
                           ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: "Search for restaurants or dishes",
-                              hintStyle: GoogleFonts.poppins(
-                                color: const Color(0xFF8B6A49),
-                                fontSize: 13,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.search_rounded,
-                                color: Color(0xFFA5652F),
-                              ),
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 15,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                        ),
+                          const SizedBox(height: 18),
+                          _buildPartyButton(),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -393,151 +493,293 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       delayMs: 200,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Obx(() {
-                            if (authCtrl.isBannerLoading.value) {
-                              return bannerShimmer();
-                            }
-                            if (authCtrl.banners.isEmpty) {
-                              return const SizedBox(
-                                height: 170,
-                                child: Center(
-                                  child: Text("No banners available"),
-                                ),
-                              );
-                            }
+                        child: Container(
+                          height: 210,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFE67E22,
+                                ).withOpacity(0.22),
+                                blurRadius: 24,
+                                offset: const Offset(0, 14),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(28),
+                            child: Obx(() {
+                              if (authCtrl.isBannerLoading.value) {
+                                return bannerShimmer();
+                              }
+                              if (authCtrl.banners.isEmpty) {
+                                return Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFFFB347),
+                                        Color(0xFFFF7043),
+                                        Color(0xFF8E44AD),
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Text("No banners available"),
+                                  ),
+                                );
+                              }
 
-                            return Stack(
-                              children: [
-                                SizedBox(
-                                  height: 170,
-                                  width: double.infinity,
-                                  child: PageView.builder(
-                                    controller: authCtrl.pageController,
-                                    onPageChanged: (i) {
-                                      authCtrl.currentIndex.value = i;
-                                    },
-                                    itemCount: authCtrl.banners.length,
-                                    itemBuilder: (context, i) {
-                                      final banner = authCtrl.banners[i];
+                              return Stack(
+                                children: [
+                                  SizedBox(
+                                    height: 210,
+                                    width: double.infinity,
+                                    child: PageView.builder(
+                                      controller: authCtrl.pageController,
+                                      onPageChanged: (i) {
+                                        authCtrl.currentIndex.value = i;
+                                      },
+                                      itemCount: authCtrl.banners.length,
+                                      itemBuilder: (context, i) {
+                                        final banner = authCtrl.banners[i];
 
-                                      return Stack(
-                                        fit: StackFit.expand,
-                                        children: [
-                                          Image.network(
-                                            banner.image ?? "",
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                Image.asset(
-                                                  "assets/images/delas.png",
-                                                  fit: BoxFit.cover,
-                                                ),
-                                          ),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.bottomCenter,
-                                                end: Alignment.topCenter,
-                                                colors: [
-                                                  Colors.black.withOpacity(
-                                                    0.66,
+                                        return Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            Image.network(
+                                              banner.image ?? "",
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  Image.asset(
+                                                    "assets/images/delas.png",
+                                                    fit: BoxFit.cover,
                                                   ),
-                                                  Colors.transparent,
-                                                ],
+                                            ),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    const Color(
+                                                      0xFFFF8A65,
+                                                    ).withOpacity(0.78),
+                                                    const Color(
+                                                      0xFFFFC107,
+                                                    ).withOpacity(0.45),
+                                                    const Color(
+                                                      0xFF7B1FA2,
+                                                    ).withOpacity(0.72),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          Positioned(
-                                            left: 14,
-                                            right: 14,
-                                            bottom: 20,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                if ((banner.title ?? "")
-                                                    .isNotEmpty)
-                                                  Text(
-                                                    banner.title!,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: GoogleFonts.poppins(
-                                                      color: Colors.white,
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w700,
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
+                                                  colors: [
+                                                    Colors.black.withOpacity(
+                                                      0.62,
                                                     ),
+                                                    Colors.transparent,
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 10,
+                                              left: 16,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 7,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.20),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                  border: Border.all(
+                                                    color: Colors.white
+                                                        .withOpacity(0.45),
                                                   ),
-                                                if ((banner.description ?? "")
-                                                    .isNotEmpty)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          top: 5,
-                                                        ),
-                                                    child: Text(
-                                                      banner.description!,
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons
+                                                          .local_fire_department,
+                                                      size: 15,
+                                                      color: Colors.white,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      "Chef Special",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            color: Colors.white,
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: -10,
+                                              top: -14,
+                                              child: Container(
+                                                width: 92,
+                                                height: 92,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.white
+                                                      .withOpacity(0.14),
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              left: 18,
+                                              right: 18,
+                                              bottom: 24,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  if ((banner.title ?? "")
+                                                      .isNotEmpty)
+                                                    Text(
+                                                      banner.title!,
                                                       maxLines: 2,
                                                       overflow:
                                                           TextOverflow.ellipsis,
                                                       style:
                                                           GoogleFonts.poppins(
-                                                            color: Colors.white
-                                                                .withOpacity(
-                                                                  0.84,
-                                                                ),
-                                                            fontSize: 12,
+                                                            color: Colors.white,
+                                                            fontSize: 22,
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                            height: 1.15,
+                                                          ),
+                                                    ),
+                                                  if ((banner.description ?? "")
+                                                      .isNotEmpty)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: 8,
+                                                          ),
+                                                      child: Text(
+                                                        banner.description!,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withOpacity(
+                                                                    0.92,
+                                                                  ),
+                                                              fontSize: 12.5,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  const SizedBox(height: 12),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 14,
+                                                          vertical: 8,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            18,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      "Order Fresh Today",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            color: const Color(
+                                                              0xFF9A4D16,
+                                                            ),
+                                                            fontSize: 11.5,
+                                                            fontWeight:
+                                                                FontWeight.w700,
                                                           ),
                                                     ),
                                                   ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 10,
-                                  left: 0,
-                                  right: 0,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(
-                                      authCtrl.banners.length,
-                                      (i) => Obx(() {
-                                        final isActive =
-                                            authCtrl.currentIndex.value == i;
-                                        return AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 320,
-                                          ),
-                                          margin: const EdgeInsets.symmetric(
-                                            horizontal: 3,
-                                          ),
-                                          width: isActive ? 20 : 7,
-                                          height: 7,
-                                          decoration: BoxDecoration(
-                                            color: isActive
-                                                ? const Color(0xFFFFD69A)
-                                                : Colors.white.withOpacity(
-                                                    0.45,
-                                                  ),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
+                                          ],
                                         );
-                                      }),
+                                      },
                                     ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }),
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 0,
+                                    right: 0,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: List.generate(
+                                        authCtrl.banners.length,
+                                        (i) => Obx(() {
+                                          final isActive =
+                                              authCtrl.currentIndex.value == i;
+                                          return AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 320,
+                                            ),
+                                            margin: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                            ),
+                                            width: isActive ? 24 : 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              gradient: isActive
+                                                  ? const LinearGradient(
+                                                      colors: [
+                                                        Color(0xFFFFF176),
+                                                        Color(0xFFFFA726),
+                                                      ],
+                                                    )
+                                                  : null,
+                                              color: isActive
+                                                  ? null
+                                                  : Colors.white.withOpacity(
+                                                      0.42,
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
+                          ),
                         ),
                       ),
                     ),
@@ -557,24 +799,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                               ),
                             ),
                             const Spacer(),
-                            InkWell(
-                              onTap: () => Get.offAll(
-                                () => const BottomNavBar(initialIndex: 2),
+                            Text(
+                              "${authCtrl.quickCategories.length} categories",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFAF6528),
                               ),
-                              child: Text(
-                                "See All",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFAF6528),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 14,
-                              color: Color(0xFFAF6528),
                             ),
                           ],
                         ),
@@ -585,31 +816,63 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       delayMs: 340,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: dummySnackDrinkCategories
-                                .asMap()
-                                .entries
-                                .map((entry) {
-                                  final index = entry.key;
-                                  final item = entry.value;
-                                  final gradientColors = [
-                                    const Color(0xFFB55D1E),
-                                    const Color(0xFFE29140),
-                                  ];
+                        child: Obx(() {
+                          final snackDrinkCategories = authCtrl.quickCategories;
 
-                                  return TweenAnimationBuilder<double>(
-                                    tween: Tween(begin: 0, end: 1),
-                                    duration: Duration(
-                                      milliseconds: 500 + (index * 80),
-                                    ),
-                                    curve: Curves.easeOutCubic,
-                                    builder: (_, value, __) {
-                                      return Transform.translate(
-                                        offset: Offset(0, 12 * (1 - value)),
-                                        child: Opacity(
-                                          opacity: value.clamp(0, 1),
+                          if (authCtrl.isQuickCategoryLoading.value &&
+                              snackDrinkCategories.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 20,
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          if (snackDrinkCategories.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: Text(
+                                "Quick categories are not available right now",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF7A6759),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: snackDrinkCategories.asMap().entries.map((
+                                entry,
+                              ) {
+                                final index = entry.key;
+                                final item = entry.value;
+                                final gradientColors = [
+                                  const Color(0xFFB55D1E),
+                                  const Color(0xFFE29140),
+                                ];
+
+                                return TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: 1),
+                                  duration: Duration(
+                                    milliseconds: 500 + (index * 80),
+                                  ),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (_, value, __) {
+                                    return Transform.translate(
+                                      offset: Offset(0, 12 * (1 - value)),
+                                      child: Opacity(
+                                        opacity: value.clamp(0, 1),
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          onTap: () => _openCategoryMenu(item),
                                           child: Container(
                                             width: 94,
                                             margin: const EdgeInsets.only(
@@ -654,9 +917,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                                             color: Colors.white,
                                                           ),
                                                       child: ClipOval(
-                                                        child: Image.asset(
-                                                          item["image"]!,
+                                                        child: Image.network(
+                                                          item.categoryImage ??
+                                                              "",
                                                           fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (
+                                                                _,
+                                                                __,
+                                                                ___,
+                                                              ) => Image.asset(
+                                                                "assets/images/popular.png",
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                              ),
                                                         ),
                                                       ),
                                                     ),
@@ -664,7 +938,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Text(
-                                                  item["name"]!,
+                                                  item.name ?? "",
                                                   textAlign: TextAlign.center,
                                                   maxLines: 2,
                                                   overflow:
@@ -681,13 +955,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                             ),
                                           ),
                                         ),
-                                      );
-                                    },
-                                  );
-                                })
-                                .toList(),
-                          ),
-                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        }),
                       ),
                     ),
                     const SizedBox(height: 26),
@@ -706,25 +981,24 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                               ),
                             ),
                             const Spacer(),
-                            InkWell(
-                              onTap: () => Get.offAll(
-                                () => const BottomNavBar(initialIndex: 2),
-                              ),
-                              child: Text(
-                                "See All",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFAF6528),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 14,
-                              color: Color(0xFFAF6528),
-                            ),
+                            // InkWell(
+                            //   onTap: () =>
+                            //       Get.to(() => const MenuEntryScreen()),
+                            //   child: Text(
+                            //     "See All",
+                            //     style: GoogleFonts.poppins(
+                            //       fontSize: 13,
+                            //       fontWeight: FontWeight.w700,
+                            //       color: const Color(0xFFAF6528),
+                            //     ),
+                            //   ),
+                            // ),
+                            // const SizedBox(width: 4),
+                            // const Icon(
+                            //   Icons.arrow_forward_ios,
+                            //   size: 14,
+                            //   color: Color(0xFFAF6528),
+                            // ),
                           ],
                         ),
                       ),
@@ -733,18 +1007,16 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Obx(() {
-                        if (popularCtrl.isLoading.value) {
+                        if (authCtrl.isSnackDrinkItemsLoading.value) {
                           return popularDishShimmer();
                         }
 
-                        if (popularCtrl.popularDishes.isEmpty) {
-                          return const Center(
-                            child: Text("No popular dishes found"),
-                          );
+                        if (authCtrl.snackDrinkItems.isEmpty) {
+                          return const Center(child: Text("No items found"));
                         }
 
                         return Column(
-                          children: popularCtrl.popularDishes
+                          children: authCtrl.snackDrinkItems
                               .asMap()
                               .entries
                               .map((entry) {
@@ -754,31 +1026,35 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                   delayMs: 420 + (index * 90),
                                   duration: const Duration(milliseconds: 460),
                                   child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 20),
+                                    padding: const EdgeInsets.only(bottom: 7),
                                     child: popularDishFullCard(
-                                      image: dish.image?.isNotEmpty == true
-                                          ? dish.image ?? ""
+                                      image: dish.menuImage?.isNotEmpty == true
+                                          ? dish.menuImage ?? ""
                                           : "assets/images/popular.png",
                                       name: dish.name ?? "Unknown",
                                       description:
                                           dish.description?.isNotEmpty == true
                                           ? dish.description!
                                           : "Delight in every bite",
-                                      rating:
-                                          dish.rating?.toStringAsFixed(1) ??
-                                          "0.0",
+                                      rating: dish.isAvailable == true
+                                          ? "4.5"
+                                          : "0.0",
                                       category: dish.isVeg == true
                                           ? "Veg"
                                           : "Non-Veg",
-                                      time: "${dish.totalSold ?? 0} sold",
-                                      price: "â‚¹${dish.price ?? 0}",
+                                      time:
+                                          dish.subCategory?.name?.isNotEmpty ==
+                                              true
+                                          ? dish.subCategory!.name!
+                                          : "Freshly prepared",
+                                      price: "Rs ${dish.basePrice ?? 0}",
                                       onAdd: () {
                                         openProductBottomSheet(context, {
-                                          "id": dish.id ?? "",
+                                          "id": dish.sId ?? "",
                                           "name": dish.name ?? "",
                                           "desc": dish.description ?? "",
-                                          "price": "â‚¹${dish.price ?? 0}",
-                                          "image": dish.image ?? "",
+                                          "price": "Rs ${dish.basePrice ?? 0}",
+                                          "image": dish.menuImage ?? "",
                                         });
                                       },
                                     ),
@@ -922,10 +1198,10 @@ Widget bannerShimmer() {
     baseColor: Colors.grey.shade300,
     highlightColor: Colors.grey.shade100,
     child: Container(
-      height: 160,
+      height: 210,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(28),
       ),
     ),
   );

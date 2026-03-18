@@ -12,6 +12,8 @@ import 'package:path/path.dart' as path;
 import 'package:taste_of_bihar/Modules/Auth/view/Otpverifiction.dart';
 import 'package:taste_of_bihar/Modules/Auth/view/basicdetails.dart';
 import 'package:taste_of_bihar/Modules/Dashboard/model/Dashboardmodel.dart';
+import 'package:taste_of_bihar/Modules/Dashboard/model/Snaksmodel.dart'
+    as quick_model;
 import 'package:taste_of_bihar/Modules/Dashboard/view/CartScreen.dart';
 import 'package:taste_of_bihar/Modules/Navbar/cartcontroller.dart';
 import 'package:taste_of_bihar/Modules/Navbar/navbar.dart';
@@ -261,6 +263,18 @@ class Authcontroller extends GetxController {
   int get length => categories.length;
   SubCategoryResponse? subCategoryResponse;
   var subCategories = <SubCategoryData>[].obs;
+  quick_model.QuickCategoryModel? quickCategoryResponse;
+  var quickCategories = <quick_model.CategoryData>[].obs;
+  var isQuickCategoryLoading = false.obs;
+  var snackDrinkItems = <MenuItem>[].obs;
+  var isSnackDrinkItemsLoading = false.obs;
+
+  bool isSnackOrDrinkCategoryName(String name) {
+    final normalized = name.trim().toLowerCase();
+    return normalized.contains("snack") ||
+        normalized.contains("drink") ||
+        normalized.contains("beverage");
+  }
 
   Future<void> fetchCategories() async {
     try {
@@ -286,6 +300,40 @@ class Authcontroller extends GetxController {
       isCategoryLoading(false);
     }
   }
+
+  Future<void> fetchQuickCategories() async {
+    try {
+      isQuickCategoryLoading(true);
+
+      String token = await SharedPre.getAccessToken();
+      const quickBytesUrl =
+          "https://bihar-taste.bitmaxtest.com/api/v1/user/categories/quick-bytes";
+
+      final res = await http.get(
+        Uri.parse(quickBytesUrl),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        quickCategoryResponse = quick_model.QuickCategoryModel.fromJson(
+          jsonDecode(res.body),
+        );
+        quickCategories.value = quickCategoryResponse?.data ?? [];
+      } else {
+        quickCategories.clear();
+      }
+    } catch (e) {
+      debugPrint("Quick bytes category API Error: $e");
+      quickCategories.clear();
+    } finally {
+      isQuickCategoryLoading(false);
+    }
+  }
+
+  // Subcategory fetching based on category id
 
   Future<void> fetchSubCategories(String categoryId) async {
     try {
@@ -319,6 +367,34 @@ class Authcontroller extends GetxController {
     } finally {
       isSubCategoryLoading(false);
     }
+  }
+
+  Future<List<SubCategoryData>> _getSubCategoriesForCategory(
+    String categoryId,
+  ) async {
+    try {
+      String token = await SharedPre.getAccessToken();
+      final uri = Uri.parse(
+        ApiEndpoint.getUrl(ApiEndpoint.subCategories),
+      ).replace(queryParameters: {"category": categoryId, "force": "true"});
+
+      final res = await http.get(
+        uri,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final response = SubCategoryResponse.fromJson(jsonDecode(res.body));
+        return response.data ?? [];
+      }
+    } catch (e) {
+      debugPrint("Snack/Drink subcategory error: $e");
+    }
+
+    return [];
   }
 
   // menu items show api
@@ -366,6 +442,88 @@ class Authcontroller extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<List<MenuItem>> _getMenuItemsForSubCategory(
+    String subCategoryId,
+  ) async {
+    try {
+      String token = await SharedPre.getAccessToken();
+      final uri = Uri.parse(
+        ApiEndpoint.getUrl(ApiEndpoint.menu),
+      ).replace(queryParameters: {"subCategory": subCategoryId});
+
+      final response = await http.get(
+        uri,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = jsonDecode(response.body);
+        final data = MenuResponse.fromJson(jsonData);
+        if (data.success == true) {
+          return data.data?.data ?? [];
+        }
+      }
+    } catch (e) {
+      debugPrint("Snack/Drink items error: $e");
+    }
+
+    return [];
+  }
+
+  Future<void> fetchSnackDrinkItems() async {
+    try {
+      isSnackDrinkItemsLoading.value = true;
+      snackDrinkItems.clear();
+
+      if (quickCategories.isEmpty) {
+        await fetchQuickCategories();
+      }
+
+      final List<MenuItem> combinedItems = [];
+      final Set<String> addedItemIds = {};
+
+      for (final category in quickCategories) {
+        final categoryId = category.id ?? "";
+        if (categoryId.isEmpty) continue;
+
+        final categorySubCategories = await _getSubCategoriesForCategory(
+          categoryId,
+        );
+
+        for (final subCategory in categorySubCategories) {
+          final subCategoryId = subCategory.sId ?? "";
+          if (subCategoryId.isEmpty) continue;
+
+          final menuItems = await _getMenuItemsForSubCategory(subCategoryId);
+
+          for (final item in menuItems) {
+            final itemId = item.sId ?? "";
+            if (itemId.isEmpty || addedItemIds.contains(itemId)) {
+              continue;
+            }
+
+            addedItemIds.add(itemId);
+            combinedItems.add(item);
+          }
+        }
+      }
+
+      snackDrinkItems.value = combinedItems;
+    } catch (e) {
+      debugPrint("Snack/Drink home fetch error: $e");
+      snackDrinkItems.clear();
+    } finally {
+      isSnackDrinkItemsLoading.value = false;
+    }
+  }
+
+  Future<void> fetchQuickCategoryItems() async {
+    await fetchSnackDrinkItems();
   }
 
   /// Add to Cart Functionality
@@ -681,7 +839,11 @@ class Authcontroller extends GetxController {
     try {
       isHomeRefreshing(true);
 
-      await Future.wait([fetchBanners(), fetchCategories()]);
+      await Future.wait([
+        fetchBanners(),
+        fetchCategories(),
+        fetchQuickCategories(),
+      ]);
     } finally {
       isHomeRefreshing(false);
     }

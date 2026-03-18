@@ -5,6 +5,11 @@ class SharedPre {
   static const String KEY_ACCESS_TOKEN = "access_token";
   static const String KEY_REFRESH_TOKEN = "refresh_token";
   static const String KEY_EXPIRES_IN = "expires_in";
+  static const String KEY_CART_CATEGORY_NAME = "cart_category_name";
+  static const String KEY_CART_ORDER_START_TIME = "cart_order_start_time";
+  static const String KEY_CART_ORDER_END_TIME = "cart_order_end_time";
+  static const String KEY_CART_DELIVERY_START_TIME = "cart_delivery_start_time";
+  static const String KEY_CART_DELIVERY_END_TIME = "cart_delivery_end_time";
 
   // Save verified mobile
   static Future<void> saveMobile(String mobile) async {
@@ -67,5 +72,40 @@ class SharedPre {
   static Future<String> getSelectedAddressId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("selected_address_id") ?? "";
+  }
+
+  static Future<void> saveCartTiming({
+    required String categoryName,
+    required String orderStartTime,
+    required String orderEndTime,
+    required String deliveryStartTime,
+    required String deliveryEndTime,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(KEY_CART_CATEGORY_NAME, categoryName);
+    await prefs.setString(KEY_CART_ORDER_START_TIME, orderStartTime);
+    await prefs.setString(KEY_CART_ORDER_END_TIME, orderEndTime);
+    await prefs.setString(KEY_CART_DELIVERY_START_TIME, deliveryStartTime);
+    await prefs.setString(KEY_CART_DELIVERY_END_TIME, deliveryEndTime);
+  }
+
+  static Future<Map<String, String>> getCartTiming() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      "categoryName": prefs.getString(KEY_CART_CATEGORY_NAME) ?? "",
+      "orderStartTime": prefs.getString(KEY_CART_ORDER_START_TIME) ?? "",
+      "orderEndTime": prefs.getString(KEY_CART_ORDER_END_TIME) ?? "",
+      "deliveryStartTime": prefs.getString(KEY_CART_DELIVERY_START_TIME) ?? "",
+      "deliveryEndTime": prefs.getString(KEY_CART_DELIVERY_END_TIME) ?? "",
+    };
+  }
+
+  static Future<void> clearCartTiming() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(KEY_CART_CATEGORY_NAME);
+    await prefs.remove(KEY_CART_ORDER_START_TIME);
+    await prefs.remove(KEY_CART_ORDER_END_TIME);
+    await prefs.remove(KEY_CART_DELIVERY_START_TIME);
+    await prefs.remove(KEY_CART_DELIVERY_END_TIME);
   }
 }

@@ -26,6 +26,11 @@ class CartController extends GetxController {
   var updatingIndex = (-1).obs;
   var selectedAddressId = "".obs;
   var applyingCouponCode = "".obs;
+  var cartCategoryName = "".obs;
+  var cartOrderStartTime = "".obs;
+  var cartOrderEndTime = "".obs;
+  var cartDeliveryStartTime = "".obs;
+  var cartDeliveryEndTime = "".obs;
 
   // ================= LIVE MAP DATA =================
   var userLat = 0.0.obs;
@@ -182,6 +187,7 @@ class CartController extends GetxController {
     grandTotal.value = 0.0;
     applyingCouponCode.value = "";
     selectedAddressId.value = "";
+    clearSavedCartTiming();
     cartItems.refresh();
   }
 
@@ -308,7 +314,7 @@ class CartController extends GetxController {
       if (cartItemId == null) return;
 
       final url =
-        "https://bihar-taste.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
+          "https://bihar-taste.bitmaxtest.com/api/v1/user/cart/$cartItemId/remove";
 
       final response = await http.delete(
         Uri.parse(url),
@@ -346,7 +352,82 @@ class CartController extends GetxController {
     cartItems.clear();
     cartResponse = null;
     grandTotal.value = 0.0;
+    clearSavedCartTiming();
     cartItems.refresh();
+  }
+
+  Future<void> restoreCartTiming() async {
+    final timing = await SharedPre.getCartTiming();
+    cartCategoryName.value = timing["categoryName"] ?? "";
+    cartOrderStartTime.value = timing["orderStartTime"] ?? "";
+    cartOrderEndTime.value = timing["orderEndTime"] ?? "";
+    cartDeliveryStartTime.value = timing["deliveryStartTime"] ?? "";
+    cartDeliveryEndTime.value = timing["deliveryEndTime"] ?? "";
+  }
+
+  Future<void> clearSavedCartTiming() async {
+    cartCategoryName.value = "";
+    cartOrderStartTime.value = "";
+    cartOrderEndTime.value = "";
+    cartDeliveryStartTime.value = "";
+    cartDeliveryEndTime.value = "";
+    await SharedPre.clearCartTiming();
+  }
+
+  int? _timeToMinutes(String value) {
+    final parts = value.split(":");
+    if (parts.length != 2) return null;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+
+    return (hour * 60) + minute;
+  }
+
+  String _formatTime(String value) {
+    final totalMinutes = _timeToMinutes(value);
+    if (totalMinutes == null) return value;
+
+    final hour = totalMinutes ~/ 60;
+    final minute = totalMinutes % 60;
+    final suffix = hour >= 12 ? "PM" : "AM";
+    final normalizedHour = hour % 12 == 0 ? 12 : hour % 12;
+    return "$normalizedHour:${minute.toString().padLeft(2, '0')} $suffix";
+  }
+
+  bool get canPlaceOrderNow {
+    if (cartOrderStartTime.value.isEmpty || cartOrderEndTime.value.isEmpty) {
+      return true;
+    }
+
+    final start = _timeToMinutes(cartOrderStartTime.value);
+    final end = _timeToMinutes(cartOrderEndTime.value);
+    if (start == null || end == null) return true;
+
+    final now = DateTime.now();
+    final current = (now.hour * 60) + now.minute;
+
+    if (start == end) return true;
+    if (end > start) {
+      return current >= start && current <= end;
+    }
+
+    return current >= start || current <= end;
+  }
+
+  String get placeOrderTimingMessage {
+    final label = cartCategoryName.value.isNotEmpty
+        ? cartCategoryName.value
+        : "This menu";
+
+    if (cartOrderStartTime.value.isEmpty || cartOrderEndTime.value.isEmpty) {
+      return "$label order timing is not available right now.";
+    }
+
+    return "$label orders are available between "
+        "${_formatTime(cartOrderStartTime.value)} and "
+        "${_formatTime(cartOrderEndTime.value)}.";
   }
 
   /// Fetch cart from API and sync
@@ -361,6 +442,8 @@ class CartController extends GetxController {
         clearCartAndReset();
         return;
       }
+
+      await restoreCartTiming();
 
       final url = ApiEndpoint.getUrl(ApiEndpoint.getCart);
 
@@ -1331,7 +1414,7 @@ class CartController extends GetxController {
       if (token.isEmpty) return;
 
       final url = Uri.parse(
-       "https://resto-grandma.onrender.com/api/v1/user/notifications/$notificationId/read"
+        "https://resto-grandma.onrender.com/api/v1/user/notifications/$notificationId/read",
       );
 
       final response = await http.patch(
