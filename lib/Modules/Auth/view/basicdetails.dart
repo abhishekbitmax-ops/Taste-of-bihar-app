@@ -18,7 +18,7 @@ class UserBasicDetails extends StatefulWidget {
 
 class _UserBasicDetailsState extends State<UserBasicDetails> {
   final TextEditingController nameCtrl = TextEditingController();
-  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController phoneCtrl = TextEditingController();
   final TextEditingController locationCtrl = TextEditingController();
   final RxString selectedGender = "".obs;
   final RxString dobValue = "".obs;
@@ -164,20 +164,20 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
 
                   const SizedBox(height: 16),
 
-                  // Email Field
+                  // Phone Field
                   TextField(
-                    controller: emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),
                     decoration: InputDecoration(
-                      hintText: "Email",
+                      hintText: "Phone Number",
                       filled: true,
                       fillColor: Colors.grey.shade100,
                       prefixIcon: const Icon(
-                        Icons.email,
+                        Icons.phone,
                         size: 20,
                         color: Colors.black54,
                       ),
@@ -356,7 +356,7 @@ class _UserBasicDetailsState extends State<UserBasicDetails> {
                             : () async {
                                 await userBasicCtrl.submitBasicDetails(
                                   name: nameCtrl.text.trim(),
-                                  email: emailCtrl.text.trim(),
+                                  phone: phoneCtrl.text.trim(),
                                   imageFile: userImage,
                                   gender: selectedGender.value,
                                   dob: dobValue.value,

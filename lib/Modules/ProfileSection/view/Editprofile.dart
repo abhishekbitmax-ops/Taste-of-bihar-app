@@ -70,13 +70,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
 
               buildTextField(
-                "Email",
+                "Mobile",
                 TextField(
-                  controller: ctrl.emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: ctrl.mobileCtrl,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    hintText: ctrl.profileData.value.email ?? "Enter Email",
+                    hintText: "Enter Mobile",
                   ),
                 ),
               ),

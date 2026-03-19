@@ -7,9 +7,13 @@ class ApiEndpoint {
   static const String baseUrl2 = "https://bihar-taste.bitmaxtest.com/api/v1";
   //  AUTHENTICATION ENDPOINTS
 
-  static const String login = "/mobile-send-otp";
-  static String verifyOtp = "/mobile-verify-otp";
-  static const String basicDetails = "/mobile-register";
+  // static const String login = "/mobile-send-otp";
+  // static String verifyOtp = "/mobile-verify-otp";
+  // static const String basicDetails = "/mobile-register";
+
+   static const String login = "/email-send-otp";
+  static String verifyOtp = "/email-verify-otp";
+  static const String basicDetails = "/email-register";
   static const String profile = "/profile";
   static const String updateProfile = "/profile-update";
   static const String categories = "/categories";

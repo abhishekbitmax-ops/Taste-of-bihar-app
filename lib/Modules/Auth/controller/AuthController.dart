@@ -21,7 +21,7 @@ import 'package:taste_of_bihar/utils/Sharedpre.dart';
 import 'package:taste_of_bihar/utils/api_endpoints.dart';
 
 class Authcontroller extends GetxController {
-  final mobileCtrl = TextEditingController();
+  final emailCtrl = TextEditingController();
   var isLoading = false.obs;
   var isDataBound = false.obs;
   var isBannerLoading = true.obs;
@@ -40,14 +40,17 @@ class Authcontroller extends GetxController {
   }
 
   Future<void> sendOtp() async {
-    if (mobileCtrl.text.length < 10) {
-      Get.snackbar("Error", "Please enter valid mobile number");
+    final email = emailCtrl.text.trim();
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+    if (!emailRegex.hasMatch(email)) {
+      Get.snackbar("Error", "Please enter a valid email address");
       return;
     }
 
     try {
       isLoading.value = true;
-      var body = jsonEncode({"mobile": mobileCtrl.text.trim()});
+      var body = jsonEncode({"email": email});
 
       var response = await http.post(
         Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.login)),
@@ -62,7 +65,7 @@ class Authcontroller extends GetxController {
         Get.to(
           () => const OtpVerificationScreen(),
           arguments: {
-            "mobile": data["mobile"],
+            "email": data["email"] ?? email,
             "isLogin": false,
             "otp": data["otp"],
           },
@@ -77,13 +80,46 @@ class Authcontroller extends GetxController {
     }
   }
 
+  Future<Map<String, dynamic>> resendOtp({required String email}) async {
+    try {
+      isLoading.value = true;
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoint.getUrl(ApiEndpoint.login)),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
+
+      final data = jsonDecode(response.body);
+      debugPrint("RESEND OTP RESPONSE => $data");
+
+      if (data["success"] == true) {
+        return {
+          "success": true,
+          "otp": data["otp"],
+          "email": data["email"] ?? email,
+          "message": data["message"] ?? "OTP resent successfully",
+        };
+      }
+
+      return {
+        "success": false,
+        "message": data["message"] ?? "Failed to resend OTP",
+      };
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Verify OTP ------
 
-  Future<void> verifyOtp({required String mobile, required String otp}) async {
+  Future<void> verifyOtp({required String email, required String otp}) async {
     try {
       isLoading.value = true;
       final url = ApiEndpoint.getUrl(ApiEndpoint.verifyOtp);
-      final body = jsonEncode({"mobile": mobile, "otp": otp});
+      final body = jsonEncode({"email": email, "otp": otp});
 
       final response = await http.post(
         Uri.parse(url),
@@ -95,7 +131,7 @@ class Authcontroller extends GetxController {
       debugPrint("OTP Response: $data");
 
       if (data["success"] == true) {
-        await SharedPre.saveMobile(mobile);
+        await SharedPre.saveMobile(email);
 
         // ✔ Tokens root me mil rhe hain, directly save karo
         await SharedPre.saveTokens(
@@ -133,7 +169,7 @@ class Authcontroller extends GetxController {
 
   Future<void> submitBasicDetails({
     required String name,
-    required String email,
+    required String phone,
     required File? imageFile,
     required String gender,
     required String dob,
@@ -147,23 +183,25 @@ class Authcontroller extends GetxController {
       final url = ApiEndpoint.getUrl(ApiEndpoint.basicDetails);
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // 📱 Get verified mobile
-      final mobile = await SharedPre.getMobile();
-      if (mobile.isEmpty) {
+      final verifiedEmail = await SharedPre.getMobile();
+      if (verifiedEmail.isEmpty) {
         Get.snackbar(
           "Error",
-          "No verified mobile found",
+          "No verified email found",
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
         return;
       }
 
-      // 🧾 Request Fields
+      final submittedPhone = phone.trim().isNotEmpty
+          ? phone.trim()
+          : "";
+
       request.fields.addAll({
-        "mobile": mobile,
+        "email": verifiedEmail,
+        "phone": submittedPhone,
         "name": name,
-        "email": email,
         "gender": gender,
         "dob": dob,
 

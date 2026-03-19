@@ -53,7 +53,6 @@ class ProfileController extends GetxController {
     fetchProfile();
     fetchProfile().then((_) {
       nameCtrl.text = profileData.value.name ?? "";
-      emailCtrl.text = profileData.value.email ?? "";
       addressCtrl.text = profileData.value.location?.address ?? "";
       String genderFromApi = profileData.value.gender?.toLowerCase() ?? "male";
       if (!genders.contains(genderFromApi)) {
@@ -67,7 +66,7 @@ class ProfileController extends GetxController {
   var imageFile = Rx<File?>(null);
 
   final nameCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
+  final mobileCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
   var selectedGender = "male".obs;
   var selectedDOB = Rx<DateTime?>(null);
@@ -120,18 +119,14 @@ class ProfileController extends GetxController {
       }
 
       String oldName = profileData.value.name ?? "";
-      String oldEmail = profileData.value.email ?? "";
       String oldGender = profileData.value.gender ?? "male";
       String oldDob = profileData.value.dob ?? "1999-01-01T00:00:00.000Z";
       String oldAddress = profileData.value.location?.address ?? "";
 
-      request.fields.addAll({
+      final fields = <String, String>{
         "name": nameCtrl.text.trim().isNotEmpty
             ? nameCtrl.text.trim()
             : oldName,
-        "email": emailCtrl.text.trim().isNotEmpty
-            ? emailCtrl.text.trim()
-            : oldEmail,
         "gender": selectedGender.value.isNotEmpty
             ? selectedGender.value.toLowerCase()
             : oldGender,
@@ -144,7 +139,13 @@ class ProfileController extends GetxController {
             : oldAddress,
         "addresses[0][coordinates][lat]": "28.5559",
         "addresses[0][coordinates][lng]": "77.3466",
-      });
+      };
+
+      if (mobileCtrl.text.trim().isNotEmpty) {
+        fields["mobile"] = mobileCtrl.text.trim();
+      }
+
+      request.fields.addAll(fields);
 
       debugPrint("updateProfileApi url: $uri");
       debugPrint("updateProfileApi headers: ${request.headers}");

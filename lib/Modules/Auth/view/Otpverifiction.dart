@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:taste_of_bihar/utils/app_color.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
+import 'package:taste_of_bihar/utils/app_color.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -13,16 +15,21 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final Authcontroller otpCtrl = Get.find<Authcontroller>();
-
   final TextEditingController otpInputCtrl = TextEditingController();
+
+  Timer? _resendTimer;
+  int _secondsRemaining = 30;
+  String currentEmail = "";
 
   @override
   void initState() {
     super.initState();
 
-    // 🔥 SHOW OTP IN TOP SNACKBAR (DEV MODE)
+    final args = Get.arguments;
+    currentEmail = args?["email"] ?? "";
+    _startResendTimer();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments;
       final otp = args?["otp"];
 
       if (otp != null && otp.toString().isNotEmpty) {
@@ -38,16 +45,79 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           icon: const Icon(Icons.lock, color: Colors.white),
         );
 
-        // (optional) auto-fill OTP field
         otpInputCtrl.text = otp.toString();
       }
     });
   }
 
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() {
+      _secondsRemaining = 30;
+    });
+
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_secondsRemaining <= 1) {
+        timer.cancel();
+        setState(() {
+          _secondsRemaining = 0;
+        });
+        return;
+      }
+
+      setState(() {
+        _secondsRemaining--;
+      });
+    });
+  }
+
+  Future<void> _handleResendOtp() async {
+    if (_secondsRemaining > 0 || currentEmail.isEmpty) return;
+
+    final result = await otpCtrl.resendOtp(email: currentEmail);
+
+    if (!mounted) return;
+
+    if (result["success"] == true) {
+      currentEmail = result["email"] ?? currentEmail;
+      final latestOtp = result["otp"];
+
+      _startResendTimer();
+
+      Get.snackbar(
+        "Success",
+        result["message"] ?? "OTP resent successfully",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      if (latestOtp != null && latestOtp.toString().isNotEmpty) {
+        otpInputCtrl.text = latestOtp.toString();
+      }
+    } else {
+      Get.snackbar(
+        "Error",
+        result["message"] ?? "Failed to resend OTP",
+        snackPosition: SnackPosition.TOP,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    otpInputCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final mobile = Get.arguments['mobile']; // passed mobile number
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -83,9 +153,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ],
                 ),
-
-                const Spacer(),
-
+                const SizedBox(height: 60),
                 Text(
                   "Taste of Bihar",
                   style: GoogleFonts.playfairDisplay(
@@ -94,9 +162,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: Colors.red.shade900,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.grey.shade200,
@@ -112,10 +178,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // OTP Input
                 SizedBox(
                   width: 260,
                   child: TextField(
@@ -146,9 +209,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
+                Text(
+                  currentEmail,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Obx(
                   () => SizedBox(
                     width: 260,
@@ -156,10 +226,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       onPressed: otpCtrl.isLoading.value
                           ? null
                           : () async {
-                              String mobile = Get.arguments["mobile"];
-                              String otp = otpInputCtrl.text.trim();
-
-                              await otpCtrl.verifyOtp(mobile: mobile, otp: otp);
+                              final otp = otpInputCtrl.text.trim();
+                              await otpCtrl.verifyOtp(
+                                email: currentEmail,
+                                otp: otp,
+                              );
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -189,9 +260,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-
+                const SizedBox(height: 16),
+                Obx(
+                  () => TextButton(
+                    onPressed:
+                        (_secondsRemaining == 0 && !otpCtrl.isLoading.value)
+                        ? _handleResendOtp
+                        : null,
+                    child: Text(
+                      _secondsRemaining == 0
+                          ? "Resend OTP"
+                          : "Resend OTP in ${_secondsRemaining}s",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _secondsRemaining == 0
+                            ? AppColors.primary
+                            : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
                 const Spacer(),
-
                 const SizedBox(height: 30),
               ],
             ),

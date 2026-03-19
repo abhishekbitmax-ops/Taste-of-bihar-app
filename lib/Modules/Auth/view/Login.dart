@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:taste_of_bihar/utils/app_color.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:taste_of_bihar/Modules/Auth/controller/AuthController.dart';
-import 'package:taste_of_bihar/utils/Sharedpre.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -179,10 +177,10 @@ class _UserLoginTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
-              controller: loginCtrl.mobileCtrl,
-              keyboardType: TextInputType.phone,
+              controller: loginCtrl.emailCtrl,
+              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                hintText: "Enter Mobile Number",
+                hintText: "Enter Email Address",
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
@@ -192,7 +190,7 @@ class _UserLoginTab extends StatelessWidget {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                prefixIcon: const Icon(Icons.phone_android),
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             const SizedBox(height: 22),
@@ -200,15 +198,7 @@ class _UserLoginTab extends StatelessWidget {
               () => ElevatedButton(
                 onPressed: loginCtrl.isLoading.value
                     ? null
-                    : () async {
-                        final savedMobile = await SharedPre.getMobile();
-
-                        if (savedMobile.isNotEmpty) {
-                          loginCtrl.sendOtp(); // controller खुद OTP पर भेजेगा
-                        } else {
-                          loginCtrl.sendOtp();
-                        }
-                      },
+                    : () => loginCtrl.sendOtp(),
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -266,7 +256,7 @@ class _AdminTab extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 final Uri url = Uri.parse(
-                  'https://restro-83kb.vercel.app/login',
+                  'https://taste-of-bihar.vercel.app/login',
                 );
                 await launchUrl(url, mode: LaunchMode.externalApplication);
               },

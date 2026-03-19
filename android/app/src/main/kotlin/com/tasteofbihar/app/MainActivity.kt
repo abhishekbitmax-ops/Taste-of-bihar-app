@@ -1,4 +1,4 @@
-package com.example.restro_app
+package com.tasteofbihar.app
 
 import io.flutter.embedding.android.FlutterActivity
 
